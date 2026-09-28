@@ -26,7 +26,11 @@ import {
   UploadCloud,
   ImagePlus,
   X,
-  ShieldCheck
+  ShieldCheck,
+  ZoomIn,
+  ZoomOut,
+  Crop,
+  Link as LinkIcon
 } from 'lucide-react';
 import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
@@ -60,6 +64,13 @@ export const WebStudioView: React.FC = () => {
   const desktopIframeRef = useRef<HTMLIFrameElement>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
 
+  const [logoInputTab, setLogoInputTab] = useState<'upload' | 'url'>(
+    draftConfig.customLogoUrl?.startsWith('http') ? 'url' : 'upload'
+  );
+  const [logoUrlInputValue, setLogoUrlInputValue] = useState(
+    draftConfig.customLogoUrl?.startsWith('http') ? draftConfig.customLogoUrl : ''
+  );
+
   const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -72,6 +83,7 @@ export const WebStudioView: React.FC = () => {
         const result = event.target?.result as string;
         if (result) {
           handleFieldChange('customLogoUrl', result);
+          setLogoUrlInputValue('');
         }
       };
       reader.readAsDataURL(file);
@@ -168,6 +180,7 @@ export const WebStudioView: React.FC = () => {
     if (confirm('¿Deseas restablecer todos los textos, colores y estética al diseño editorial original?')) {
       const def = resetConfig();
       setDraftConfig({ ...def });
+      setLogoUrlInputValue('');
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 2000);
     }
@@ -476,11 +489,15 @@ export const WebStudioView: React.FC = () => {
                     <div className="flex items-center gap-3.5 bg-background/70 p-3 rounded-xl border border-rose-200/50 dark:border-rose-900/30 shadow-2xs">
                       <div className="relative shrink-0">
                         {draftConfig.customLogoUrl ? (
-                          <div className="size-14 rounded-2xl overflow-hidden bg-white shadow-md border-2 border-white ring-2 ring-emerald-500/30 flex items-center justify-center p-1">
+                          <div className="size-14 rounded-full overflow-hidden bg-white shadow-md border-2 border-white ring-2 ring-emerald-500/30 flex items-center justify-center p-1">
                             <img
                               src={draftConfig.customLogoUrl}
                               alt="Logo Personal Atelier"
                               className="size-full object-contain"
+                              style={{
+                                transform: `scale(${(draftConfig.customLogoScale || 100) / 100})`,
+                                transition: 'transform 0.1s ease'
+                              }}
                             />
                           </div>
                         ) : (
@@ -505,17 +522,151 @@ export const WebStudioView: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Opción 1: Subir Logo Personal */}
-                    <div className="space-y-2 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/60 p-3">
+                    {/* VISOR DE PERFIL CIRCULAR & ENCUADRE DE LOGO (ZOOM IN / OUT) */}
+                    {draftConfig.customLogoUrl && (
+                      <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/50 bg-background/80 p-4 space-y-3.5 shadow-xs">
+                        <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/30 pb-2">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                            <Crop className="size-3.5 text-[#DE738F]" />
+                            <span>Visor de Perfil Circular & Encuadre</span>
+                          </div>
+                          <span className="text-[11px] font-mono font-bold text-rose-600 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+                            {draftConfig.customLogoScale || 100}% Zoom
+                          </span>
+                        </div>
+
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Ajustá el zoom con el control deslizante para que tu logo encaje con precisión dentro del visor circular, tal como se apreciará en la cabecera y footer de tu web:
+                        </p>
+
+                        {/* Circular Viewfinder Window */}
+                        <div className="flex flex-col items-center justify-center py-2">
+                          <div className="relative size-44 rounded-2xl bg-[#140D10] border border-rose-200/30 shadow-inner flex items-center justify-center overflow-hidden">
+                            {/* Ambient checkered pattern for transparent PNGs */}
+                            <div
+                              className="absolute inset-0 opacity-15"
+                              style={{
+                                backgroundImage: `radial-gradient(circle, #DE738F 1px, transparent 1px)`,
+                                backgroundSize: '12px 12px'
+                              }}
+                            />
+
+                            {/* Scaled Logo Image */}
+                            <div
+                              className="relative size-full flex items-center justify-center p-3 transition-transform duration-75"
+                              style={{
+                                transform: `scale(${(draftConfig.customLogoScale || 100) / 100})`,
+                                transformOrigin: 'center center'
+                              }}
+                            >
+                              <img
+                                src={draftConfig.customLogoUrl}
+                                alt="Encuadre Logo"
+                                className="max-h-full max-w-full object-contain pointer-events-none select-none drop-shadow-md"
+                              />
+                            </div>
+
+                            {/* Circular Mask Reticle Guide Overlay */}
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                              <div className="size-32 rounded-full border-2 border-dashed border-[#DE738F] shadow-[0_0_0_9999px_rgba(15,10,12,0.68)] ring-1 ring-white/20 relative">
+                                {/* Subtle crosshair centering aids */}
+                                <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-rose-300/30 pointer-events-none" />
+                                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-px bg-rose-300/30 pointer-events-none" />
+                              </div>
+                            </div>
+
+                            <div className="absolute bottom-1.5 inset-x-0 text-center">
+                              <span className="text-[9px] font-semibold text-white/80 bg-black/70 px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-widest">
+                                Área Visible en Web
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Zoom Controls: Buttons, Slider & Presets */}
+                        <div className="space-y-2 pt-1">
+                          <div className="flex items-center justify-between text-xs text-foreground font-medium">
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                              <Sliders className="size-3 text-rose-500" />
+                              Control de Escala / Zoom:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleFieldChange('customLogoScale', 100)}
+                              className="text-[10px] text-rose-600 hover:underline flex items-center gap-1 font-medium"
+                            >
+                              <RotateCcw className="size-2.5" />
+                              Restablecer (100%)
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => handleFieldChange('customLogoScale', Math.max(40, (draftConfig.customLogoScale || 100) - 5))}
+                              className="p-1.5 rounded-lg border border-border/70 hover:bg-rose-500/10 hover:border-rose-400 text-muted-foreground hover:text-foreground transition-colors"
+                              title="Alejar / Zoom Out (-5%)"
+                            >
+                              <ZoomOut className="size-3.5" />
+                            </button>
+
+                            <input
+                              type="range"
+                              min={40}
+                              max={220}
+                              step={1}
+                              value={draftConfig.customLogoScale || 100}
+                              onChange={e => handleFieldChange('customLogoScale', Number(e.target.value))}
+                              className="flex-1 h-2 rounded-lg bg-rose-200/40 dark:bg-rose-950/60 accent-rose-500 cursor-pointer"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleFieldChange('customLogoScale', Math.min(220, (draftConfig.customLogoScale || 100) + 5))}
+                              className="p-1.5 rounded-lg border border-border/70 hover:bg-rose-500/10 hover:border-rose-400 text-muted-foreground hover:text-foreground transition-colors"
+                              title="Acercar / Zoom In (+5%)"
+                            >
+                              <ZoomIn className="size-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Quick Presets */}
+                          <div className="flex items-center justify-between gap-1 pt-1">
+                            <span className="text-[10px] text-muted-foreground">Preajustes rápidos:</span>
+                            <div className="flex items-center gap-1">
+                              {[60, 80, 100, 125, 150].map(val => (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => handleFieldChange('customLogoScale', val)}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all ${
+                                    (draftConfig.customLogoScale || 100) === val
+                                      ? 'bg-rose-500 text-white font-bold shadow-2xs'
+                                      : 'bg-muted/70 hover:bg-rose-500/10 text-muted-foreground'
+                                  }`}
+                                >
+                                  {val}%
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Inyección de Logo Personal: Subir Archivo o URL Web */}
+                    <div className="space-y-3 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/60 p-3.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 uppercase tracking-wider">
-                          <UploadCloud className="size-3.5 text-rose-500" />
-                          <span>1. Tu Logo Personal (Imagen)</span>
+                        <label className="text-[11px] font-bold text-foreground/90 uppercase tracking-wider">
+                          1. Inyectar Logo Personal del Atelier
                         </label>
                         {draftConfig.customLogoUrl && (
                           <button
                             type="button"
-                            onClick={() => handleFieldChange('customLogoUrl', '')}
+                            onClick={() => {
+                              handleFieldChange('customLogoUrl', '');
+                              setLogoUrlInputValue('');
+                            }}
                             className="text-[10px] font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1"
                           >
                             <Trash2 className="size-3" />
@@ -524,47 +675,101 @@ export const WebStudioView: React.FC = () => {
                         )}
                       </div>
 
-                      <input
-                        type="file"
-                        ref={logoFileInputRef}
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                        onChange={handleLogoFileUpload}
-                        className="hidden"
-                      />
-
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      {/* Selector de Método: Archivo vs URL */}
+                      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/60">
                         <button
                           type="button"
-                          onClick={() => logoFileInputRef.current?.click()}
-                          className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-rose-300 dark:border-rose-800 bg-rose-500/5 hover:bg-rose-500/10 px-3.5 py-2.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition-colors shadow-2xs w-full sm:w-auto shrink-0"
+                          onClick={() => setLogoInputTab('upload')}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            logoInputTab === 'upload'
+                              ? 'bg-background shadow-xs text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
                         >
-                          <UploadCloud className="size-4 text-rose-500" />
-                          <span>{draftConfig.customLogoUrl ? 'Cambiar archivo de logo' : 'Subir archivo (PNG, SVG, JPG)'}</span>
+                          <UploadCloud className="size-3.5" />
+                          <span>Subir Archivo de Imagen</span>
                         </button>
-
-                        <div className="relative flex-1">
-                          <input
-                            type="url"
-                            value={draftConfig.customLogoUrl}
-                            onChange={e => handleFieldChange('customLogoUrl', e.target.value)}
-                            placeholder="O pegar URL de imagen (https://...)"
-                            className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs focus:border-[#DE738F] focus:outline-none"
-                          />
-                          {draftConfig.customLogoUrl && (
-                            <button
-                              type="button"
-                              onClick={() => handleFieldChange('customLogoUrl', '')}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                              title="Limpiar logo"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setLogoInputTab('url')}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            logoInputTab === 'url'
+                              ? 'bg-background shadow-xs text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          <LinkIcon className="size-3.5" />
+                          <span>Inyección por Link / URL</span>
+                        </button>
                       </div>
+
+                      {/* Vista según método seleccionado */}
+                      {logoInputTab === 'upload' ? (
+                        <div className="space-y-2 pt-1">
+                          <input
+                            type="file"
+                            ref={logoFileInputRef}
+                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                            onChange={handleLogoFileUpload}
+                            className="hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => logoFileInputRef.current?.click()}
+                            className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-rose-300 dark:border-rose-800 bg-rose-500/5 hover:bg-rose-500/10 p-4 transition-colors group cursor-pointer"
+                          >
+                            <div className="size-9 rounded-full bg-rose-500/15 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
+                              <UploadCloud className="size-4" />
+                            </div>
+                            <span className="text-xs font-bold text-rose-700 dark:text-rose-300">
+                              {draftConfig.customLogoUrl ? 'Hacé click para reemplazar archivo' : 'Hacé click para elegir archivo de tu computadora'}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Formatos: PNG transparente, SVG vectorial, JPG o WebP (hasta 2MB)
+                            </span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 pt-1">
+                          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                            Enlace Web Directo de la Imagen (URL):
+                          </label>
+                          <div className="relative">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                              <Globe className="size-3.5 text-rose-500/70" />
+                            </div>
+                            <input
+                              type="url"
+                              value={logoUrlInputValue}
+                              onChange={e => {
+                                setLogoUrlInputValue(e.target.value);
+                                handleFieldChange('customLogoUrl', e.target.value);
+                              }}
+                              placeholder="https://tudominio.com/assets/logo.png"
+                              className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 pl-9 pr-8 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground/50 shadow-xs focus:border-[#DE738F] focus:outline-none"
+                            />
+                            {logoUrlInputValue && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLogoUrlInputValue('');
+                                  handleFieldChange('customLogoUrl', '');
+                                }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                                title="Limpiar URL"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">
+                            Pegá el link directo a la imagen de tu logo alojada en tu servidor, CDN o web. Se inyectará al instante en el visor y en la vista previa.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Opción 2: Sello o Ícono Predefinido (Fallback) */}
+                    {/* Opción 2: Sello o Ícono Predefinido (Fallback de App) */}
                     <div className="space-y-2 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/60 p-3">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 uppercase tracking-wider">

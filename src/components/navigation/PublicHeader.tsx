@@ -36,7 +36,13 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               <img
                 src={config.customLogoUrl}
                 alt={config.brandName}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  transform: `scale(${(config.customLogoScale || 100) / 100})`,
+                  transition: 'transform 0.1s ease-out'
+                }}
               />
             </div>
           ) : (

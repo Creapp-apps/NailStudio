@@ -520,7 +520,12 @@ export const PublicLanding: React.FC<Props> = ({
                   <img
                     src={config.customLogoUrl}
                     alt={config.brandName}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      transform: `scale(${(config.customLogoScale || 100) / 100})`
+                    }}
                   />
                 </div>
               ) : (

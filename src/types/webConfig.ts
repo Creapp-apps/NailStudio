@@ -12,6 +12,7 @@ export interface WebCustomizationConfig {
   badgeText: string;
   logoEmoji: string;
   customLogoUrl: string; // URL o Base64 (DataURL) del logo personal del cliente
+  customLogoScale: number; // Escala / Zoom del logo (50 a 250%, default: 100)
 
   // 2. Colores & Paleta
   primaryColor: string;
@@ -76,6 +77,7 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   badgeText: 'ESTUDIO DE ALTA MANICURÍA',
   logoEmoji: '💅',
   customLogoUrl: '',
+  customLogoScale: 100,
 
   // Colores
   primaryColor: '#DE738F',
