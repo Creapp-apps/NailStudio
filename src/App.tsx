@@ -62,30 +62,31 @@ export function App() {
       {/* Top Application Navigation */}
       <header className="header-glass">
         <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '70px', gap: '1rem' }}>
-          {/* Logo & Brand */}
+          {/* Logo & Brand (Haute Couture Style) */}
           <div
             onClick={() => setViewMode('public')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
           >
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--brand-terracotta) 0%, #352622 100%)',
+              background: 'linear-gradient(135deg, #DE738F 0%, #301720 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
-              boxShadow: 'var(--shadow-sm)'
+              boxShadow: '0 4px 12px rgba(222, 115, 143, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.6)'
             }}>
               💅
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--brand-espresso)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                Atelier Nails & Co.
+              <div style={{ fontFamily: 'var(--font-serif-glam)', fontSize: '1.4rem', color: 'var(--brand-espresso)', letterSpacing: '0.04em', lineHeight: 1.1 }}>
+                Atelier Nails
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--brand-terracotta)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Haute Studio Suite
+              <div style={{ fontSize: '0.65rem', color: 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                by Haute Studio
               </div>
             </div>
           </div>
@@ -149,8 +150,8 @@ export function App() {
               Supabase Online
             </div>
 
-            <button onClick={() => handleOpenBooking()} className="btn-primary" style={{ padding: '0.55rem 1.15rem', fontSize: '0.825rem' }}>
-              <Calendar size={15} /> Reservar Turno
+            <button onClick={() => handleOpenBooking()} className="btn-outline-couture" style={{ padding: '0.55rem 1.15rem' }}>
+              APPOINTMENT
             </button>
 
             <button
