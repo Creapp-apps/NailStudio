@@ -36,29 +36,3 @@ VALUES
 ('tech-3', 'Camila Méndez', 'Senior Sculptor & Polygel Tech', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80', ARRAY['Esculpidas Acrílico', 'Diseño Francés', 'Cat Eye'], 4.92, 87, 0.50)
 ON CONFLICT (id) DO NOTHING;
 
--- 5. Clients
-INSERT INTO public.client_profiles (id, name, phone, email, avatar, nail_plate_condition, allergies_hema, lamp_heat_sensitivity, favorite_colors, technician_notes, points_balance, tier, referral_code, total_visits, last_visit_date)
-VALUES
-('cli-1', 'Lucía Fernández', '+54 9 11 4522-8901', 'lucia.fernandez@gmail.com', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80', 'thin_weak', false, 'medium', ARRAY['#E6C2BF (Nude Rose)', '#C4977E (Caramel)', '#FFFFFF (French White)'], 'Le gusta forma almendra corta. Suele tener levantamiento leve en índice derecho por uso de teclado. Recomendar base Rubber niveladora densa.', 1250, 'VIP Haute', 'LUCIA-NAILS', 8, '2026-09-08'),
-('cli-2', 'Micaela Gómez', '+54 9 11 5821-3312', 'mica.gomez@hotmail.com', NULL, 'healthy', false, 'low', ARRAY['#1A1A1A (Vampy Black)', '#800020 (Burgundy Chic)'], 'Forma cuadrada recta perfecta. Prefiere colores oscuros invernales.', 600, 'Gold', 'MICA-GLAM', 4, '2026-09-12'),
-('cli-3', 'Carolina Varela', '+54 9 11 3901-7744', 'caro.varela@outlook.com', NULL, 'onychophagy', true, 'high', ARRAY['#F3EBE1 (Milky Nude)', '#F5DFD5 (Soft Peach)'], '⚠️ ATENCIÓN: Alérgica al HEMA. Usar exclusivamente línea hipoalergénica HEMA-FREE. Gran sensibilidad al calor en cabina; curar en modo Low Heat.', 350, 'Silver', 'CARO-GLOW', 2, '2026-09-20')
-ON CONFLICT (id) DO NOTHING;
-
--- 6. Appointments
-INSERT INTO public.appointments (id, client_name, client_phone, client_email, tech_id, service_id, removal_id, nail_art_tier_id, total_duration_min, total_price, deposit_amount, deposit_paid, scheduled_date, scheduled_time, status, notes)
-VALUES
-('apt-101', 'Lucía Fernández', '+54 9 11 4522-8901', 'lucia.fernandez@gmail.com', 'tech-1', 'srv-kapping', 'own_studio', 'art-2', 120, 27000, 5000, true, '2026-09-28', '10:00', 'confirmed', 'Service de Kapping con nuevo diseño cromo perlado.'),
-('apt-102', 'Micaela Gómez', '+54 9 11 5821-3312', 'mica.gomez@hotmail.com', 'tech-2', 'srv-semipermanente', 'none', 'art-1', 75, 17000, 5000, true, '2026-09-28', '11:30', 'in_progress', 'Micro french vino tinto.'),
-('apt-103', 'Carolina Varela', '+54 9 11 3901-7744', 'caro.varela@outlook.com', 'tech-1', 'srv-kapping', 'none', 'art-0', 75, 18500, 5000, true, '2026-09-28', '15:00', 'confirmed', 'Recordar esmaltes HEMA-Free y modo baja temperatura.')
-ON CONFLICT (id) DO NOTHING;
-
--- 7. Supplies
-INSERT INTO public.supplies (id, name, category, current_stock, min_stock_alert, unit, brand)
-VALUES
-('sup-1', 'Base Rubber Niveladora Transparente (HEMA-Free)', 'geles_bases', 3, 5, 'Frascos 15ml', 'Kodi Professional'),
-('sup-2', 'Top Coat No Wipe Ultra Gloss', 'geles_bases', 8, 4, 'Frascos 15ml', 'Victoria Vynn'),
-('sup-3', 'Alcohol Isopropílico 99% / Sanitizante', 'quimicos', 2, 3, 'Litros', 'Atelier Labs'),
-('sup-4', 'Polvo Acrílico Cover Peach 50g', 'acrilicos', 6, 2, 'Potes', 'Mia Secret'),
-('sup-5', 'Limas Descartables Zebra 100/180', 'descartables', 24, 20, 'Unidades', 'OPI Pro'),
-('sup-6', 'Fresas Diamante Flama (Manicura Rusa)', 'herramientas', 12, 6, 'Unidades', 'Staleks Pro')
-ON CONFLICT (id) DO NOTHING;

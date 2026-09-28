@@ -23,7 +23,7 @@ interface Props {
 }
 
 export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, supplies }) => {
-  const [activeSection, setActiveSection] = useState<BackofficeSection>('calendar');
+  const [activeSection, setActiveSection] = useState<BackofficeSection>('web_studio');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 

@@ -37,23 +37,28 @@ class StorageService {
   }
 
   private initDefaults() {
+    // Purge legacy mock data if present
+    const storedApts = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
+    if (!storedApts || storedApts.includes('apt-101') || storedApts.includes('Lucía Fernández')) {
+      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
+    }
+    const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS);
+    if (!storedClients || storedClients.includes('cli-1') || storedClients.includes('Lucía Fernández')) {
+      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
+    }
+    const storedSupplies = localStorage.getItem(STORAGE_KEYS.SUPPLIES);
+    if (!storedSupplies || storedSupplies.includes('sup-1')) {
+      localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify([]));
+    }
+
     if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(INITIAL_SERVICES));
     }
     if (!localStorage.getItem(STORAGE_KEYS.TECHS)) {
       localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(NAIL_TECHNICIANS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) {
-      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CLIENTS)) {
-      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SUPPLIES)) {
-      localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(INITIAL_SUPPLIES));
-    }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID)) {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, 'cli-1');
+      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, '');
     }
   }
 
@@ -118,7 +123,7 @@ class StorageService {
 
       // 3. Appointments
       const { data: aptData } = await supabase.from('appointments').select('*').order('scheduled_date', { ascending: false });
-      if (aptData && aptData.length > 0) {
+      if (aptData) {
         const mappedApts: Appointment[] = aptData.map(a => ({
           id: a.id,
           clientName: a.client_name,
@@ -143,7 +148,7 @@ class StorageService {
 
       // 4. Clients
       const { data: cliData } = await supabase.from('client_profiles').select('*');
-      if (cliData && cliData.length > 0) {
+      if (cliData) {
         const mappedClients: ClientProfile[] = cliData.map(c => ({
           id: c.id,
           name: c.name,
@@ -168,7 +173,7 @@ class StorageService {
 
       // 5. Supplies
       const { data: supData } = await supabase.from('supplies').select('*');
-      if (supData && supData.length > 0) {
+      if (supData) {
         const mappedSupplies: SupplyItem[] = supData.map(s => ({
           id: s.id,
           name: s.name,
