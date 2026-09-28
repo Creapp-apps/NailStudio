@@ -33,6 +33,7 @@ import { Separator } from '@/components/ui/separator';
 import { PublicHeader } from '../navigation/PublicHeader';
 import { PublicLanding } from '../public/PublicLanding';
 import { IPhoneMockup } from './IPhoneMockup';
+import { MacBookMockup } from './MacBookMockup';
 
 type StudioCategory =
   | 'identidad'
@@ -209,8 +210,8 @@ export const WebStudioView: React.FC = () => {
       {/* Main Studio View: Left Sub-Sidebar + Middle Form Controls + Right Real-Time Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* Sub-Sidebar: Categories of Web Components (Cols 1-3) */}
-        <div className="lg:col-span-3 space-y-1.5 rounded-2xl border border-rose-200/50 dark:border-rose-900/30 bg-card/85 backdrop-blur-md p-2.5 shadow-[0_10px_30px_-15px_rgba(222,115,143,0.08)]">
+        {/* Sub-Sidebar: Categories of Web Components (Cols 1-3 on mobile, 1-2 on desktop preview) */}
+        <div className={`${previewDevice === 'desktop' ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-1.5 rounded-2xl border border-rose-200/50 dark:border-rose-900/30 bg-card/85 backdrop-blur-md p-2.5 shadow-[0_10px_30px_-15px_rgba(222,115,143,0.08)]`}>
           <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center justify-between">
             <span>Secciones del Sitio</span>
             <span className="text-[9px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">8 Módulos</span>
@@ -964,8 +965,8 @@ export const WebStudioView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Real-Time Live Website Preview Frame (Cols 8-12) */}
-        <div className="lg:col-span-5 space-y-3">
+        {/* Right Column: Real-Time Live Website Preview Frame (Cols 8-12 on mobile, 7-12 on desktop) */}
+        <div className={`${previewDevice === 'desktop' ? 'lg:col-span-6' : 'lg:col-span-5'} space-y-3`}>
           {/* Device Switcher & Status Bar */}
           <div className="flex items-center justify-between rounded-xl border border-border bg-card/80 backdrop-blur-sm px-3.5 py-2 shadow-xs text-xs">
             <div className="flex items-center gap-2">
@@ -990,10 +991,10 @@ export const WebStudioView: React.FC = () => {
                       ? 'bg-background shadow-xs text-foreground font-semibold'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
-                  title="Vista Escritorio (Full)"
+                  title="Mockup MacBook Pro (Escritorio)"
                 >
                   <Laptop className="size-3.5" />
-                  <span>Escritorio</span>
+                  <span>MacBook Pro</span>
                 </button>
               </div>
             </div>
@@ -1025,28 +1026,13 @@ export const WebStudioView: React.FC = () => {
               />
             </div>
           ) : (
-            /* Desktop Preview Box */
-            <div className="rounded-2xl border border-rose-200/60 dark:border-rose-900/40 bg-[#140D10] shadow-xl overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/10 bg-[#1E1216] px-3.5 py-2.5 text-xs text-zinc-400">
-                <div className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-full bg-red-500/80" />
-                  <span className="size-2.5 rounded-full bg-amber-500/80" />
-                  <span className="size-2.5 rounded-full bg-emerald-500/80" />
-                </div>
-                <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-black/40 px-3 py-0.5 text-[10px] text-zinc-300">
-                  <span className="text-emerald-400">🔒</span>
-                  <span>https://ateliernails.com</span>
-                </div>
-                <span className="text-[10px] text-zinc-500 font-mono">100% Desktop Viewport</span>
-              </div>
-              <div className="bg-[#FFF7FA] h-[780px] w-full">
-                <iframe
-                  ref={desktopIframeRef}
-                  src="/?preview=true"
-                  title="Vista Previa Escritorio"
-                  className="w-full h-full border-none"
-                />
-              </div>
+            /* Desktop MacBook Pro Mockup */
+            <div className="flex justify-center py-1 w-full">
+              <MacBookMockup
+                iframeSrc="/?preview=true"
+                iframeRef={desktopIframeRef}
+                url="ateliernails.com"
+              />
             </div>
           )}
         </div>
