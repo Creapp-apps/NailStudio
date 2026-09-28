@@ -19,13 +19,15 @@ import {
   AlertTriangle,
   Building2,
   TrendingUp,
-  Percent
+  Percent,
+  Palette
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
 export type BackofficeSection =
+  | 'web_studio'
   | 'calendar'
   | 'waitlist'
   | 'crm'
@@ -61,6 +63,18 @@ export const BackofficeSidebar: React.FC<Props> = ({
   onCloseMobile
 }) => {
   const navigationGroups = [
+    {
+      rubro: 'DISEÑO & PERSONALIZACIÓN',
+      items: [
+        {
+          id: 'web_studio' as BackofficeSection,
+          label: 'Personalización de la Web',
+          icon: <Palette className="size-4 text-pink-400" />,
+          badge: 'En Vivo',
+          badgeVariant: 'outline' as const
+        }
+      ]
+    },
     {
       rubro: 'OPERACIONES & SALÓN',
       items: [

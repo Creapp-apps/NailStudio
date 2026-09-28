@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { WebCustomizationConfig } from '../../types/webConfig';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Particle {
   x: number;
@@ -12,7 +14,14 @@ interface Particle {
   spin: number;
 }
 
-export const InteractiveGlamBackground: React.FC = () => {
+interface Props {
+  config?: WebCustomizationConfig;
+}
+
+export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig }) => {
+  const { config: hookConfig } = useWebConfig();
+  const config = propConfig || hookConfig;
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mouseRef = useRef({ x: -1000, y: -1000, targetX: -1000, targetY: -1000 });
 

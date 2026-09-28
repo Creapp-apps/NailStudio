@@ -44,10 +44,10 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(NAIL_TECHNICIANS));
     }
     if (!localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) {
-      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(INITIAL_APPOINTMENTS));
+      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
     }
     if (!localStorage.getItem(STORAGE_KEYS.CLIENTS)) {
-      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(INITIAL_CLIENTS));
+      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
     }
     if (!localStorage.getItem(STORAGE_KEYS.SUPPLIES)) {
       localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(INITIAL_SUPPLIES));
@@ -214,7 +214,7 @@ class StorageService {
   // --- Appointments ---
   public getAppointments(): Appointment[] {
     const raw = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
-    return raw ? JSON.parse(raw) : INITIAL_APPOINTMENTS;
+    return raw ? JSON.parse(raw) : [];
   }
 
   public createAppointment(newApt: Omit<Appointment, 'id' | 'createdAt'>): Appointment {
@@ -290,7 +290,7 @@ class StorageService {
   // --- Clients ---
   public getClients(): ClientProfile[] {
     const raw = localStorage.getItem(STORAGE_KEYS.CLIENTS);
-    return raw ? JSON.parse(raw) : INITIAL_CLIENTS;
+    return raw ? JSON.parse(raw) : [];
   }
 
   public getCurrentClient(): ClientProfile {

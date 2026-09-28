@@ -11,6 +11,7 @@ import { HealthDiagnosticsView } from './HealthDiagnosticsView';
 import { CommissionsView } from './CommissionsView';
 import { StaffManagementView } from './StaffManagementView';
 import { LiveDeskView } from './LiveDeskView';
+import { WebStudioView } from './WebStudioView';
 import { BookingModal } from '../booking/BookingModal';
 import { storage } from '../../services/storage';
 
@@ -73,6 +74,11 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
         {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl">
+            {/* PERSONALIZACIÓN & WEB STUDIO */}
+            {activeSection === 'web_studio' && (
+              <WebStudioView />
+            )}
+
             {/* OPERACIONES */}
             {activeSection === 'calendar' && (
               <MultiTechCalendar appointments={appointments} techs={techs} />

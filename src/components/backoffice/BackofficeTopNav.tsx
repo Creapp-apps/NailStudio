@@ -28,6 +28,8 @@ export const BackofficeTopNav: React.FC<Props> = ({
 }) => {
   const getBreadcrumb = (section: BackofficeSection) => {
     switch (section) {
+      case 'web_studio':
+        return { rubro: 'Diseño Web', title: 'Personalización & Editor en Vivo' };
       case 'calendar':
         return { rubro: 'Operaciones', title: 'Agenda de Mesas & Turnos' };
       case 'waitlist':

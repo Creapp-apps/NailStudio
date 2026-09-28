@@ -1,16 +1,24 @@
 import React from 'react';
+import { WebCustomizationConfig } from '../../types/webConfig';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
-export const InfiniteCoutureMarquee: React.FC = () => {
-  const marqueeItems = [
-    'MANICURÍA RUSA COMBINADA',
-    'PRODUCTOS BIOCOMPATIBLES LIBRES DE HEMA',
-    'EFECTO CROMADO GLAZED DONUT',
-    'DISEÑOS CON CRISTALES SWAROVSKI',
-    'RETENCIÓN GARANTIZADA DE 21 DÍAS',
-    'KAPPING Y NIVELACIÓN CON GEL RUBBER',
-    'ESCULPIDAS EN SOFT GEL',
-    'CLUB DE BENEFICIOS EXCLUSIVOS PRIVILEGE'
-  ];
+interface Props {
+  config?: WebCustomizationConfig;
+}
+
+export const InfiniteCoutureMarquee: React.FC<Props> = ({ config: propConfig }) => {
+  const { config: hookConfig } = useWebConfig();
+  const config = propConfig || hookConfig;
+
+  const marqueeItems = config.marqueePhrases && config.marqueePhrases.length > 0
+    ? config.marqueePhrases
+    : [
+        'MANICURÍA RUSA COMBINADA',
+        'PRODUCTOS BIOCOMPATIBLES LIBRES DE HEMA',
+        'EFECTO CROMADO GLAZED DONUT',
+        'DISEÑOS CON CRISTALES SWAROVSKI',
+        'RETENCIÓN GARANTIZADA DE 21 DÍAS'
+      ];
 
   return (
     <div className="marquee-container">

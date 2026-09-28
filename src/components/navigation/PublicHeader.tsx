@@ -1,12 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Smartphone, Calendar, ChevronRight } from 'lucide-react';
+import { WebCustomizationConfig } from '../../types/webConfig';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Props {
   onOpenBooking: () => void;
+  config?: WebCustomizationConfig;
 }
 
-export const PublicHeader: React.FC<Props> = ({ onOpenBooking }) => {
+export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfig }) => {
+  const { config: hookConfig } = useWebConfig();
+  const config = propConfig || hookConfig;
+
   return (
     <header className="header-glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
       <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '74px', gap: '1rem' }}>
@@ -17,23 +23,23 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking }) => {
             width: '44px',
             height: '44px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #DE738F 0%, #301720 100%)',
+            background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#FFFFFF',
-            boxShadow: '0 4px 14px rgba(222, 115, 143, 0.4)',
+            boxShadow: `0 4px 14px ${config.primaryColor}66`,
             border: '1px solid rgba(255, 255, 255, 0.8)',
             fontSize: '1.2rem'
           }}>
-            💅
+            {config.logoEmoji || '💅'}
           </div>
           <div>
             <div style={{ fontFamily: 'var(--font-serif-glam)', fontSize: '1.45rem', color: 'var(--brand-espresso)', letterSpacing: '0.04em', lineHeight: 1.1 }}>
-              Atelier Nails
+              {config.brandName}
             </div>
-            <div style={{ fontSize: '0.62rem', color: 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              Estudio de Uñas & Manicuría
+            <div style={{ fontSize: '0.62rem', color: config.secondaryColor || 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              {config.brandTagline}
             </div>
           </div>
         </Link>

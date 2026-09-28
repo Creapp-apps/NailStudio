@@ -8,10 +8,22 @@ interface Props {
 }
 
 export const ClientCRM: React.FC<Props> = ({ clients }) => {
+  if (clients.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground animate-fade-in">
+        <User className="size-10 mx-auto text-pink-400 mb-3 opacity-60" />
+        <h3 className="text-base font-bold text-foreground font-serif">No hay fichas técnicas de clientas aún</h3>
+        <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1">
+          A medida que las clientas agenden sus turnos desde la web o el portal PWA, sus fichas clínicas, fotos y diagnósticos ungueales se registrarán automáticamente aquí.
+        </p>
+      </div>
+    );
+  }
+
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<ClientProfile>(clients[0]);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState(selectedClient?.technicianNotes || '');
+  const [notesValue, setNotesValue] = useState(clients[0].technicianNotes || '');
 
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,7 +38,8 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
   };
 
   const handleSaveNotes = () => {
-    const updated = {
+    if (!selectedClient) return;
+    const updated: ClientProfile = {
       ...selectedClient,
       technicianNotes: notesValue
     };

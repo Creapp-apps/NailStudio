@@ -20,14 +20,24 @@ import { INITIAL_SERVICES, NAIL_ART_TIERS } from '../../services/mockData';
 import { InteractiveGlamBackground } from '../effects/InteractiveGlamBackground';
 import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
 import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
+import { WebCustomizationConfig } from '../../types/webConfig';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Props {
   onOpenBooking: (serviceId?: string) => void;
   onOpenNailBot: () => void;
   onOpenPortal: () => void;
+  config?: WebCustomizationConfig;
 }
 
-export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, onOpenPortal }) => {
+export const PublicLanding: React.FC<Props> = ({
+  onOpenBooking,
+  onOpenNailBot,
+  onOpenPortal,
+  config: propConfig
+}) => {
+  const { config: hookConfig } = useWebConfig();
+  const config = propConfig || hookConfig;
   const [activeFeature, setActiveFeature] = useState<number>(0);
 
   const whyChooseUs = [
@@ -89,9 +99,18 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
   ];
 
   return (
-    <div className="animate-fade-in" style={{ position: 'relative' }}>
+    <div
+      className="animate-fade-in"
+      style={{
+        position: 'relative',
+        '--brand-pink-satin': config.primaryColor,
+        '--brand-pink-dark': config.secondaryColor,
+        '--font-serif-glam': config.headingFont,
+        '--font-couture': config.accentFont
+      } as React.CSSProperties}
+    >
       {/* Living Ambient Stardust & Breathing Liquid Aurora Canvas */}
-      <InteractiveGlamBackground />
+      {config.enableAmbientAurora && <InteractiveGlamBackground config={config} />}
 
       {/* Editorial Mini-Header Sub-Navigation (Matching Reference) */}
       <div style={{
@@ -112,15 +131,15 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         zIndex: 20
       }}>
         <span>Inicio</span>
-        <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
+        <span style={{ color: config.primaryColor }}>•</span>
         <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
-        <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
+        <span style={{ color: config.primaryColor }}>•</span>
         <a href="#why-us" style={{ color: 'inherit', textDecoration: 'none' }}>¿Por Qué Elegirnos?</a>
-        <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
+        <span style={{ color: config.primaryColor }}>•</span>
         <a href="#nail-art" style={{ color: 'inherit', textDecoration: 'none' }}>Galería Nail Art</a>
-        <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
-        <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: 'var(--brand-pink-satin)', fontWeight: 700 }}>Nail-Bot IA</span>
-        <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
+        <span style={{ color: config.primaryColor }}>•</span>
+        <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: config.primaryColor, fontWeight: 700 }}>Nail-Bot IA</span>
+        <span style={{ color: config.primaryColor }}>•</span>
         <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: '#B8860B', fontWeight: 700 }}>Club Privilege</span>
       </div>
 
@@ -131,7 +150,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         display: 'flex',
         alignItems: 'center',
         padding: '3rem 1.5rem 4.5rem 1.5rem',
-        background: 'radial-gradient(circle at 75% 25%, rgba(255, 227, 236, 0.45) 0%, rgba(255, 245, 248, 0.25) 45%, rgba(252, 245, 248, 0.1) 100%)',
+        background: `radial-gradient(circle at 75% 25%, ${config.primaryColor}25 0%, rgba(255, 245, 248, 0.25) 45%, rgba(252, 245, 248, 0.1) 100%)`,
         overflow: 'hidden',
         borderBottom: '1px solid var(--border-subtle)',
         zIndex: 10
@@ -151,9 +170,9 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               marginBottom: '1.25rem',
               boxShadow: '0 4px 15px rgba(222, 115, 143, 0.1)'
             }}>
-              <Sparkles size={14} color="var(--brand-pink-satin)" />
-              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--brand-pink-dark)', fontWeight: 700 }}>
-                ESTUDIO DE ALTA MANICURÍA
+              <Sparkles size={14} color={config.primaryColor} />
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: config.secondaryColor, fontWeight: 700 }}>
+                {config.badgeText || config.heroPill}
               </span>
             </div>
 
@@ -166,7 +185,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               fontWeight: 400,
               marginBottom: '1rem'
             }}>
-              ARTE, PRECISIÓN Y ALTA COSTURA PARA TUS UÑAS
+              {config.heroTitle}
             </h1>
 
             <p style={{
@@ -177,34 +196,36 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               marginBottom: '2rem',
               letterSpacing: '0.02em'
             }}>
-              @ Atelier Nails Studio • Buenos Aires
+              {config.heroSubtitle}
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
               <button
                 onClick={() => onOpenBooking()}
                 className="btn-satin-pink"
+                style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.secondaryColor} 100%)` }}
               >
-                VER SERVICIOS Y RESERVAR
+                {config.ctaPrimaryText}
               </button>
 
               <button
                 onClick={onOpenNailBot}
                 className="btn-outline-couture"
+                style={{ borderColor: config.primaryColor, color: config.secondaryColor }}
               >
-                <Sparkles size={15} color="var(--brand-pink-satin)" />
-                CONSULTAR CON NAIL-BOT IA
+                <Sparkles size={15} color={config.primaryColor} />
+                {config.ctaSecondaryText}
               </button>
             </div>
           </div>
 
           {/* Right Column: Hero High-Fashion Interactive 3D Card with Holographic Specular Tilt */}
-          <Hero3DTiltCard />
+          <Hero3DTiltCard config={config} />
         </div>
       </section>
 
       {/* Infinite Continuous Haute Couture Typography Ribbon Marquee */}
-      <InfiniteCoutureMarquee />
+      <InfiniteCoutureMarquee config={config} />
 
       {/* WHY CHOOSE US? (Translucent Glassmorphism) */}
       <section id="why-us" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
@@ -482,33 +503,33 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
       <footer style={{ background: '#1E1216', color: '#FFFFFF', padding: '4rem 1.5rem 2rem 1.5rem' }}>
         <div className="app-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '2.5rem', marginBottom: '2rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif-glam)', color: '#F28DA7', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
-              Atelier Nails & Co.
+            <h3 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif-glam)', color: config.primaryColor, marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
+              {config.brandName}
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#D9BAC4', maxWidth: '340px' }}>
-              Estudio de alta manicura, formación y estética ungueal avanzada con tratamiento de salón spa.
+              {config.brandTagline}
             </p>
           </div>
           <div>
-            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: '#D4AF37', marginBottom: '0.75rem', letterSpacing: '0.08em' }}>HORARIOS DE ATENCIÓN</div>
-            <div style={{ fontSize: '0.8rem', color: '#EAE3DC', lineHeight: 1.8 }}>Lunes a Sábados: 09:00 a 20:00 hs</div>
-            <div style={{ fontSize: '0.8rem', color: '#EAE3DC' }}>Recoleta / Palermo, Buenos Aires</div>
+            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: config.accentGold, marginBottom: '0.75rem', letterSpacing: '0.08em' }}>HORARIOS DE ATENCIÓN</div>
+            <div style={{ fontSize: '0.8rem', color: '#EAE3DC', lineHeight: 1.8 }}>{config.hours}</div>
+            <div style={{ fontSize: '0.8rem', color: '#EAE3DC' }}>{config.address}</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: '#D4AF37', marginBottom: '0.75rem', letterSpacing: '0.08em' }}>ACCESOS EXCLUSIVOS</div>
+            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: config.accentGold, marginBottom: '0.75rem', letterSpacing: '0.08em' }}>ACCESOS EXCLUSIVOS</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
-              <Link to="/pwa" style={{ color: '#F28DA7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Link to="/pwa" style={{ color: config.primaryColor, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 ✦ Portal Clientas (Club Privilege)
               </Link>
               <Link to="/backoffice" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
                 ⚙️ Acceso Staff & Backoffice
               </Link>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#25D366', marginTop: '0.85rem', fontWeight: 600 }}>WhatsApp Concierge disponible</div>
+            <div style={{ fontSize: '0.75rem', color: '#25D366', marginTop: '0.85rem', fontWeight: 600 }}>WhatsApp Concierge: {config.whatsapp}</div>
           </div>
         </div>
         <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
-          © 2026 Atelier Nails & Co. • Estudio de Alta Manicuría. Todos los derechos reservados.
+          {config.footerCopyright}
         </div>
       </footer>
     </div>

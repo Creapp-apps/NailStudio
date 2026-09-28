@@ -23,11 +23,12 @@
 | 2026-09-28 01:02 | 100% Localización a Español (Argentina) | Traducida toda la interfaz, encabezados, cintas tipográficas, tarjetas 3D, botones y manifiesto editorial a Español rioplatense/argentino con terminología especializada de salones de uñas. |
 | 2026-09-28 09:35 | Separación Modular de Vistas con React Router | Separadas las 3 vistas en rutas y layouts 100% independientes: `/` (Web Pública con `PublicHeader` editorial), `/pwa` (Portal PWA para Clientas con app bar y selector de clienta), `/backoffice` (Suite de gestión y agenda multi-tech). Se integró `DevQuickSwitcher` discreto flotante para alternar entre ellas en desarrollo. |
 | 2026-09-28 11:25 | Backoffice High-End SaaS & shadcn/ui Setup | Configurado Tailwind CSS v3 + shadcn/ui con preset Nova y variables CSS. Estructurado el Backoffice como SaaS de alta gama con Sidebar organizado en 6 rubros/sectores (`OPERACIONES & SALÓN`, `CLIENTAS & CLÍNICA UNGUEAL`, `LOGÍSTICA & STOCK`, `MARKETING & FIDELIZACIÓN`, `FINANZAS & COMISIONES`, `SISTEMA & AJUSTES`), TopNav con breadcrumb dinámico, status de Supabase y vistas especializadas (`HealthDiagnosticsView`, `CommissionsView`, `StaffManagementView`, `LiveDeskView`). |
+| 2026-09-28 11:42 | Limpieza de Mock Data & Web Studio con Preview en Vivo | Eliminada información mock residual de citas y clientas (ahora inicializan en limpio con estados vacíos elegantes). Creado el panel `Personalización de la Web` (`WebStudioView`) con sub-sidebar organizado por componentes (Identidad, Colores, Tipografías, Glows, Hero 3D, Cinta, Pilares, Contacto) y ventana de Live Preview interactiva en tiempo real con selector de dispositivos (Desktop, Tablet, Mobile) y persistencia reactiva. |
 
 ## Test Results
 | Test Suite | Status | Details |
 |---|---|---|
-| TypeScript Compilation | PASS | `tsc && vite build` built in 1.85s with zero errors. |
+| TypeScript Compilation | PASS | `tsc && vite build` built in 1.80s with zero errors. |
 | Supabase Live REST Query | PASS | Live query confirmed 4 services, 3 clients, 3 appointments, 6 supplies. |
 | GitHub Remote Push | PASS | All commits pushed to `https://github.com/Creapp-apps/NailStudio.git` (branch `main`). |
 | HTTP Endpoint Response | PASS | `http://localhost:5174/backoffice` HTTP 200 OK. |

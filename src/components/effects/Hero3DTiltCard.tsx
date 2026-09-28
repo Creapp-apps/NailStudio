@@ -1,7 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Eye } from 'lucide-react';
+import { WebCustomizationConfig } from '../../types/webConfig';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
-export const Hero3DTiltCard: React.FC = () => {
+interface Props {
+  config?: WebCustomizationConfig;
+}
+
+export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
+  const { config: hookConfig } = useWebConfig();
+  const config = propConfig || hookConfig;
+
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [transformStyle, setTransformStyle] = useState<string>('');
   const [glareStyle, setGlareStyle] = useState<{ x: number; y: number; opacity: number }>({
@@ -61,8 +70,8 @@ export const Hero3DTiltCard: React.FC = () => {
       >
         {/* High-Fashion Almond Sculpted Nails with Violet & Crystals */}
         <img
-          src="https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=900&q=85"
-          alt="Haute Manicure Crystals and Glitter Nails"
+          src={config.heroCardImage || "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=900&q=85"}
+          alt={config.heroCardTitle || "Haute Manicure Nails"}
           style={{
             width: '100%',
             height: '100%',
@@ -72,17 +81,19 @@ export const Hero3DTiltCard: React.FC = () => {
         />
 
         {/* Dynamic Holographic Specular Glare Overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `radial-gradient(circle at ${glareStyle.x}% ${glareStyle.y}%, rgba(255, 255, 255, 0.75) 0%, rgba(242, 141, 167, 0.4) 30%, rgba(212, 175, 55, 0.25) 55%, transparent 75%)`,
-            opacity: glareStyle.opacity,
-            mixBlendMode: 'color-dodge',
-            pointerEvents: 'none',
-            transition: 'opacity 0.25s ease'
-          }}
-        />
+        {config.enable3DTilt && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: `radial-gradient(circle at ${glareStyle.x}% ${glareStyle.y}%, rgba(255, 255, 255, 0.75) 0%, ${config.primaryColor}66 30%, ${config.accentGold}40 55%, transparent 75%)`,
+              opacity: glareStyle.opacity,
+              mixBlendMode: 'color-dodge',
+              pointerEvents: 'none',
+              transition: 'opacity 0.25s ease'
+            }}
+          />
+        )}
 
         {/* Ambient Vignette Gradient */}
         <div
@@ -110,7 +121,7 @@ export const Hero3DTiltCard: React.FC = () => {
             justifyContent: 'space-between',
             border: '1px solid var(--border-subtle)',
             boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
-            transform: 'translateZ(30px)'
+            transform: config.enable3DTilt ? 'translateZ(30px)' : 'none'
           }}
         >
           <div>
@@ -118,20 +129,20 @@ export const Hero3DTiltCard: React.FC = () => {
               fontSize: '0.7rem',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: 'var(--brand-pink-dark)',
+              color: config.secondaryColor || 'var(--brand-pink-dark)',
               fontWeight: 700,
               fontFamily: 'var(--font-couture)'
             }}>
-              ACABADO ESPEJO & CRISTALES
+              {config.heroCardBadge}
             </div>
             <div style={{ fontSize: '0.925rem', color: 'var(--brand-espresso)', fontWeight: 600 }}>
-              Cromado Glaseado Violeta & Cristales 3D
+              {config.heroCardTitle}
             </div>
           </div>
           <div style={{
             fontSize: '0.75rem',
-            background: 'var(--brand-pink-soft)',
-            color: 'var(--brand-pink-dark)',
+            background: `${config.primaryColor}22`,
+            color: config.secondaryColor || 'var(--brand-pink-dark)',
             padding: '0.3rem 0.65rem',
             borderRadius: 'var(--radius-full)',
             fontWeight: 700,
@@ -139,7 +150,7 @@ export const Hero3DTiltCard: React.FC = () => {
             alignItems: 'center',
             gap: '0.3rem'
           }}>
-            <Sparkles size={13} /> Efecto 3D
+            <Sparkles size={13} /> {config.heroCardRating || 'Efecto 3D'}
           </div>
         </div>
       </div>
