@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Sparkles,
   Calendar,
@@ -494,9 +495,16 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             <div style={{ fontSize: '0.8rem', color: '#EAE3DC' }}>Recoleta / Palermo, Buenos Aires</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: '#D4AF37', marginBottom: '0.75rem', letterSpacing: '0.08em' }}>ATENCIÓN PERSONALIZADA</div>
-            <div style={{ fontSize: '0.8rem', color: '#EAE3DC' }}>Turnos con reserva anticipada y seña online.</div>
-            <div style={{ fontSize: '0.8rem', color: '#25D366', marginTop: '0.5rem', fontWeight: 600 }}>WhatsApp Concierge disponible</div>
+            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-couture)', color: '#D4AF37', marginBottom: '0.75rem', letterSpacing: '0.08em' }}>ACCESOS EXCLUSIVOS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
+              <Link to="/pwa" style={{ color: '#F28DA7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                ✦ Portal Clientas (Club Privilege)
+              </Link>
+              <Link to="/backoffice" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
+                ⚙️ Acceso Staff & Backoffice
+              </Link>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#25D366', marginTop: '0.85rem', fontWeight: 600 }}>WhatsApp Concierge disponible</div>
           </div>
         </div>
         <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>

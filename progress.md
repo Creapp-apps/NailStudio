@@ -21,6 +21,7 @@
 | 2026-09-28 00:25 | Ethereal Haute Glam Redesign | Redesigned public landing to match "Aurora Beauty" reference: Italiana/Cinzel/Cormorant fonts, Rose Quartz radial aura, Why Choose Us? 4-card grid, massive editorial typography statement. |
 | 2026-09-28 00:52 | Dynamic Canvas Motion & WhatsApp Cleanup | Removed overlapping WhatsApp button. Created & mounted `InteractiveGlamBackground` (ambient breathing aurora mesh + Swarovski sparkles + mouse trail), `Hero3DTiltCard` (3D parallax perspective with dynamic holographic specular glare), and `InfiniteCoutureMarquee` (infinite running typography ribbon). Made section backgrounds translucent glassmorphic. |
 | 2026-09-28 01:02 | 100% Localización a Español (Argentina) | Traducida toda la interfaz, encabezados, cintas tipográficas, tarjetas 3D, botones y manifiesto editorial a Español rioplatense/argentino con terminología especializada de salones de uñas. |
+| 2026-09-28 09:35 | Separación Modular de Vistas con React Router | Separadas las 3 vistas en rutas y layouts 100% independientes: `/` (Web Pública con `PublicHeader` editorial), `/pwa` (Portal PWA para Clientas con app bar y selector de clienta), `/backoffice` (Suite de gestión y agenda multi-tech). Se integró `DevQuickSwitcher` discreto flotante para alternar entre ellas en desarrollo. |
 
 ## Test Results
 | Test Suite | Status | Details |
