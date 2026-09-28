@@ -71,22 +71,60 @@ export const WebStudioView: React.FC = () => {
     draftConfig.customLogoUrl?.startsWith('http') ? draftConfig.customLogoUrl : ''
   );
 
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor seleccioná un archivo de imagen válido (PNG, SVG, JPG, WebP).');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('El archivo no debe superar los 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        handleFieldChange('customLogoUrl', result);
+        setLogoUrlInputValue('');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('El archivo de imagen no debe superar los 2MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
-          handleFieldChange('customLogoUrl', result);
-          setLogoUrlInputValue('');
-        }
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
     }
   };
 
@@ -713,21 +751,54 @@ export const WebStudioView: React.FC = () => {
                             onChange={handleLogoFileUpload}
                             className="hidden"
                           />
-                          <button
-                            type="button"
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragEnter={handleDragEnter}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
                             onClick={() => logoFileInputRef.current?.click()}
-                            className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-rose-300 dark:border-rose-800 bg-rose-500/5 hover:bg-rose-500/10 p-4 transition-colors group cursor-pointer"
+                            className={`relative w-full flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 transition-all duration-200 cursor-pointer text-center select-none overflow-hidden group ${
+                              isDraggingLogo
+                                ? 'border-[#DE738F] bg-rose-500/20 scale-[1.02] shadow-[0_0_30px_rgba(222,115,143,0.35)] ring-4 ring-rose-400/30'
+                                : 'border-rose-300 dark:border-rose-800 bg-rose-500/[0.04] hover:bg-rose-500/[0.09] hover:border-rose-400 shadow-2xs'
+                            }`}
                           >
-                            <div className="size-9 rounded-full bg-rose-500/15 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
-                              <UploadCloud className="size-4" />
+                            {/* Ambient animated ripple when dragging */}
+                            {isDraggingLogo && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 animate-pulse pointer-events-none" />
+                            )}
+
+                            <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-200 shadow-xs ${
+                              isDraggingLogo
+                                ? 'bg-rose-500 text-white scale-125 rotate-3'
+                                : 'bg-rose-500/15 text-rose-600 group-hover:scale-110'
+                            }`}>
+                              <UploadCloud className="size-5" />
                             </div>
-                            <span className="text-xs font-bold text-rose-700 dark:text-rose-300">
-                              {draftConfig.customLogoUrl ? 'Hacé click para reemplazar archivo' : 'Hacé click para elegir archivo de tu computadora'}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              Formatos: PNG transparente, SVG vectorial, JPG o WebP (hasta 2MB)
-                            </span>
-                          </button>
+
+                            <div className="space-y-1 relative z-10">
+                              <span className={`text-xs font-bold block transition-colors ${
+                                isDraggingLogo ? 'text-rose-600 dark:text-rose-300 text-sm' : 'text-foreground'
+                              }`}>
+                                {isDraggingLogo
+                                  ? '¡Soltá tu logo aquí para cargarlo!'
+                                  : 'Arrastrá y soltá tu logo aquí'}
+                              </span>
+                              {!isDraggingLogo && (
+                                <span className="text-[11px] font-semibold text-rose-600 hover:underline block">
+                                  o hacé click para elegir archivo de tu computadora
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap justify-center pt-1 text-[10px] text-muted-foreground relative z-10">
+                              <span className="px-1.5 py-0.5 rounded bg-background/80 border border-border/60 font-mono">PNG</span>
+                              <span className="px-1.5 py-0.5 rounded bg-background/80 border border-border/60 font-mono">SVG</span>
+                              <span className="px-1.5 py-0.5 rounded bg-background/80 border border-border/60 font-mono">JPG</span>
+                              <span className="px-1.5 py-0.5 rounded bg-background/80 border border-border/60 font-mono">WebP</span>
+                              <span>• Máx 2MB</span>
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-2 pt-1">
