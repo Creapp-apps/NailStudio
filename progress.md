@@ -18,6 +18,8 @@
 | 2026-09-28 00:03 | GitHub Remote Repository Linked | Initialized local git, created `.gitignore` (ignoring `.env`), and pushed initial suite to `https://github.com/Creapp-apps/NailStudio.git`. |
 | 2026-09-28 00:05 | Supabase Integration & Schema | Connected to project `aloqecmxdshpoidhuysx`, created `supabase/schema.sql` & `supabase/seed.sql`, installed `@supabase/supabase-js`, and built hybrid cloud/local reactive storage sync. |
 | 2026-09-28 00:10 | Supabase SQL Execution Verified | User executed schema & seed on Supabase (4 services, 3 technicians, 3 appointments, 6 supplies live). Storage service hydration and Realtime channels enabled. |
+| 2026-09-28 00:25 | Ethereal Haute Glam Redesign | Redesigned public landing to match "Aurora Beauty" reference: Italiana/Cinzel/Cormorant fonts, Rose Quartz radial aura, Why Choose Us? 4-card grid, massive editorial typography statement. |
+| 2026-09-28 00:52 | Dynamic Canvas Motion & WhatsApp Cleanup | Removed overlapping WhatsApp button. Created & mounted `InteractiveGlamBackground` (ambient breathing aurora mesh + Swarovski sparkles + mouse trail), `Hero3DTiltCard` (3D parallax perspective with dynamic holographic specular glare), and `InfiniteCoutureMarquee` (infinite running typography ribbon). Made section backgrounds translucent glassmorphic. |
 
 ## Test Results
 | Test Suite | Status | Details |

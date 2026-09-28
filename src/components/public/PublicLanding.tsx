@@ -10,13 +10,15 @@ import {
   Check,
   Scissors,
   Heart,
-  MessageCircle,
   Gem,
   PackageCheck,
   Feather
 } from 'lucide-react';
 import { NailService, NailArtTier } from '../../types/nailStudio';
 import { INITIAL_SERVICES, NAIL_ART_TIERS } from '../../services/mockData';
+import { InteractiveGlamBackground } from '../effects/InteractiveGlamBackground';
+import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
+import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
 
 interface Props {
   onOpenBooking: (serviceId?: string) => void;
@@ -87,9 +89,13 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
 
   return (
     <div className="animate-fade-in" style={{ position: 'relative' }}>
+      {/* Living Ambient Stardust & Breathing Liquid Aurora Canvas */}
+      <InteractiveGlamBackground />
+
       {/* Editorial Mini-Header Sub-Navigation (Matching Reference) */}
       <div style={{
-        background: 'rgba(255, 247, 250, 0.95)',
+        background: 'rgba(255, 247, 250, 0.88)',
+        backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--border-subtle)',
         padding: '0.65rem 1.5rem',
         display: 'flex',
@@ -100,7 +106,9 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
         fontFamily: 'var(--font-couture)',
-        color: 'var(--text-secondary)'
+        color: 'var(--text-secondary)',
+        position: 'relative',
+        zIndex: 20
       }}>
         <span>Home</span>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
@@ -115,21 +123,39 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: '#B8860B', fontWeight: 700 }}>Privilege Pass</span>
       </div>
 
-      {/* HERO SECTION: Editorial High Glamour (Reference Match) */}
+      {/* HERO SECTION: Editorial High Glamour with 3D Specular Tilt */}
       <section style={{
         minHeight: '85vh',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        padding: '3rem 1.5rem 5rem 1.5rem',
-        background: 'radial-gradient(circle at 75% 25%, #FFE3EC 0%, #FFF5F8 45%, #FCF5F8 100%)',
+        padding: '3rem 1.5rem 4.5rem 1.5rem',
+        background: 'radial-gradient(circle at 75% 25%, rgba(255, 227, 236, 0.45) 0%, rgba(255, 245, 248, 0.25) 45%, rgba(252, 245, 248, 0.1) 100%)',
         overflow: 'hidden',
-        borderBottom: '1px solid var(--border-subtle)'
+        borderBottom: '1px solid var(--border-subtle)',
+        zIndex: 10
       }}>
-        <div className="app-container" style={{ width: '100%', display: 'grid', gridTemplateColumns: 'minmax(320px, 1.15fr) 1fr', alignItems: 'center', gap: '3rem', position: 'relative', zIndex: 10 }}>
+        <div className="app-container" style={{ width: '100%', display: 'grid', gridTemplateColumns: 'minmax(320px, 1.15fr) 1fr', alignItems: 'center', gap: '3.5rem', position: 'relative', zIndex: 10 }}>
           
           {/* Left Column: Editorial Headline & Actions */}
           <div style={{ maxWidth: '620px' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'rgba(255, 255, 255, 0.85)',
+              padding: '0.4rem 0.9rem',
+              borderRadius: 'var(--radius-full)',
+              border: '1px solid var(--border-subtle)',
+              marginBottom: '1.25rem',
+              boxShadow: '0 4px 15px rgba(222, 115, 143, 0.1)'
+            }}>
+              <Sparkles size={14} color="var(--brand-pink-satin)" />
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--brand-pink-dark)', fontWeight: 700 }}>
+                HAUTE COUTURE NAIL LAB
+              </span>
+            </div>
+
             <h1 style={{
               fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
               lineHeight: 1.08,
@@ -171,104 +197,16 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             </div>
           </div>
 
-          {/* Right Column: Hero High-Fashion Imagery (Violet & Floral Crystals) */}
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-            {/* Ambient Halo behind the hand */}
-            <div style={{
-              position: 'absolute',
-              width: '420px',
-              height: '420px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(242, 141, 167, 0.45) 0%, rgba(255, 240, 245, 0) 70%)',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              filter: 'blur(30px)',
-              pointerEvents: 'none'
-            }} />
-
-            {/* Glamour Hand Visual */}
-            <div style={{
-              position: 'relative',
-              borderRadius: '24px',
-              overflow: 'hidden',
-              boxShadow: '0 30px 70px -15px rgba(184, 80, 110, 0.35)',
-              border: '2px solid rgba(255, 255, 255, 0.8)',
-              maxWidth: '480px',
-              width: '100%',
-              aspectRatio: '4/5'
-            }}>
-              <img
-                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=85"
-                alt="High Fashion Nails with Glitter and Crystals"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transform: 'scale(1.03)',
-                  transition: 'transform 0.8s ease'
-                }}
-              />
-              {/* Soft overlay gradient */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(180deg, rgba(222, 115, 143, 0.1) 0%, rgba(30, 18, 22, 0.35) 100%)',
-                pointerEvents: 'none'
-              }} />
-
-              {/* Floating Haute Badge */}
-              <div style={{
-                position: 'absolute',
-                bottom: '18px',
-                left: '18px',
-                right: '18px',
-                background: 'rgba(255, 255, 255, 0.92)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.85rem 1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--brand-pink-dark)', fontWeight: 700 }}>
-                    EDICIÓN GLAMOUR 2026
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--brand-espresso)', fontWeight: 600 }}>
-                    Cat Eye Violeta & Gemas Swarovski
-                  </div>
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--brand-pink-dark)' }}>
-                  ★ 5.0
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Floating Green WhatsApp Button (Exact from Reference) */}
-        <div style={{
-          position: 'absolute',
-          bottom: '24px',
-          right: '24px',
-          zIndex: 40
-        }}>
-          <a
-            href="https://wa.me/5491145228901?text=Hola%20Atelier%20Nails,%20me%20gustaria%20consultar%20por%20un%20turno%20de%20manicuria%20glamour"
-            target="_blank"
-            rel="noreferrer"
-            className="whatsapp-floating-pill"
-          >
-            <MessageCircle size={18} fill="#FFFFFF" color="#25D366" />
-            Chat with us on WhatsApp
-          </a>
+          {/* Right Column: Hero High-Fashion Interactive 3D Card with Holographic Specular Tilt */}
+          <Hero3DTiltCard />
         </div>
       </section>
 
-      {/* WHY CHOOSE US? (Exact 4-Card Section from Reference) */}
-      <section id="why-us" style={{ padding: '5rem 1.5rem', background: '#FFFFFF' }}>
+      {/* Infinite Continuous Haute Couture Typography Ribbon Marquee */}
+      <InfiniteCoutureMarquee />
+
+      {/* WHY CHOOSE US? (Translucent Glassmorphism) */}
+      <section id="why-us" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.78)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <h2 style={{
             fontSize: 'clamp(2rem, 3.8vw, 3rem)',
@@ -406,7 +344,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
       </section>
 
       {/* SERVICES MENU: Luxury Cards */}
-      <section id="servicios" style={{ padding: '5rem 1.5rem', background: '#FFFFFF' }}>
+      <section id="servicios" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.82)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
             <span className="badge-luxury badge-rose" style={{ marginBottom: '0.75rem' }}>
@@ -425,7 +363,8 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               <div
                 key={service.id}
                 style={{
-                  background: 'var(--bg-card-subtle)',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(8px)',
                   borderRadius: 'var(--radius-md)',
                   overflow: 'hidden',
                   border: '1px solid var(--border-subtle)',
@@ -487,7 +426,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
       </section>
 
       {/* NAIL ART TIERS (Glitter & Shiny Finishes) */}
-      <section id="nail-art" style={{ padding: '5rem 1.5rem', background: '#FFF7FA', borderTop: '1px solid var(--border-subtle)' }}>
+      <section id="nail-art" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 247, 250, 0.82)', backdropFilter: 'blur(16px)', borderTop: '1px solid var(--border-subtle)', position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
             <span className="badge-luxury badge-gold" style={{ marginBottom: '0.75rem' }}>
