@@ -32,7 +32,7 @@ import {
   Crop,
   Link as LinkIcon
 } from 'lucide-react';
-import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem } from '../../types/webConfig';
+import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem, ShowcaseWorkItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,7 @@ type StudioCategory =
   | 'tipografias'
   | 'glows'
   | 'hero'
+  | 'galeria'
   | 'cinta'
   | 'pilares'
   | 'contacto';
@@ -276,6 +277,57 @@ export const WebStudioView: React.FC = () => {
     }));
   };
 
+  const handleWorkImageUpload = (workId: string, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor seleccioná un archivo de imagen válido (PNG, JPG, WebP).');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('La imagen no debe superar los 3MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        updateWorkItem(workId, { imageUrl: result });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateWorkItem = (id: string, partial: Partial<ShowcaseWorkItem>) => {
+    const current = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    const updated = current.map(item =>
+      item.id === id ? { ...item, ...partial } : item
+    );
+    handleFieldChange('showcaseItems', updated);
+  };
+
+  const removeWorkItem = (id: string) => {
+    const current = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    const updated = current.filter(item => item.id !== id);
+    handleFieldChange('showcaseItems', updated);
+  };
+
+  const addWorkItem = () => {
+    const current = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    const newItem: ShowcaseWorkItem = {
+      id: `work-${Date.now()}`,
+      title: 'Nuevo Set de Alta Manicuría',
+      category: 'kapping',
+      imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Kapping Rubber',
+      description: 'Nivelación con gel hipoalergénico y acabado brillante de 21 días.',
+      durationDays: 21
+    };
+    handleFieldChange('showcaseItems', [...current, newItem]);
+  };
+
+  const resetShowcasePresets = () => {
+    handleFieldChange('showcaseItems', DEFAULT_WEB_CONFIG.showcaseItems);
+  };
+
   const handleSave = () => {
     updateConfig(draftConfig);
     setSavedSuccess(true);
@@ -438,6 +490,21 @@ export const WebStudioView: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveCategory('galeria')}
+            className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
+              activeCategory === 'galeria'
+                ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-transparent text-rose-700 dark:text-rose-300 font-semibold border border-rose-500/30 shadow-xs'
+                : 'text-muted-foreground hover:bg-rose-500/5 hover:text-foreground'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <ImageIcon className="size-4 text-pink-500" />
+              <span>Galería de Trabajos</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{(draftConfig.showcaseItems || []).length} fotos</span>
+          </button>
+
+          <button
             onClick={() => setActiveCategory('cinta')}
             className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
               activeCategory === 'cinta'
@@ -499,6 +566,7 @@ export const WebStudioView: React.FC = () => {
                     {activeCategory === 'tipografias' && <Type className="size-4 text-purple-500" />}
                     {activeCategory === 'glows' && <Sparkles className="size-4 text-pink-400" />}
                     {activeCategory === 'hero' && <Layout className="size-4 text-rose-500" />}
+                    {activeCategory === 'galeria' && <ImageIcon className="size-4 text-pink-500" />}
                     {activeCategory === 'cinta' && <SlidersHorizontal className="size-4 text-indigo-500" />}
                     {activeCategory === 'pilares' && <HeartHandshake className="size-4 text-emerald-500" />}
                     {activeCategory === 'contacto' && <MessageCircle className="size-4 text-emerald-600" />}
@@ -510,6 +578,7 @@ export const WebStudioView: React.FC = () => {
                       {activeCategory === 'tipografias' && 'Tipografías Editoriales & Lectura'}
                       {activeCategory === 'glows' && 'Fondo Sensorial, Glows & Efectos'}
                       {activeCategory === 'hero' && 'Portada de Inicio & Tarjeta 3D'}
+                      {activeCategory === 'galeria' && 'Galería de Trabajos Destacados'}
                       {activeCategory === 'cinta' && 'Cinta Continua & Manifiesto'}
                       {activeCategory === 'pilares' && 'Pilares de Diferenciación'}
                       {activeCategory === 'contacto' && 'Redes, WhatsApp & Ubicación'}
@@ -1451,6 +1520,193 @@ export const WebStudioView: React.FC = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* 5.b GALERÍA DE TRABAJOS DESTACADOS */}
+              {activeCategory === 'galeria' && (
+                <div className="space-y-4 text-xs">
+                  {/* Eyebrow / Badge */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 flex items-center justify-between">
+                      <span>Insignia Superior (Badge)</span>
+                      <span className="text-[10px] lowercase font-normal text-muted-foreground">cabecera</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={draftConfig.showcaseBadge || ''}
+                      onChange={e => handleFieldChange('showcaseBadge', e.target.value)}
+                      placeholder="✦ OBRAS DE AUTOR & PORTFOLIO ✦"
+                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                      Título Principal de la Galería
+                    </label>
+                    <input
+                      type="text"
+                      value={draftConfig.showcaseTitle || ''}
+                      onChange={e => handleFieldChange('showcaseTitle', e.target.value)}
+                      placeholder="GALERÍA DE TRABAJOS DESTACADOS"
+                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Subtitle */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                      Bajada Descriptiva / Filosofía
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={draftConfig.showcaseSubtitle || ''}
+                      onChange={e => handleFieldChange('showcaseSubtitle', e.target.value)}
+                      placeholder="Explorá nuestras técnicas más solicitadas: arquitectura estructural en Soft Gel, Kapping con Rubber..."
+                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="border-t border-rose-200/60 dark:border-rose-900/30 pt-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                          Trabajos en Exhibición ({(draftConfig.showcaseItems || []).length})
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground">Podés subir fotos desde tu dispositivo o pegar URLs</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={resetShowcasePresets}
+                          className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground rounded-lg border border-border bg-background hover:bg-muted/50 cursor-pointer"
+                          title="Restablecer a las fotos originales"
+                        >
+                          Restablecer
+                        </button>
+                        <button
+                          type="button"
+                          onClick={addWorkItem}
+                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1"
+                        >
+                          <Plus className="size-3" />
+                          <span>Agregar</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Cards list */}
+                    <div className="space-y-3">
+                      {(draftConfig.showcaseItems || []).map((work, index) => (
+                        <div
+                          key={work.id || index}
+                          className="p-3 rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/20 dark:bg-rose-950/10 space-y-2.5"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Photo Thumbnail + Quick Upload */}
+                            <div className="relative group shrink-0">
+                              <img
+                                src={work.imageUrl}
+                                alt={work.title}
+                                className="size-16 rounded-lg object-cover border border-rose-200/80 dark:border-rose-800 shadow-xs"
+                              />
+                              <label
+                                className="absolute inset-0 bg-black/55 text-white rounded-lg opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-[9px] font-semibold"
+                                title="Subir foto propia desde dispositivo"
+                              >
+                                <UploadCloud className="size-4 mb-0.5" />
+                                <span>Subir</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleWorkImageUpload(work.id, file);
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Main Details */}
+                            <div className="flex-1 space-y-1.5 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <input
+                                  type="text"
+                                  value={work.title}
+                                  onChange={(e) => updateWorkItem(work.id, { title: e.target.value })}
+                                  placeholder="Título del set (ej: Kapping Ruso)"
+                                  className="w-full text-xs font-bold text-foreground bg-transparent border-b border-rose-200/50 focus:border-[#DE738F] focus:outline-none pb-0.5"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeWorkItem(work.id)}
+                                  className="text-muted-foreground hover:text-rose-600 p-1 rounded-md hover:bg-rose-100/50 transition-colors"
+                                  title="Eliminar este trabajo"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Categoría</label>
+                                  <select
+                                    value={work.category}
+                                    onChange={(e) => updateWorkItem(work.id, { category: e.target.value })}
+                                    className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
+                                  >
+                                    <option value="kapping">Kapping Gel</option>
+                                    <option value="nail_art">Nail Art & Efectos</option>
+                                    <option value="soft_gel">Soft Gel</option>
+                                    <option value="rusa">Manicuría Rusa</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Técnica (Pill)</label>
+                                  <input
+                                    type="text"
+                                    value={work.techniqueTag}
+                                    onChange={(e) => updateWorkItem(work.id, { techniqueTag: e.target.value })}
+                                    placeholder="Ej: Nivelación Rubber"
+                                    className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Description & Image URL input */}
+                          <div className="space-y-1.5 pt-1">
+                            <input
+                              type="text"
+                              value={work.description || ''}
+                              onChange={(e) => updateWorkItem(work.id, { description: e.target.value })}
+                              placeholder="Breve descripción o detalle técnico del set..."
+                              className="w-full text-[11px] rounded-lg border border-border bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/40"
+                            />
+
+                            <div className="flex items-center gap-1.5">
+                              <LinkIcon className="size-3 text-muted-foreground shrink-0" />
+                              <input
+                                type="text"
+                                value={work.imageUrl.startsWith('data:') ? 'Imagen subida desde tu dispositivo (Base64)' : work.imageUrl}
+                                onChange={(e) => {
+                                  if (!e.target.value.startsWith('Imagen subida')) {
+                                    updateWorkItem(work.id, { imageUrl: e.target.value });
+                                  }
+                                }}
+                                placeholder="https://..."
+                                className="w-full text-[10px] text-muted-foreground bg-transparent border-none focus:outline-none truncate"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

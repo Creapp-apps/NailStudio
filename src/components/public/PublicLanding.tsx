@@ -20,6 +20,7 @@ import { INITIAL_SERVICES, NAIL_ART_TIERS } from '../../services/mockData';
 import { InteractiveGlamBackground } from '../effects/InteractiveGlamBackground';
 import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
 import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
+import { WorkShowcaseCarousel } from './WorkShowcaseCarousel';
 import { WebCustomizationConfig } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { getThemeFromConfig } from '../../lib/themeStyles';
@@ -307,84 +308,8 @@ export const PublicLanding: React.FC<Props> = ({
         </div>
       </section>
 
-      {/* MASSIVE EDITORIAL STATEMENT BANNER (Exact Reference Match) */}
-      <section style={{
-        padding: '5.5rem 1.5rem',
-        background: theme.statementBg,
-        borderTop: `1px solid ${theme.borderSubtle}`,
-        borderBottom: `1px solid ${theme.borderSubtle}`,
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Subtle decorative leaf silhouette */}
-        <div style={{
-          position: 'absolute',
-          right: '-5%',
-          bottom: '-10%',
-          opacity: 0.12,
-          pointerEvents: 'none',
-          fontSize: '320px',
-          color: theme.primary
-        }}>
-          🌸
-        </div>
-
-        <div className="app-container" style={{ position: 'relative', zIndex: 5 }}>
-          <div style={{
-            fontSize: '0.825rem',
-            fontFamily: 'var(--font-couture)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: theme.secondary,
-            marginBottom: '1.25rem'
-          }}>
-            Atelier Nails • Estudio Boutique Buenos Aires
-          </div>
-
-          <div style={{
-            fontSize: 'clamp(1.8rem, 4.2vw, 3.4rem)',
-            fontFamily: 'var(--font-serif-glam)',
-            lineHeight: 1.15,
-            letterSpacing: '0.02em',
-            textTransform: 'uppercase'
-          }}>
-            <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              ESTUDIO EXCLUSIVO DE ALTA MANICURÍA
-            </span>
-            <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              Y NAIL ART DE AUTOR CON
-            </span>
-            <span style={{ color: 'var(--brand-espresso)' }}>
-              TRATAMIENTOS DE VANGUARDIA{' '}
-            </span>
-            <span style={{ color: 'rgba(156, 133, 142, 0.45)' }}>
-              COMO
-            </span>
-            <span style={{ color: 'rgba(156, 133, 142, 0.45)', display: 'block' }}>
-              KAPPING GEL Y EXTENSIONES ESCULPIDAS,
-            </span>
-            <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              MANICURÍA RUSA COMBINADA CON
-            </span>
-            <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              PRODUCTOS HIPOALERGÉNICOS LIBRES DE HEMA
-            </span>
-          </div>
-
-          <div style={{ marginTop: '2.5rem' }}>
-            <button
-              onClick={() => onOpenBooking()}
-              className="btn-satin-pink"
-              style={{
-                background: theme.buttonGradient,
-                boxShadow: theme.buttonShadow
-              }}
-            >
-              VER TURNOS Y DISPONIBILIDAD
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* GALERÍA DE TRABAJOS DESTACADOS / WORK CAROUSEL */}
+      <WorkShowcaseCarousel config={config} onOpenBooking={() => onOpenBooking()} />
 
       {/* SERVICES MENU: Luxury Cards */}
       <section id="servicios" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.82)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>

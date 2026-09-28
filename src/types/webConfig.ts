@@ -5,6 +5,16 @@ export interface WhyUsFeatureItem {
   tag: string;
 }
 
+export interface ShowcaseWorkItem {
+  id: string;
+  title: string;
+  category: 'kapping' | 'nail_art' | 'soft_gel' | 'rusa' | string;
+  imageUrl: string;
+  techniqueTag: string;
+  description?: string;
+  durationDays?: number;
+}
+
 export interface WebCustomizationConfig {
   // 1. Identidad & Branding
   brandName: string;
@@ -46,6 +56,12 @@ export interface WebCustomizationConfig {
   heroCardTitle: string;
   heroCardSubtitle: string;
   heroCardRating?: string;
+
+  // 5.b Galería de Trabajos Destacados (Work Carousel)
+  showcaseBadge: string;
+  showcaseTitle: string;
+  showcaseSubtitle: string;
+  showcaseItems: ShowcaseWorkItem[];
 
   // 6. Cinta de Lujo (Marquee)
   marqueePhrases: string[];
@@ -111,6 +127,67 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   heroCardTitle: 'Arquitectura Soft Gel & Kapping',
   heroCardSubtitle: 'Nivelación Rubber con Manicura Rusa',
   heroCardRating: '',
+
+  // Galería de Trabajos Destacados (Work Carousel)
+  showcaseBadge: '✦ OBRAS DE AUTOR & PORTFOLIO ✦',
+  showcaseTitle: 'GALERÍA DE TRABAJOS DESTACADOS',
+  showcaseSubtitle: 'Explorá nuestras técnicas más solicitadas: arquitectura estructural en Soft Gel, Kapping con Rubber hipoalergénico y Nail Art exclusivo de alta precisión.',
+  showcaseItems: [
+    {
+      id: 'work-1',
+      title: 'Glazed Donut & Cromado Perla',
+      category: 'nail_art',
+      imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Cromado Espejo',
+      description: 'Esmaltado semipermanente blanco translúcido con efecto perlado Aurora y manicuría rusa de corte limpio.',
+      durationDays: 21
+    },
+    {
+      id: 'work-2',
+      title: 'Kapping Gel Ruso & Almendra',
+      category: 'kapping',
+      imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Nivelación Rubber',
+      description: 'Refuerzo de uña natural con rubber base biocompatible HEMA-free. Resistencia y flexibilidad extrema.',
+      durationDays: 28
+    },
+    {
+      id: 'work-3',
+      title: 'Arquitectura Soft Gel Coffin',
+      category: 'soft_gel',
+      imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Soft Gel Tips',
+      description: 'Extensiones anatómicas completas adheridas con gel constructivo sin daño a la uña natural.',
+      durationDays: 24
+    },
+    {
+      id: 'work-4',
+      title: 'Haute Nail Art & Cristales Swarovski',
+      category: 'nail_art',
+      imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Cristales & 3D',
+      description: 'Diseño de autor con micro-pedrería de corte diamante sellada con gel blindado de alto impacto.',
+      durationDays: 21
+    },
+    {
+      id: 'work-5',
+      title: 'Manicuría Rusa Combinada & Nude Rosé',
+      category: 'rusa',
+      imageUrl: 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Limpieza de Cutícula',
+      description: 'Bolsillo de cutícula pulido a torno con fresas diamantadas y esmaltado bajo cutícula impecable.',
+      durationDays: 21
+    },
+    {
+      id: 'work-6',
+      title: 'Cat Eye Magnético Velvet',
+      category: 'nail_art',
+      imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+      techniqueTag: 'Cat Eye 5D',
+      description: 'Partículas magnéticas orientadas en multidimensión creando un efecto seda aterciopelada y brillante.',
+      durationDays: 21
+    }
+  ],
 
   // Marquee
   marqueePhrases: [

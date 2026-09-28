@@ -17,7 +17,14 @@ class WebConfigStorageService {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return { ...DEFAULT_WEB_CONFIG, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_WEB_CONFIG,
+          ...parsed,
+          showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
+            ? parsed.showcaseItems
+            : DEFAULT_WEB_CONFIG.showcaseItems
+        };
       }
     } catch (e) {
       console.warn('Error reading web config from localStorage, using default:', e);
