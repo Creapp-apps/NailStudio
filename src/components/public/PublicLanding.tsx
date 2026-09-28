@@ -113,23 +113,22 @@ export const PublicLanding: React.FC<Props> = ({
       {config.enableAmbientAurora && <InteractiveGlamBackground config={config} />}
 
       {/* Editorial Mini-Header Sub-Navigation (Matching Reference) */}
-      <div style={{
-        background: 'rgba(255, 247, 250, 0.88)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border-subtle)',
-        padding: '0.65rem 1.5rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '0.75rem',
-        fontSize: '0.78rem',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        fontFamily: 'var(--font-couture)',
-        color: 'var(--text-secondary)',
-        position: 'relative',
-        zIndex: 20
-      }}>
+      <div
+        className="subnav-scroll"
+        style={{
+          background: 'rgba(255, 247, 250, 0.92)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--border-subtle)',
+          padding: '0.65rem 1.25rem',
+          fontSize: '0.75rem',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          fontFamily: 'var(--font-couture)',
+          color: 'var(--text-secondary)',
+          position: 'relative',
+          zIndex: 20
+        }}
+      >
         <span>Inicio</span>
         <span style={{ color: config.primaryColor }}>•</span>
         <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
@@ -145,17 +144,17 @@ export const PublicLanding: React.FC<Props> = ({
 
       {/* HERO SECTION: Editorial High Glamour with 3D Specular Tilt */}
       <section style={{
-        minHeight: '85vh',
+        minHeight: '80vh',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        padding: '3rem 1.5rem 4.5rem 1.5rem',
+        padding: '2.5rem 1rem 3.5rem 1rem',
         background: `radial-gradient(circle at 75% 25%, ${config.primaryColor}25 0%, rgba(255, 245, 248, 0.25) 45%, rgba(252, 245, 248, 0.1) 100%)`,
         overflow: 'hidden',
         borderBottom: '1px solid var(--border-subtle)',
         zIndex: 10
       }}>
-        <div className="app-container" style={{ width: '100%', display: 'grid', gridTemplateColumns: 'minmax(320px, 1.15fr) 1fr', alignItems: 'center', gap: '3.5rem', position: 'relative', zIndex: 10 }}>
+        <div className="app-container hero-grid-responsive" style={{ width: '100%' }}>
           
           {/* Left Column: Editorial Headline & Actions */}
           <div style={{ maxWidth: '620px' }}>
@@ -177,13 +176,14 @@ export const PublicLanding: React.FC<Props> = ({
             </div>
 
             <h1 style={{
-              fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
-              lineHeight: 1.08,
+              fontSize: 'clamp(2rem, 5vw, 4.2rem)',
+              lineHeight: 1.1,
               color: 'var(--brand-espresso)',
               fontFamily: 'var(--font-serif-glam)',
               letterSpacing: '0.01em',
               fontWeight: 400,
-              marginBottom: '1rem'
+              marginBottom: '1rem',
+              wordBreak: 'break-word'
             }}>
               {config.heroTitle}
             </h1>

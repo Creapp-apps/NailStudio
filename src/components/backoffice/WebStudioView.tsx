@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PublicHeader } from '../navigation/PublicHeader';
 import { PublicLanding } from '../public/PublicLanding';
+import { IPhoneMockup } from './IPhoneMockup';
 
 type StudioCategory =
   | 'identidad'
@@ -47,7 +48,7 @@ export const WebStudioView: React.FC = () => {
   const { config, updateConfig, resetConfig } = useWebConfig();
   const [draftConfig, setDraftConfig] = useState<WebCustomizationConfig>({ ...config });
   const [activeCategory, setActiveCategory] = useState<StudioCategory>('identidad');
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Quick Luxury Palettes
@@ -801,74 +802,86 @@ export const WebStudioView: React.FC = () => {
         </div>
 
         {/* Right Column: Real-Time Live Website Preview Frame (Cols 8-12) */}
-        <div className="lg:col-span-5 space-y-2">
-          {/* Device Switcher Bar */}
-          <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-1.5 shadow-sm text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-muted-foreground">Vista Previa:</span>
-              <div className="flex items-center rounded-md border border-border p-0.5 bg-muted/30">
-                <button
-                  onClick={() => setPreviewDevice('desktop')}
-                  className={`p-1 rounded ${previewDevice === 'desktop' ? 'bg-background shadow-xs text-foreground font-bold' : 'text-muted-foreground'}`}
-                  title="Escritorio (100%)"
-                >
-                  <Laptop className="size-3.5" />
-                </button>
-                <button
-                  onClick={() => setPreviewDevice('tablet')}
-                  className={`p-1 rounded ${previewDevice === 'tablet' ? 'bg-background shadow-xs text-foreground font-bold' : 'text-muted-foreground'}`}
-                  title="Tablet (768px)"
-                >
-                  <Tablet className="size-3.5" />
-                </button>
+        <div className="lg:col-span-5 space-y-3">
+          {/* Device Switcher & Status Bar */}
+          <div className="flex items-center justify-between rounded-xl border border-border bg-card/80 backdrop-blur-sm px-3.5 py-2 shadow-xs text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Preview:</span>
+              <div className="flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/40">
                 <button
                   onClick={() => setPreviewDevice('mobile')}
-                  className={`p-1 rounded ${previewDevice === 'mobile' ? 'bg-background shadow-xs text-foreground font-bold' : 'text-muted-foreground'}`}
-                  title="Móvil (390px)"
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition-all ${
+                    previewDevice === 'mobile'
+                      ? 'bg-background shadow-xs text-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Mockup iPhone 16 Pro"
                 >
-                  <Smartphone className="size-3.5" />
+                  <Smartphone className="size-3.5 text-rose-500" />
+                  <span>iPhone 16 Pro</span>
+                </button>
+                <button
+                  onClick={() => setPreviewDevice('desktop')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition-all ${
+                    previewDevice === 'desktop'
+                      ? 'bg-background shadow-xs text-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Vista Escritorio (Full)"
+                >
+                  <Laptop className="size-3.5" />
+                  <span>Escritorio</span>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Actualización en Vivo</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden sm:inline">Live Sync</span>
+              </div>
+              <a
+                href="/"
+                target="_blank"
+                rel="noreferrer"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                title="Abrir sitio web completo en nueva pestaña"
+              >
+                <ExternalLink className="size-3.5" />
+              </a>
             </div>
           </div>
 
-          {/* Browser Mockup Window Container */}
-          <div className="rounded-xl border border-border bg-[#140D10] shadow-xl overflow-hidden">
-            {/* Browser Chrome Header */}
-            <div className="flex items-center justify-between border-b border-white/10 bg-[#1E1216] px-3 py-2 text-xs text-zinc-400">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-red-500/80" />
-                <span className="size-2.5 rounded-full bg-amber-500/80" />
-                <span className="size-2.5 rounded-full bg-emerald-500/80" />
-              </div>
-
-              {/* URL Pill */}
-              <div className="flex items-center gap-1 rounded-md border border-white/10 bg-black/40 px-3 py-0.5 text-[10px] text-zinc-300">
-                <span className="text-emerald-400">🔒</span>
-                <span>https://ateliernails.com</span>
-              </div>
-
-              <span className="text-[10px] text-zinc-500">v1.0</span>
-            </div>
-
-            {/* Simulated Viewport Body with live dynamic styling */}
-            <div className="bg-[#FFF7FA] overflow-y-auto max-h-[68vh] transition-all flex justify-center">
-              <div
-                style={{
-                  width: previewDevice === 'mobile' ? '390px' : previewDevice === 'tablet' ? '768px' : '100%',
-                  transition: 'width 0.3s ease',
-                  boxShadow: previewDevice !== 'desktop' ? '0 0 40px rgba(0,0,0,0.2)' : 'none'
-                }}
-              >
-                {/* Embedded Live Header */}
+          {/* Device Preview Container */}
+          {previewDevice === 'mobile' ? (
+            <div className="flex justify-center py-1">
+              <IPhoneMockup url="ateliernails.com">
                 <PublicHeader onOpenBooking={() => {}} config={draftConfig} />
-
-                {/* Embedded Live Landing */}
+                <PublicLanding
+                  onOpenBooking={() => {}}
+                  onOpenNailBot={() => {}}
+                  onOpenPortal={() => {}}
+                  config={draftConfig}
+                />
+              </IPhoneMockup>
+            </div>
+          ) : (
+            /* Desktop Preview Box */
+            <div className="rounded-xl border border-border bg-[#140D10] shadow-xl overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/10 bg-[#1E1216] px-3 py-2 text-xs text-zinc-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-red-500/80" />
+                  <span className="size-2.5 rounded-full bg-amber-500/80" />
+                  <span className="size-2.5 rounded-full bg-emerald-500/80" />
+                </div>
+                <div className="flex items-center gap-1 rounded-md border border-white/10 bg-black/40 px-3 py-0.5 text-[10px] text-zinc-300">
+                  <span className="text-emerald-400">🔒</span>
+                  <span>https://ateliernails.com</span>
+                </div>
+                <span className="text-[10px] text-zinc-500">v1.0 Desktop</span>
+              </div>
+              <div className="bg-[#FFF7FA] overflow-y-auto max-h-[780px]">
+                <PublicHeader onOpenBooking={() => {}} config={draftConfig} />
                 <PublicLanding
                   onOpenBooking={() => {}}
                   onOpenNailBot={() => {}}
@@ -877,7 +890,7 @@ export const WebStudioView: React.FC = () => {
                 />
               </div>
             </div>
-          </div>
+          )}
         </div>
 
       </div>

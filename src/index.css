@@ -134,6 +134,35 @@ h1, h2, h3, .font-serif-glam {
   padding: 0 1.5rem;
 }
 
+.hero-grid-responsive {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.15fr) 1fr;
+  align-items: center;
+  gap: 3.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+@media (max-width: 900px) {
+  .hero-grid-responsive {
+    grid-template-columns: 1fr !important;
+    gap: 2.25rem !important;
+  }
+}
+
+.subnav-scroll {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.subnav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Glassmorphism Navigation */
 .header-glass {
   background: rgba(255, 247, 250, 0.88);

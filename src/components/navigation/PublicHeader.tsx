@@ -15,36 +15,55 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
 
   return (
     <header className="header-glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
-      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '74px', gap: '1rem' }}>
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px', padding: '0.5rem 1rem', gap: '0.75rem' }}>
         
         {/* Brand & Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', textDecoration: 'none' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none', minWidth: 0 }}>
           <div style={{
-            width: '44px',
-            height: '44px',
+            width: '38px',
+            height: '38px',
+            flexShrink: 0,
             borderRadius: '50%',
             background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#FFFFFF',
-            boxShadow: `0 4px 14px ${config.primaryColor}66`,
+            boxShadow: `0 4px 12px ${config.primaryColor}55`,
             border: '1px solid rgba(255, 255, 255, 0.8)',
-            fontSize: '1.2rem'
+            fontSize: '1.1rem'
           }}>
             {config.logoEmoji || '💅'}
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-serif-glam)', fontSize: '1.45rem', color: 'var(--brand-espresso)', letterSpacing: '0.04em', lineHeight: 1.1 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'var(--font-serif-glam)',
+              fontSize: 'clamp(1.1rem, 4vw, 1.45rem)',
+              color: 'var(--brand-espresso)',
+              letterSpacing: '0.02em',
+              lineHeight: 1.1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
               {config.brandName}
             </div>
-            <div style={{ fontSize: '0.62rem', color: config.secondaryColor || 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            <div className="hidden sm:block" style={{
+              fontSize: '0.58rem',
+              color: config.secondaryColor || 'var(--brand-pink-dark)',
+              fontFamily: 'var(--font-couture)',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
               {config.brandTagline}
             </div>
           </div>
         </Link>
 
-        {/* Center Editorial Links */}
+        {/* Center Editorial Links (Desktop only) */}
         <nav style={{ display: 'none', alignItems: 'center', gap: '1.75rem', fontSize: '0.82rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.08em', textTransform: 'uppercase' }} className="desktop-nav">
           <a href="#servicios" style={{ color: 'var(--brand-espresso)', textDecoration: 'none', fontWeight: 600 }}>
             Servicios
@@ -58,39 +77,46 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
         </nav>
 
         {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {/* Link to Dedicated PWA Client Portal */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          {/* Link to Dedicated PWA Client Portal (Hidden on very narrow mobile to prevent wrap) */}
           <Link
             to="/pwa"
+            className="hidden md:flex"
             style={{
-              display: 'flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0.5rem 0.95rem',
+              padding: '0.45rem 0.85rem',
               borderRadius: 'var(--radius-full)',
               background: 'linear-gradient(135deg, rgba(222, 115, 143, 0.12) 0%, rgba(212, 175, 55, 0.12) 100%)',
               border: '1px solid rgba(222, 115, 143, 0.35)',
               color: 'var(--brand-pink-dark)',
               textDecoration: 'none',
-              fontSize: '0.78rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               fontFamily: 'var(--font-couture)',
               letterSpacing: '0.04em',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
             }}
             title="Acceso al Portal PWA para Clientas"
           >
-            <Smartphone size={14} color="var(--brand-pink-satin)" />
-            <span>Mi Club Privilege</span>
+            <Smartphone size={13} color="var(--brand-pink-satin)" />
+            <span>Club Privilege</span>
           </Link>
 
           {/* Booking CTA Button */}
           <button
             onClick={onOpenBooking}
             className="btn-satin-pink"
-            style={{ padding: '0.6rem 1.35rem', fontSize: '0.78rem', letterSpacing: '0.08em' }}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '0.72rem',
+              letterSpacing: '0.08em',
+              whiteSpace: 'nowrap',
+              borderRadius: 'var(--radius-full)'
+            }}
           >
-            RESERVAR TURNO
+            RESERVAR
           </button>
         </div>
 
