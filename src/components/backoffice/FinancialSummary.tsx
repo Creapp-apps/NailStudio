@@ -63,7 +63,9 @@ export const FinancialSummary: React.FC<Props> = ({ appointments, techs }) => {
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#805AD5', marginTop: '0.2rem', fontFamily: 'var(--font-editorial)' }}>
             ${techPayouts.reduce((a, c) => a + c.commission, 0).toLocaleString('es-AR')}
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Calculado al 50%-55% pactado</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            {techPayouts.length > 0 ? 'Calculado según comisión pactada' : 'Sin comisiones registradas'}
+          </span>
         </div>
       </div>
 
@@ -94,43 +96,68 @@ export const FinancialSummary: React.FC<Props> = ({ appointments, techs }) => {
           <div>Neto para el Atelier</div>
         </div>
 
-        {techPayouts.map(item => (
-          <div
-            key={item.tech.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-              padding: '1rem 1.25rem',
-              alignItems: 'center',
-              borderBottom: '1px solid var(--border-subtle)',
-              fontSize: '0.85rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <img
-                src={item.tech.avatar}
-                alt={item.tech.name}
-                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-              <div>
-                <strong style={{ color: 'var(--brand-espresso)' }}>{item.tech.name}</strong>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Comisión: {item.tech.commissionRate * 100}%</div>
+        {techPayouts.length === 0 ? (
+          <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            No hay especialistas cargadas en el salón. Podés agregarlas desde la sección <strong>Staff & Especialistas</strong> para visualizar sus liquidaciones y comisiones automáticas.
+          </div>
+        ) : (
+          techPayouts.map(item => (
+            <div
+              key={item.tech.id}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                padding: '1rem 1.25rem',
+                alignItems: 'center',
+                borderBottom: '1px solid var(--border-subtle)',
+                fontSize: '0.85rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {item.tech.avatar ? (
+                  <img
+                    src={item.tech.avatar}
+                    alt={item.tech.name}
+                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: 'var(--brand-terracotta)',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.8rem'
+                  }}>
+                    {item.tech.name.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <strong style={{ color: 'var(--brand-espresso)' }}>{item.tech.name}</strong>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Comisión: {Math.round((item.tech.commissionRate || 0.5) * 100)}%
+                  </div>
+                </div>
+              </div>
+
+              <div>{item.servicesCount} sets</div>
+
+              <div style={{ fontWeight: 700 }}>${item.volume.toLocaleString('es-AR')}</div>
+
+              <div style={{ fontWeight: 700, color: 'var(--brand-terracotta)' }}>
+                ${item.commission.toLocaleString('es-AR')}
+              </div>
+
+              <div style={{ fontWeight: 700, color: 'var(--status-confirmed)' }}>
+                ${item.studioNet.toLocaleString('es-AR')}
               </div>
             </div>
-
-            <div>{item.servicesCount} sets</div>
-
-            <div style={{ fontWeight: 700 }}>${item.volume.toLocaleString('es-AR')}</div>
-
-            <div style={{ fontWeight: 700, color: 'var(--brand-terracotta)' }}>
-              ${item.commission.toLocaleString('es-AR')}
-            </div>
-
-            <div style={{ fontWeight: 700, color: 'var(--status-confirmed)' }}>
-              ${item.studioNet.toLocaleString('es-AR')}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

@@ -52,12 +52,16 @@ class StorageService {
     if (!storedSupplies || storedSupplies.includes('sup-1')) {
       localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify([]));
     }
+    const storedTechs = localStorage.getItem(STORAGE_KEYS.TECHS);
+    if (!storedTechs || storedTechs.includes('tech-1') || storedTechs.includes('Sofía Valenzuela') || storedTechs.includes('Valentina Rossi') || storedTechs.includes('Camila Méndez')) {
+      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
+    }
 
     if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(INITIAL_SERVICES));
     }
     if (!localStorage.getItem(STORAGE_KEYS.TECHS)) {
-      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(NAIL_TECHNICIANS));
+      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID)) {
       localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, '');
@@ -107,10 +111,14 @@ class StorageService {
         localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
       }
 
-      // 2. Technicians
+      // 2. Technicians (Filter out mock data)
       const { data: techData } = await supabase.from('nail_technicians').select('*');
       if (techData && techData.length > 0) {
-        const mappedTechs: NailTechnician[] = techData.map(t => ({
+        const filtered = techData.filter(t =>
+          !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
+          !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
+        );
+        const mappedTechs: NailTechnician[] = filtered.map(t => ({
           id: t.id,
           name: t.name,
           role: t.role,
@@ -215,7 +223,73 @@ class StorageService {
 
   public getTechs(): NailTechnician[] {
     const raw = localStorage.getItem(STORAGE_KEYS.TECHS);
-    return raw ? JSON.parse(raw) : NAIL_TECHNICIANS;
+    if (!raw) return [];
+    try {
+      const parsed: NailTechnician[] = JSON.parse(raw);
+      return parsed.filter(t =>
+        !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
+        !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  public addTech(tech: Omit<NailTechnician, 'id'>): NailTechnician {
+    const current = this.getTechs();
+    const created: NailTechnician = {
+      ...tech,
+      id: `tech-${Date.now()}`
+    };
+    const updated = [...current, created];
+    localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(updated));
+    this.pushTechToSupabase(created);
+    this.notify();
+    return created;
+  }
+
+  public updateTech(updatedTech: NailTechnician): void {
+    const current = this.getTechs();
+    const idx = current.findIndex(t => t.id === updatedTech.id);
+    if (idx !== -1) {
+      current[idx] = updatedTech;
+      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(current));
+      this.pushTechToSupabase(updatedTech);
+      this.notify();
+    }
+  }
+
+  public deleteTech(id: string): void {
+    const current = this.getTechs();
+    const updated = current.filter(t => t.id !== id);
+    localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(updated));
+    this.deleteTechFromSupabase(id);
+    this.notify();
+  }
+
+  private async pushTechToSupabase(tech: NailTechnician) {
+    try {
+      await supabase.from('nail_technicians').upsert({
+        id: tech.id,
+        name: tech.name,
+        role: tech.role,
+        avatar: tech.avatar || '',
+        specialties: tech.specialties || [],
+        rating: tech.rating || 5.0,
+        reviews_count: tech.reviewsCount || 0,
+        commission_rate: tech.commissionRate || 0.50
+      });
+    } catch (err) {
+      console.warn('Sync tech to Supabase fallback:', err);
+    }
+  }
+
+  private async deleteTechFromSupabase(id: string) {
+    try {
+      await supabase.from('nail_technicians').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Delete tech from Supabase fallback:', err);
+    }
   }
 
   // --- Appointments ---

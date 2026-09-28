@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, ArrowRight, ArrowLeft, Calendar, User, Phone, Mail, Sparkles, AlertCircle } from 'lucide-react';
 import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment } from '../../types/nailStudio';
-import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS, NAIL_TECHNICIANS } from '../../services/mockData';
+import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
 import { NailTimeCalculator } from './NailTimeCalculator';
 import { storage } from '../../services/storage';
 
@@ -13,13 +13,14 @@ interface Props {
 }
 
 export const BookingModal: React.FC<Props> = ({ isOpen, onClose, preselectedServiceId, onBookingSuccess }) => {
+  const availableTechs = storage.getTechs();
   const [step, setStep] = useState<number>(1);
   const [selectedService, setSelectedService] = useState<NailService | null>(
     INITIAL_SERVICES.find(s => s.id === preselectedServiceId) || INITIAL_SERVICES[0]
   );
   const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(REMOVAL_OPTIONS[0]);
   const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(NAIL_ART_TIERS[0]);
-  const [selectedTech, setSelectedTech] = useState<NailTechnician>(NAIL_TECHNICIANS[0]);
+  const [selectedTech, setSelectedTech] = useState<NailTechnician | null>(availableTechs[0] || null);
   const [selectedDate, setSelectedDate] = useState<string>('2026-09-29');
   const [selectedTime, setSelectedTime] = useState<string>('14:30');
 
@@ -55,7 +56,7 @@ export const BookingModal: React.FC<Props> = ({ isOpen, onClose, preselectedServ
         clientName,
         clientPhone,
         clientEmail: clientEmail || `${clientName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
-        techId: selectedTech.id,
+        techId: selectedTech?.id || 'auto-assigned',
         serviceId: selectedService!.id,
         removalId: selectedRemoval.id,
         nailArtTierId: selectedNailArt.id,
@@ -183,7 +184,7 @@ export const BookingModal: React.FC<Props> = ({ isOpen, onClose, preselectedServ
                 Te esperamos, {confirmedApt.clientName}
               </h3>
               <p style={{ color: 'var(--text-secondary)', maxWidth: '480px', margin: '0.5rem auto 1.5rem auto' }}>
-                Tu turno ha sido bloqueado en la agenda de <strong>{selectedTech.name}</strong> para el día <strong>{confirmedApt.scheduledDate}</strong> a las <strong>{confirmedApt.scheduledTime} hs</strong> ({confirmedApt.totalDurationMin} minutos).
+                Tu turno ha sido bloqueado en la agenda {selectedTech ? <>de <strong>{selectedTech.name}</strong></> : <>del salón (<strong>Mesa asignada</strong>)</>} para el día <strong>{confirmedApt.scheduledDate}</strong> a las <strong>{confirmedApt.scheduledTime} hs</strong> ({confirmedApt.totalDurationMin} minutos).
               </p>
 
               <div style={{
@@ -401,39 +402,89 @@ export const BookingModal: React.FC<Props> = ({ isOpen, onClose, preselectedServ
 
                   <div style={{ marginBottom: '1.25rem' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-                      Nail Artist de tu preferencia:
+                      Nail Artist y Mesa:
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-                      {NAIL_TECHNICIANS.map(tech => {
-                        const isSelected = selectedTech.id === tech.id;
-                        return (
-                          <div
-                            key={tech.id}
-                            onClick={() => setSelectedTech(tech)}
-                            style={{
-                              border: `2px solid ${isSelected ? 'var(--brand-terracotta)' : 'var(--border-subtle)'}`,
-                              borderRadius: 'var(--radius-md)',
-                              padding: '0.75rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.75rem',
-                              background: isSelected ? '#FDFBF9' : 'var(--bg-surface)'
-                            }}
-                          >
-                            <img
-                              src={tech.avatar}
-                              alt={tech.name}
-                              style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
-                            />
-                            <div>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>{tech.name}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>★ {tech.rating} ({tech.reviewsCount})</div>
+                    {availableTechs.length > 0 ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                        {availableTechs.map(tech => {
+                          const isSelected = selectedTech?.id === tech.id;
+                          return (
+                            <div
+                              key={tech.id}
+                              onClick={() => setSelectedTech(tech)}
+                              style={{
+                                border: `2px solid ${isSelected ? 'var(--brand-terracotta)' : 'var(--border-subtle)'}`,
+                                borderRadius: 'var(--radius-md)',
+                                padding: '0.75rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                background: isSelected ? '#FDFBF9' : 'var(--bg-surface)'
+                              }}
+                            >
+                              {tech.avatar ? (
+                                <img
+                                  src={tech.avatar}
+                                  alt={tech.name}
+                                  style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <div style={{
+                                  width: '42px',
+                                  height: '42px',
+                                  borderRadius: '50%',
+                                  background: 'var(--brand-terracotta)',
+                                  color: 'white',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.85rem'
+                                }}>
+                                  {tech.name.substring(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>{tech.name}</div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>★ {tech.rating || 5.0} ({tech.reviewsCount || 0})</div>
+                              </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: '1rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-surface)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.85rem'
+                      }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: 'rgba(219, 131, 147, 0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--brand-terracotta)'
+                        }}>
+                          <Sparkles size={20} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>
+                            Asignación Automática de Mesa
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Tu set será atendido por la profesional en turno del salón según la técnica solicitada.
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

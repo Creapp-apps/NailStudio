@@ -74,48 +74,99 @@ export const MultiTechCalendar: React.FC<Props> = ({ appointments, techs }) => {
       </div>
 
       {/* Columns per Technician */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${techs.length}, 1fr)`,
-        gap: '1.25rem',
-        overflowX: 'auto',
-        minWidth: '780px'
-      }}>
-        {techs.map(tech => {
-          const techApts = filteredAppointments
-            .filter(a => a.techId === tech.id)
-            .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+      {techs.length === 0 ? (
+        <div style={{
+          background: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px dashed var(--border-subtle)',
+          padding: '3.5rem 1.5rem',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '54px',
+            height: '54px',
+            borderRadius: '50%',
+            background: 'rgba(219, 131, 147, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--brand-terracotta)'
+          }}>
+            <User size={28} />
+          </div>
+          <div style={{ maxWidth: '440px' }}>
+            <h4 style={{ fontSize: '1.05rem', color: 'var(--brand-espresso)', fontWeight: 700, marginBottom: '0.35rem' }}>
+              No hay especialistas registradas en el salón
+            </h4>
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Para visualizar la agenda organizada por columnas de mesas y puestos de trabajo, primero agrega a las profesionales desde la sección <strong>Staff & Especialistas</strong>.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${techs.length}, 1fr)`,
+          gap: '1.25rem',
+          overflowX: 'auto',
+          minWidth: `${Math.max(780, techs.length * 260)}px`
+        }}>
+          {techs.map(tech => {
+            const techApts = filteredAppointments
+              .filter(a => a.techId === tech.id)
+              .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 
-          return (
-            <div
-              key={tech.id}
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              {/* Column Header */}
-              <div style={{
-                padding: '1rem',
-                borderBottom: '1px solid var(--border-subtle)',
-                background: 'var(--bg-card)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}>
-                <img
-                  src={tech.avatar}
-                  alt={tech.name}
-                  style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--brand-terracotta)' }}
-                />
-                <div>
-                  <h4 style={{ fontSize: '0.925rem', color: 'var(--brand-espresso)' }}>{tech.name}</h4>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tech.role}</div>
+            return (
+              <div
+                key={tech.id}
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                {/* Column Header */}
+                <div style={{
+                  padding: '1rem',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-card)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}>
+                  {tech.avatar ? (
+                    <img
+                      src={tech.avatar}
+                      alt={tech.name}
+                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--brand-terracotta)' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: 'var(--brand-terracotta)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.85rem'
+                    }}>
+                      {tech.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h4 style={{ fontSize: '0.925rem', color: 'var(--brand-espresso)' }}>{tech.name}</h4>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tech.role}</div>
+                  </div>
                 </div>
-              </div>
 
               {/* Appointment Cards */}
               <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1 }}>
@@ -230,6 +281,7 @@ export const MultiTechCalendar: React.FC<Props> = ({ appointments, techs }) => {
           );
         })}
       </div>
+      )}
     </div>
   );
 };

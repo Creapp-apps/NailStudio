@@ -112,38 +112,7 @@ export const NAIL_ART_TIERS: NailArtTier[] = [
   }
 ];
 
-export const NAIL_TECHNICIANS: NailTechnician[] = [
-  {
-    id: 'tech-1',
-    name: 'Sofía Valenzuela',
-    role: 'Master Educator & Nail Artist',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-    specialties: ['Soft Gel', 'Nail Art 3D', 'Cromados'],
-    rating: 4.98,
-    reviewsCount: 142,
-    commissionRate: 0.55
-  },
-  {
-    id: 'tech-2',
-    name: 'Valentina Rossi',
-    role: 'Especialista en Manicura Rusa & Kapping',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
-    specialties: ['Kapping Gel', 'Manicura Rusa', 'Recuperación de Uñas'],
-    rating: 4.95,
-    reviewsCount: 98,
-    commissionRate: 0.50
-  },
-  {
-    id: 'tech-3',
-    name: 'Camila Méndez',
-    role: 'Senior Sculptor & Polygel Tech',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80',
-    specialties: ['Esculpidas Acrílico', 'Diseño Francés', 'Cat Eye'],
-    rating: 4.92,
-    reviewsCount: 87,
-    commissionRate: 0.50
-  }
-];
+export const NAIL_TECHNICIANS: NailTechnician[] = [];
 
 export const INITIAL_CLIENTS: ClientProfile[] = [];
 

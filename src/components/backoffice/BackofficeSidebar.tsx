@@ -298,15 +298,15 @@ export const BackofficeSidebar: React.FC<Props> = ({
             <div className="flex items-center gap-2.5">
               <Avatar className="size-8 border border-pink-400/40">
                 <AvatarFallback className="bg-gradient-to-br from-pink-900 to-zinc-900 text-xs font-bold text-pink-200">
-                  SV
+                  AA
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-zinc-200">
-                  Sofía Valenzuela
+                  Atelier Admin
                 </span>
                 <span className="text-[10px] text-zinc-400">
-                  Directora Técnica
+                  Gestión de Salón
                 </span>
               </div>
             </div>
