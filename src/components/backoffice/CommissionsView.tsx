@@ -40,7 +40,7 @@ export const CommissionsView: React.FC<Props> = ({ appointments, techs }) => {
     <div className="space-y-6 animate-fade-in">
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Facturación Bruta (Período)
@@ -55,7 +55,7 @@ export const CommissionsView: React.FC<Props> = ({ appointments, techs }) => {
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-sm">
+        <Card className="border-emerald-500/40 bg-gradient-to-br from-emerald-500/[0.04] to-transparent">
           <CardHeader className="pb-2">
             <CardDescription className="text-emerald-800 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider">
               Total a Liquidar a Manicuristas
@@ -69,7 +69,7 @@ export const CommissionsView: React.FC<Props> = ({ appointments, techs }) => {
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Margen Neto Atelier Nails
@@ -85,7 +85,7 @@ export const CommissionsView: React.FC<Props> = ({ appointments, techs }) => {
       </div>
 
       {/* Commission Breakdown Table */}
-      <Card className="border-border shadow-sm">
+      <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

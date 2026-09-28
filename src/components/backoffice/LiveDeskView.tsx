@@ -43,12 +43,12 @@ export const LiveDeskView: React.FC<Props> = ({ appointments, techs }) => {
       {/* Mesas en Servicio Activo */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <Scissors className="size-3.5 text-pink-500" />
+          <Scissors className="size-3.5 text-rose-500" />
           <span>Mesas Ocupadas Actualmente ({inProgressApps.length})</span>
         </h3>
 
         {inProgressApps.length === 0 ? (
-          <Card className="p-6 text-center text-xs text-muted-foreground border-dashed">
+          <Card className="p-8 text-center text-xs text-muted-foreground border-dashed border-rose-200/80 bg-rose-500/[0.02]">
             No hay servicios en mesa en este momento. Las manicuristas están disponibles.
           </Card>
         ) : (
@@ -56,18 +56,18 @@ export const LiveDeskView: React.FC<Props> = ({ appointments, techs }) => {
             {inProgressApps.map(app => {
               const tech = techs.find(t => t.id === app.techId);
               return (
-                <Card key={app.id} className="border-pink-500/40 bg-pink-500/5 shadow-sm">
+                <Card key={app.id} className="border-rose-300/80 bg-gradient-to-br from-rose-500/[0.04] via-white to-pink-500/[0.02] shadow-[0_12px_32px_-8px_rgba(222,115,143,0.18)]">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <Badge className="bg-pink-600 text-white text-[10px] gap-1">
+                      <Badge className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[10px] gap-1 px-2.5 py-0.5 shadow-xs border-0">
                         <span className="size-1.5 rounded-full bg-white animate-ping" />
-                        <span>En Mesa Ahora</span>
+                        <span className="font-semibold">En Mesa Ahora</span>
                       </Badge>
-                      <span className="text-xs font-semibold text-muted-foreground">
+                      <span className="text-xs font-medium text-muted-foreground">
                         Turno #{app.id.substring(0, 6)}
                       </span>
                     </div>
-                    <CardTitle className="text-base font-bold mt-2 text-foreground">
+                    <CardTitle className="text-lg font-bold mt-2 text-foreground">
                       {app.clientName}
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground">
@@ -75,24 +75,24 @@ export const LiveDeskView: React.FC<Props> = ({ appointments, techs }) => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3 text-xs">
-                    <div className="rounded-lg bg-background/80 p-2.5 space-y-1 border border-border">
-                      <div className="flex justify-between">
+                    <div className="rounded-xl bg-white/90 p-3.5 space-y-2 border border-rose-200/70 shadow-xs">
+                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Especialista:</span>
                         <span className="font-semibold text-foreground">{tech?.name || 'Asignada'}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Duración total estimada:</span>
-                        <span className="font-semibold text-pink-600">{app.totalDurationMin} min</span>
+                        <span className="font-semibold text-rose-600">{app.totalDurationMin} min</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Importe total:</span>
-                        <span className="font-bold text-foreground">${app.totalPrice.toLocaleString('es-AR')}</span>
+                      <div className="flex justify-between items-center pt-1 border-t border-rose-100">
+                        <span className="text-muted-foreground font-medium">Importe total:</span>
+                        <span className="font-bold text-foreground text-sm">${app.totalPrice.toLocaleString('es-AR')}</span>
                       </div>
                     </div>
 
                     <Button
                       onClick={() => handleFinish(app.id)}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow-sm hover:shadow-md transition-all font-medium py-2 rounded-xl"
                     >
                       <CheckCircle2 className="size-3.5" />
                       <span>Finalizar Servicio & Registrar Pago</span>
@@ -108,7 +108,7 @@ export const LiveDeskView: React.FC<Props> = ({ appointments, techs }) => {
       {/* Clientas Próximas / Check-in */}
       <div className="space-y-3 pt-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <Clock className="size-3.5 text-blue-500" />
+          <Clock className="size-3.5 text-rose-500" />
           <span>Próximas en Llegar / Confirmadas ({confirmedApps.length})</span>
         </h3>
 
@@ -116,29 +116,31 @@ export const LiveDeskView: React.FC<Props> = ({ appointments, techs }) => {
           {confirmedApps.map(app => {
             const tech = techs.find(t => t.id === app.techId);
             return (
-              <Card key={app.id} className="border-border shadow-sm">
-                <CardHeader className="pb-2">
+              <Card key={app.id}>
+                <CardHeader className="pb-2.5">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 text-[10px]">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                       {app.scheduledTime} hs
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">Seña paga</span>
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/10 text-rose-700 border border-rose-200/60">
+                      Seña paga
+                    </span>
                   </div>
-                  <CardTitle className="text-sm font-bold text-foreground mt-1">
+                  <CardTitle className="text-base font-bold text-foreground mt-2">
                     {app.clientName}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-xs">
-                  <div className="text-muted-foreground">
-                    Atiende: <span className="font-medium text-foreground">{tech?.name}</span>
+                <CardContent className="space-y-3 text-xs">
+                  <div className="text-muted-foreground flex items-center justify-between">
+                    <span>Atiende:</span>
+                    <span className="font-semibold text-foreground">{tech?.name || 'Sin asignar'}</span>
                   </div>
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => handleStart(app.id)}
-                    className="w-full text-xs gap-1.5 text-pink-600 border-pink-500/30 hover:bg-pink-50"
+                    className="w-full text-xs gap-1.5 font-medium bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-sm hover:shadow-md transition-all rounded-xl py-2"
                   >
-                    <Play className="size-3" />
+                    <Play className="size-3 fill-white" />
                     <span>Hacer Check-in & Pasar a Mesa</span>
                   </Button>
                 </CardContent>

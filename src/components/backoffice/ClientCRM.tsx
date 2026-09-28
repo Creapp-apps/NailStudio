@@ -10,8 +10,8 @@ interface Props {
 export const ClientCRM: React.FC<Props> = ({ clients }) => {
   if (clients.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground animate-fade-in">
-        <User className="size-10 mx-auto text-pink-400 mb-3 opacity-60" />
+      <div className="rounded-2xl border border-dashed border-rose-200/80 bg-white/95 p-12 text-center text-muted-foreground shadow-sm animate-fade-in">
+        <User className="size-10 mx-auto text-rose-400 mb-3 opacity-60" />
         <h3 className="text-base font-bold text-foreground font-serif">No hay fichas técnicas de clientas aún</h3>
         <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1">
           A medida que las clientas agenden sus turnos desde la web o el portal PWA, sus fichas clínicas, fotos y diagnósticos ungueales se registrarán automáticamente aquí.

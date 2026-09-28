@@ -118,12 +118,12 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
               <StaffManagementView techs={techs} />
             )}
             {activeSection === 'settings' && (
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-foreground">Configuración del Salón & Supabase Cloud</h3>
+              <div className="rounded-2xl border border-rose-200/70 bg-white/95 p-6 shadow-[0_10px_30px_-10px_rgba(222,115,143,0.12)] space-y-4">
+                <h3 className="text-base font-bold text-foreground font-serif">Configuración del Salón & Supabase Cloud</h3>
                 <p className="text-xs text-muted-foreground">
                   Parámetros de conexión con la base de datos PostgreSQL en tiempo real y reglas de negocio del estudio.
                 </p>
-                <div className="rounded-lg bg-muted/40 p-4 text-xs font-mono space-y-2 border border-border">
+                <div className="rounded-xl bg-rose-500/[0.03] p-4 text-xs font-mono space-y-2 border border-rose-200/60 text-foreground/80">
                   <div><strong>Supabase Project Ref:</strong> aloqecmxdshpoidhuysx</div>
                   <div><strong>Endpoint:</strong> https://aloqecmxdshpoidhuysx.supabase.co</div>
                   <div><strong>Canales Realtime:</strong> postgres_changes (appointments, clients, supplies)</div>

@@ -28,63 +28,67 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {techs.map(tech => (
-          <Card key={tech.id} className="border-border shadow-sm overflow-hidden flex flex-col justify-between">
-            <CardHeader className="pb-3">
+          <Card key={tech.id} className="flex flex-col justify-between">
+            <CardHeader className="pb-3.5">
               <div className="flex items-start justify-between">
-                <Avatar className="size-14 border-2 border-pink-500/20 shadow-sm">
+                <Avatar className="size-14 ring-2 ring-rose-300/80 ring-offset-2 ring-offset-white shadow-sm">
                   <AvatarImage src={tech.avatar} alt={tech.name} className="object-cover" />
-                  <AvatarFallback className="font-bold text-sm bg-pink-100 text-pink-700">
+                  <AvatarFallback className="font-bold text-sm bg-rose-100 text-rose-700">
                     {tech.name.substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
-                <Badge variant="outline" className="border-pink-500/30 text-pink-600 text-[10px] font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                   Mesa {tech.id === 'tech-sofia' ? '1 (Master)' : tech.id === 'tech-valentina' ? '2 (Rusa)' : '3 (Sculpt)'}
-                </Badge>
+                </span>
               </div>
 
               <div className="mt-3">
                 <CardTitle className="text-base font-bold text-foreground">{tech.name}</CardTitle>
-                <CardDescription className="text-xs text-pink-600 font-medium">{tech.role}</CardDescription>
+                <CardDescription className="text-xs text-rose-600 font-medium">{tech.role}</CardDescription>
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-3 text-xs">
-              <div className="rounded-lg bg-muted/40 p-2.5 space-y-1.5">
+            <CardContent className="space-y-3.5 text-xs">
+              <div className="rounded-xl bg-rose-500/[0.03] p-3 space-y-2 border border-rose-100">
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><Calendar className="size-3 text-pink-500" /> Días de atención:</span>
+                  <span className="flex items-center gap-1.5"><Calendar className="size-3.5 text-rose-500" /> Días de atención:</span>
                   <span className="font-semibold text-foreground">
                     Mar, Mié, Jue, Vie, Sáb
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><Clock className="size-3 text-pink-500" /> Horario habitual:</span>
+                  <span className="flex items-center gap-1.5"><Clock className="size-3.5 text-rose-500" /> Horario habitual:</span>
                   <span className="font-semibold text-foreground">09:00 a 19:30 hs</span>
                 </div>
               </div>
 
               <div>
-                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Técnicas Habilitadas
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {tech.specialties.map(spec => (
-                    <Badge key={spec} variant="secondary" className="text-[10px] py-0 px-2">
+                    <span
+                      key={spec}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-100/50 text-rose-900 border border-rose-200/60"
+                    >
                       {spec}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
             </CardContent>
 
-            <CardFooter className="pt-2 border-t border-border flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-amber-500 font-bold">
+            <CardFooter className="pt-3 pb-3 border-t border-rose-100/70 bg-rose-500/[0.02] flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-amber-500 font-bold">
                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
                 <span>{tech.rating}</span>
                 <span className="text-[10px] text-muted-foreground font-normal">({tech.reviewsCount} reviews)</span>
               </div>
-              <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                <span className="size-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
                 Activa en Salón
-              </Badge>
+              </span>
             </CardFooter>
           </Card>
         ))}

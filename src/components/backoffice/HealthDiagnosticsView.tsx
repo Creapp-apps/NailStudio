@@ -26,7 +26,7 @@ export const HealthDiagnosticsView: React.FC<Props> = ({ clients }) => {
     <div className="space-y-6 animate-fade-in">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-amber-500/30 bg-amber-500/5 shadow-sm">
+        <Card className="border-amber-500/40 bg-gradient-to-br from-amber-500/[0.04] to-transparent">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardDescription className="text-amber-800 dark:text-amber-300 font-semibold text-xs uppercase tracking-wider">
@@ -43,13 +43,13 @@ export const HealthDiagnosticsView: React.FC<Props> = ({ clients }) => {
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Tratamientos de Onicofagia
               </CardDescription>
-              <HeartPulse className="size-5 text-pink-500" />
+              <HeartPulse className="size-5 text-rose-500" />
             </div>
             <CardTitle className="text-2xl font-bold">
               {onychophagyClients.length} Casos Activos
@@ -60,7 +60,7 @@ export const HealthDiagnosticsView: React.FC<Props> = ({ clients }) => {
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -79,7 +79,7 @@ export const HealthDiagnosticsView: React.FC<Props> = ({ clients }) => {
       </div>
 
       {/* Table of Health Alerts */}
-      <Card className="border-border shadow-sm">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
