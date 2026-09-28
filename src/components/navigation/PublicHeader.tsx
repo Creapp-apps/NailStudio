@@ -19,22 +19,44 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
         
         {/* Brand & Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none', minWidth: 0 }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            flexShrink: 0,
-            borderRadius: '50%',
-            background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: `0 4px 12px ${config.primaryColor}55`,
-            border: '1px solid rgba(255, 255, 255, 0.8)',
-            fontSize: '1.1rem'
-          }}>
-            {config.logoEmoji || '💅'}
-          </div>
+          {config.customLogoUrl ? (
+            <div style={{
+              width: '40px',
+              height: '40px',
+              flexShrink: 0,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: '#FFFFFF',
+              boxShadow: `0 4px 14px ${config.primaryColor}35`,
+              border: '1.5px solid rgba(255, 255, 255, 0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <img
+                src={config.customLogoUrl}
+                alt={config.brandName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          ) : (
+            <div style={{
+              width: '38px',
+              height: '38px',
+              flexShrink: 0,
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              boxShadow: `0 4px 12px ${config.primaryColor}55`,
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              fontSize: '1.1rem'
+            }}>
+              {config.logoEmoji || '💅'}
+            </div>
+          )}
           <div style={{ minWidth: 0 }}>
             <div style={{
               fontFamily: 'var(--font-serif-glam)',

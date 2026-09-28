@@ -11,6 +11,7 @@ export interface WebCustomizationConfig {
   brandTagline: string;
   badgeText: string;
   logoEmoji: string;
+  customLogoUrl: string; // URL o Base64 (DataURL) del logo personal del cliente
 
   // 2. Colores & Paleta
   primaryColor: string;
@@ -74,6 +75,7 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   brandTagline: 'HAUTE MANICURE & ESTUDIO DE ARTE UNGUEAL',
   badgeText: 'ESTUDIO DE ALTA MANICURÍA',
   logoEmoji: '💅',
+  customLogoUrl: '',
 
   // Colores
   primaryColor: '#DE738F',

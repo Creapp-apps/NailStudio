@@ -22,7 +22,11 @@ import {
   HelpCircle,
   Plus,
   Trash2,
-  Globe
+  Globe,
+  UploadCloud,
+  ImagePlus,
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
@@ -54,6 +58,25 @@ export const WebStudioView: React.FC = () => {
 
   const mobileIframeRef = useRef<HTMLIFrameElement>(null);
   const desktopIframeRef = useRef<HTMLIFrameElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('El archivo de imagen no debe superar los 2MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          handleFieldChange('customLogoUrl', result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Broadcast real-time config updates to the preview iframes
   useEffect(() => {
@@ -427,44 +450,161 @@ export const WebStudioView: React.FC = () => {
                     />
                   </div>
 
-                  {/* Logo Emoji / Monogram Stamp */}
-                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 bg-gradient-to-br from-rose-500/[0.05] via-transparent to-amber-500/[0.03] p-3.5 space-y-2.5">
-                    <label className="flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase text-foreground/80">
-                      <span>Sello o Ícono de Marca (Logo)</span>
-                      <span className="text-[10px] lowercase font-normal text-muted-foreground">sello de cera</span>
-                    </label>
+                  {/* Identidad Visual: Logo Personal & Sello de Respaldo */}
+                  <div className="rounded-2xl border border-rose-200/70 dark:border-rose-900/40 bg-gradient-to-br from-rose-500/[0.06] via-card to-amber-500/[0.04] p-4 space-y-4 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/30 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="size-4 text-[#DE738F]" />
+                        <span className="text-xs font-bold text-foreground uppercase tracking-wider font-serif">
+                          Logo & Sello de Marca
+                        </span>
+                      </div>
+                      {draftConfig.customLogoUrl ? (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                          <CheckCircle2 className="size-3 text-emerald-500" />
+                          Logo personal activo
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 rounded-full">
+                          <Sparkles className="size-3 text-[#DE738F]" />
+                          Sello predefinido activo
+                        </span>
+                      )}
+                    </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#DE738F] via-[#C45774] to-[#8C3A50] text-2xl shadow-md ring-4 ring-rose-200/40">
-                        {draftConfig.logoEmoji}
+                    {/* Live Badge Preview */}
+                    <div className="flex items-center gap-3.5 bg-background/70 p-3 rounded-xl border border-rose-200/50 dark:border-rose-900/30 shadow-2xs">
+                      <div className="relative shrink-0">
+                        {draftConfig.customLogoUrl ? (
+                          <div className="size-14 rounded-2xl overflow-hidden bg-white shadow-md border-2 border-white ring-2 ring-emerald-500/30 flex items-center justify-center p-1">
+                            <img
+                              src={draftConfig.customLogoUrl}
+                              alt="Logo Personal Atelier"
+                              className="size-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#DE738F] via-[#C45774] to-[#8C3A50] text-3xl shadow-md ring-4 ring-rose-200/40 select-none">
+                            {draftConfig.logoEmoji}
+                          </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-background flex items-center justify-center text-[10px] bg-card shadow-xs">
+                          {draftConfig.customLogoUrl ? '✨' : '🎨'}
+                        </span>
                       </div>
 
-                      <div className="flex-1 space-y-1.5">
-                        <span className="text-[10px] text-muted-foreground block">Seleccioná un sello de alta costura o ingresá el tuyo:</span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {['💅', '✨', '💎', '🌸', '👑', '🪞', '🪄', '🌹'].map(emoji => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={() => handleFieldChange('logoEmoji', emoji)}
-                              className={`size-7 rounded-lg border text-sm transition-all duration-150 flex items-center justify-center ${
-                                draftConfig.logoEmoji === emoji
-                                  ? 'border-rose-500 bg-rose-500/10 shadow-xs scale-110'
-                                  : 'border-rose-200/60 hover:border-rose-400 bg-background/80'
-                              }`}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                          <input
-                            type="text"
-                            value={draftConfig.logoEmoji}
-                            onChange={e => handleFieldChange('logoEmoji', e.target.value)}
-                            className="w-12 h-7 rounded-lg border border-rose-200/70 bg-background text-center text-xs font-semibold focus:border-[#DE738F] focus:outline-none"
-                            maxLength={4}
-                            title="Ingresá emoji o letra"
-                          />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-foreground truncate">
+                          {draftConfig.customLogoUrl ? 'Logo Propio del Atelier' : 'Sello de Alta Costura'}
                         </div>
+                        <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                          {draftConfig.customLogoUrl
+                            ? 'Este logo se inyecta directamente en la barra de navegación y pie de página de la web.'
+                            : 'Al no tener un logo personal cargado, se utiliza este sello editorial como distintivo de marca.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Opción 1: Subir Logo Personal */}
+                    <div className="space-y-2 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 uppercase tracking-wider">
+                          <UploadCloud className="size-3.5 text-rose-500" />
+                          <span>1. Tu Logo Personal (Imagen)</span>
+                        </label>
+                        {draftConfig.customLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => handleFieldChange('customLogoUrl', '')}
+                            className="text-[10px] font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="size-3" />
+                            Quitar logo personal
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        ref={logoFileInputRef}
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={handleLogoFileUpload}
+                        className="hidden"
+                      />
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => logoFileInputRef.current?.click()}
+                          className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-rose-300 dark:border-rose-800 bg-rose-500/5 hover:bg-rose-500/10 px-3.5 py-2.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition-colors shadow-2xs w-full sm:w-auto shrink-0"
+                        >
+                          <UploadCloud className="size-4 text-rose-500" />
+                          <span>{draftConfig.customLogoUrl ? 'Cambiar archivo de logo' : 'Subir archivo (PNG, SVG, JPG)'}</span>
+                        </button>
+
+                        <div className="relative flex-1">
+                          <input
+                            type="url"
+                            value={draftConfig.customLogoUrl}
+                            onChange={e => handleFieldChange('customLogoUrl', e.target.value)}
+                            placeholder="O pegar URL de imagen (https://...)"
+                            className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs focus:border-[#DE738F] focus:outline-none"
+                          />
+                          {draftConfig.customLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => handleFieldChange('customLogoUrl', '')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                              title="Limpiar logo"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Opción 2: Sello o Ícono Predefinido (Fallback) */}
+                    <div className="space-y-2 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 uppercase tracking-wider">
+                          <Sparkles className="size-3.5 text-amber-500" />
+                          <span>2. Sello Editorial Predefinido (Fallback de App)</span>
+                        </label>
+                        <span className="text-[10px] text-muted-foreground">
+                          {draftConfig.customLogoUrl ? 'Respaldo en espera' : 'Activo actualmente'}
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        {draftConfig.customLogoUrl
+                          ? '✦ Tu logo personal está activo. Si en algún momento lo quitás, el sitio web utilizará automáticamente este sello predefinido:'
+                          : '✦ Seleccioná un sello de alta costura o ingresá tu propio emoji / monograma:'}
+                      </p>
+
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {['💅', '✨', '💎', '🌸', '👑', '🪞', '🪄', '🌹'].map(emoji => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleFieldChange('logoEmoji', emoji)}
+                            className={`size-8 rounded-lg border text-sm transition-all duration-150 flex items-center justify-center ${
+                              draftConfig.logoEmoji === emoji
+                                ? 'border-rose-500 bg-rose-500/15 shadow-xs scale-105 font-bold'
+                                : 'border-rose-200/60 hover:border-rose-400 bg-background/80'
+                            }`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                        <input
+                          type="text"
+                          value={draftConfig.logoEmoji}
+                          onChange={e => handleFieldChange('logoEmoji', e.target.value)}
+                          className="w-14 h-8 rounded-lg border border-rose-200/70 bg-background text-center text-xs font-semibold focus:border-[#DE738F] focus:outline-none"
+                          maxLength={4}
+                          title="Ingresá emoji o monograma"
+                        />
                       </div>
                     </div>
                   </div>

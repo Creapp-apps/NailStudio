@@ -503,9 +503,46 @@ export const PublicLanding: React.FC<Props> = ({
       <footer style={{ background: '#1E1216', color: '#FFFFFF', padding: '4rem 1.5rem 2rem 1.5rem' }}>
         <div className="app-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '2.5rem', marginBottom: '2rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif-glam)', color: config.primaryColor, marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
-              {config.brandName}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              {config.customLogoUrl ? (
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: '#FFFFFF',
+                  border: '1.5px solid rgba(255, 255, 255, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <img
+                    src={config.customLogoUrl}
+                    alt={config.brandName}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              ) : (
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  flexShrink: 0
+                }}>
+                  {config.logoEmoji || '💅'}
+                </div>
+              )}
+              <h3 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif-glam)', color: config.primaryColor, margin: 0, letterSpacing: '0.04em' }}>
+                {config.brandName}
+              </h3>
+            </div>
             <p style={{ fontSize: '0.85rem', color: '#D9BAC4', maxWidth: '340px' }}>
               {config.brandTagline}
             </p>
