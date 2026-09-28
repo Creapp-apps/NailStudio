@@ -131,3 +131,61 @@ export interface SupplierOrder {
   createdAt: string;
   receivedAt?: string;
 }
+
+export interface SalonOperatingSettings {
+  salonName: string;
+  branchName: string;
+  address: string;
+  googleMapsUrl: string;
+  phoneWhatsapp: string;
+  openingTime: string;
+  closingTime: string;
+  slotBufferMin: number;
+  openDays: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
+  };
+  simultaneousTablesCount: number;
+  depositAmount: number;
+  depositRequired: boolean;
+  cancellationHoursTolerance: number;
+  bookingWindowDays: number;
+  bankAlias: string;
+  bankCbu: string;
+  bankAccountHolder: string;
+  bankName: string;
+}
+
+export interface SalonIntegrationsConfig {
+  metaWhatsapp: {
+    enabled: boolean;
+    phoneNumberId: string;
+    wabaId: string;
+    accessToken: string;
+    webhookVerifyToken: string;
+    sendReminders24h: boolean;
+    sendRetentionDay18: boolean;
+  };
+  mercadoPago: {
+    enabled: boolean;
+    sandboxMode: boolean;
+    publicKey: string;
+    accessToken: string;
+    autoDepositCheckout: boolean;
+  };
+  googleCalendar: {
+    enabled: boolean;
+    calendarId: string;
+    syncTechs: boolean;
+  };
+  instagram: {
+    enabled: boolean;
+    igUserId: string;
+    autoReplyBookings: boolean;
+  };
+}

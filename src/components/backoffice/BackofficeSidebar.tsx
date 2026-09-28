@@ -20,7 +20,8 @@ import {
   Building2,
   TrendingUp,
   Percent,
-  Palette
+  Palette,
+  Link2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -39,7 +40,8 @@ export type BackofficeSection =
   | 'finances'
   | 'commissions'
   | 'staff'
-  | 'settings';
+  | 'settings'
+  | 'integrations';
 
 interface Props {
   activeSection: BackofficeSection;
@@ -170,6 +172,11 @@ export const BackofficeSidebar: React.FC<Props> = ({
           id: 'settings' as BackofficeSection,
           label: 'Parámetros del Salón',
           icon: <Settings className="size-4" />
+        },
+        {
+          id: 'integrations' as BackofficeSection,
+          label: "Integraciones / API's",
+          icon: <Link2 className="size-4 text-sky-400" />
         }
       ]
     }

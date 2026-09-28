@@ -6,7 +6,9 @@ import {
   SupplyItem,
   SupplierOrder,
   AppointmentStatus,
-  NailPlateCondition
+  NailPlateCondition,
+  SalonOperatingSettings,
+  SalonIntegrationsConfig
 } from '../types/nailStudio';
 import {
   INITIAL_SERVICES,
@@ -24,7 +26,9 @@ const STORAGE_KEYS = {
   CLIENTS: 'atelier_clients',
   SUPPLIES: 'atelier_supplies',
   SUPPLIER_ORDERS: 'atelier_supplier_orders',
-  CURRENT_CLIENT_ID: 'atelier_current_client_id'
+  CURRENT_CLIENT_ID: 'atelier_current_client_id',
+  SALON_SETTINGS: 'atelier_salon_settings',
+  INTEGRATIONS: 'atelier_integrations_config'
 };
 
 class StorageService {
@@ -517,6 +521,28 @@ class StorageService {
     this.notify();
   }
 
+  // --- Salon Operating Settings ---
+  public getSalonSettings(): SalonOperatingSettings {
+    const raw = localStorage.getItem(STORAGE_KEYS.SALON_SETTINGS);
+    return raw ? JSON.parse(raw) : DEFAULT_SALON_SETTINGS;
+  }
+
+  public saveSalonSettings(settings: SalonOperatingSettings): void {
+    localStorage.setItem(STORAGE_KEYS.SALON_SETTINGS, JSON.stringify(settings));
+    this.notify();
+  }
+
+  // --- Integrations & APIs ---
+  public getIntegrations(): SalonIntegrationsConfig {
+    const raw = localStorage.getItem(STORAGE_KEYS.INTEGRATIONS);
+    return raw ? JSON.parse(raw) : DEFAULT_INTEGRATIONS_CONFIG;
+  }
+
+  public saveIntegrations(integrations: SalonIntegrationsConfig): void {
+    localStorage.setItem(STORAGE_KEYS.INTEGRATIONS, JSON.stringify(integrations));
+    this.notify();
+  }
+
   // --- Force Reload from Cloud ---
   public async syncNow(): Promise<void> {
     await this.fetchFromSupabase();
@@ -529,5 +555,63 @@ class StorageService {
     this.fetchFromSupabase();
   }
 }
+
+const DEFAULT_SALON_SETTINGS: SalonOperatingSettings = {
+  salonName: 'Atelier Nails',
+  branchName: 'Recoleta Flagship',
+  address: 'Av. Alvear 1850, Recoleta, CABA',
+  googleMapsUrl: 'https://maps.google.com/?q=Av.+Alvear+1850,+CABA',
+  phoneWhatsapp: '+54 9 11 5820-9911',
+  openingTime: '09:00',
+  closingTime: '20:00',
+  slotBufferMin: 15,
+  openDays: {
+    monday: false,
+    tuesday: true,
+    wednesday: true,
+    thursday: true,
+    friday: true,
+    saturday: true,
+    sunday: false
+  },
+  simultaneousTablesCount: 3,
+  depositAmount: 5000,
+  depositRequired: true,
+  cancellationHoursTolerance: 24,
+  bookingWindowDays: 30,
+  bankAlias: 'ATELIER.NAILS.BA',
+  bankCbu: '0070123400000012345678',
+  bankAccountHolder: 'Atelier Nails Studio S.R.L.',
+  bankName: 'Banco Galicia'
+};
+
+const DEFAULT_INTEGRATIONS_CONFIG: SalonIntegrationsConfig = {
+  metaWhatsapp: {
+    enabled: true,
+    phoneNumberId: '108492048591823',
+    wabaId: '294819401829104',
+    accessToken: 'EAAG...wh78X91Kls902aZbP',
+    webhookVerifyToken: 'atelier_secure_webhook_2026',
+    sendReminders24h: true,
+    sendRetentionDay18: true
+  },
+  mercadoPago: {
+    enabled: true,
+    sandboxMode: false,
+    publicKey: 'APP_USR-78192a01-4921-4891-91a2',
+    accessToken: 'APP_USR-91829102-1829-4819-b291',
+    autoDepositCheckout: true
+  },
+  googleCalendar: {
+    enabled: false,
+    calendarId: 'c_atelier.nails.turnos@gmail.com',
+    syncTechs: true
+  },
+  instagram: {
+    enabled: true,
+    igUserId: '178414002910291',
+    autoReplyBookings: true
+  }
+};
 
 export const storage = new StorageService();

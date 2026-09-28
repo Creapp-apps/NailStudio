@@ -53,7 +53,9 @@ export const BackofficeTopNav: React.FC<Props> = ({
       case 'staff':
         return { rubro: 'Sistema', title: 'Staff & Especialistas' };
       case 'settings':
-        return { rubro: 'Sistema', title: 'Parámetros del Salón' };
+        return { rubro: 'Sistema', title: 'Parámetros del Salón & Centro de Mando' };
+      case 'integrations':
+        return { rubro: 'Sistema', title: "Integraciones / API's & Webhooks" };
       default:
         return { rubro: 'Panel', title: 'Operaciones' };
     }
