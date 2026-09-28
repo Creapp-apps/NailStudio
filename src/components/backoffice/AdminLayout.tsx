@@ -5,6 +5,7 @@ import { BackofficeTopNav } from './BackofficeTopNav';
 import { MultiTechCalendar } from './MultiTechCalendar';
 import { ClientCRM } from './ClientCRM';
 import { InventoryManager } from './InventoryManager';
+import { SupplierOrdersView } from './SupplierOrdersView';
 import { FinancialSummary } from './FinancialSummary';
 import { AutomationsHub } from './AutomationsHub';
 import { HealthDiagnosticsView } from './HealthDiagnosticsView';
@@ -95,9 +96,12 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
               <HealthDiagnosticsView clients={clients} />
             )}
 
-            {/* INVENTARIO */}
-            {(activeSection === 'inventory' || activeSection === 'orders') && (
+            {/* LOGÍSTICA & STOCK */}
+            {activeSection === 'inventory' && (
               <InventoryManager supplies={supplies} />
+            )}
+            {activeSection === 'orders' && (
+              <SupplierOrdersView supplies={supplies} />
             )}
 
             {/* MARKETING & FIDELIZACIÓN */}

@@ -108,3 +108,26 @@ export interface SupplyItem {
   unit: string;
   brand: string;
 }
+
+export interface SupplierOrderItem {
+  supplyId?: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+}
+
+export interface SupplierOrder {
+  id: string;
+  orderNumber: string;
+  supplierName: string;
+  supplierContact?: string;
+  orderDate: string; // YYYY-MM-DD
+  expectedDate?: string;
+  status: 'draft' | 'pending' | 'shipped' | 'received' | 'cancelled';
+  items: SupplierOrderItem[];
+  totalAmount: number;
+  notes?: string;
+  createdAt: string;
+  receivedAt?: string;
+}

@@ -4,6 +4,7 @@ import {
   Appointment,
   ClientProfile,
   SupplyItem,
+  SupplierOrder,
   AppointmentStatus,
   NailPlateCondition
 } from '../types/nailStudio';
@@ -22,6 +23,7 @@ const STORAGE_KEYS = {
   APPOINTMENTS: 'atelier_appointments',
   CLIENTS: 'atelier_clients',
   SUPPLIES: 'atelier_supplies',
+  SUPPLIER_ORDERS: 'atelier_supplier_orders',
   CURRENT_CLIENT_ID: 'atelier_current_client_id'
 };
 
@@ -357,6 +359,81 @@ class StorageService {
     } catch (err) {
       console.error('Error updating supply in Supabase:', err);
     }
+  }
+
+  public addSupply(item: Omit<SupplyItem, 'id'>): SupplyItem {
+    const supplies = this.getSupplies();
+    const created: SupplyItem = {
+      ...item,
+      id: `sup-${Date.now()}`
+    };
+    const updated = [...supplies, created];
+    localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(updated));
+    this.notify();
+    return created;
+  }
+
+  public deleteSupply(id: string): void {
+    const supplies = this.getSupplies().filter(s => s.id !== id);
+    localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(supplies));
+    this.notify();
+  }
+
+  // --- Supplier Orders (Pedidos a Proveedores) ---
+  public getSupplierOrders(): SupplierOrder[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.SUPPLIER_ORDERS);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  public createSupplierOrder(orderData: Omit<SupplierOrder, 'id' | 'orderNumber' | 'createdAt'>): SupplierOrder {
+    const orders = this.getSupplierOrders();
+    const count = orders.length + 1;
+    const year = new Date().getFullYear();
+    const orderNumber = `ORD-${year}-${String(count).padStart(3, '0')}`;
+    const newOrder: SupplierOrder = {
+      ...orderData,
+      id: `order-${Date.now()}`,
+      orderNumber,
+      createdAt: new Date().toISOString()
+    };
+    const updated = [newOrder, ...orders];
+    localStorage.setItem(STORAGE_KEYS.SUPPLIER_ORDERS, JSON.stringify(updated));
+    this.notify();
+    return newOrder;
+  }
+
+  public updateSupplierOrderStatus(id: string, status: SupplierOrder['status']): void {
+    const orders = this.getSupplierOrders();
+    const idx = orders.findIndex(o => o.id === id);
+    if (idx !== -1) {
+      orders[idx].status = status;
+      if (status === 'received') {
+        orders[idx].receivedAt = new Date().toISOString();
+        // Acreditar automáticamente stock a los insumos correspondientes en el inventario
+        const currentSupplies = this.getSupplies();
+        let changed = false;
+        orders[idx].items.forEach(item => {
+          if (item.supplyId) {
+            const sIdx = currentSupplies.findIndex(s => s.id === item.supplyId);
+            if (sIdx !== -1) {
+              currentSupplies[sIdx].currentStock += item.quantity;
+              changed = true;
+            }
+          }
+        });
+        if (changed) {
+          localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(currentSupplies));
+        }
+      }
+      localStorage.setItem(STORAGE_KEYS.SUPPLIER_ORDERS, JSON.stringify(orders));
+      this.notify();
+    }
+  }
+
+  public deleteSupplierOrder(id: string): void {
+    const orders = this.getSupplierOrders().filter(o => o.id !== id);
+    localStorage.setItem(STORAGE_KEYS.SUPPLIER_ORDERS, JSON.stringify(orders));
+    this.notify();
   }
 
   // --- Force Reload from Cloud ---
