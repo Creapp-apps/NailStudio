@@ -4,7 +4,8 @@ import {
   Appointment,
   ClientProfile,
   SupplyItem,
-  AppointmentStatus
+  AppointmentStatus,
+  NailPlateCondition
 } from '../types/nailStudio';
 import {
   INITIAL_SERVICES,
@@ -27,10 +28,12 @@ const STORAGE_KEYS = {
 class StorageService {
   private listeners: Set<() => void> = new Set();
   public isSupabaseConnected: boolean = false;
+  private isSyncing: boolean = false;
 
   constructor() {
     this.initDefaults();
-    this.trySyncSupabase();
+    this.fetchFromSupabase();
+    this.setupRealtimeSubscriptions();
   }
 
   private initDefaults() {
@@ -50,19 +53,141 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(INITIAL_SUPPLIES));
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID)) {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, 'cli-1'); // Default to Lucía Fernández
+      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, 'cli-1');
     }
   }
 
-  private async trySyncSupabase() {
+  // --- Realtime Subscriptions from Supabase ---
+  private setupRealtimeSubscriptions() {
     try {
-      const { data, error } = await supabase.from('nail_services').select('*');
-      if (!error && data && data.length > 0) {
-        this.isSupabaseConnected = true;
-        this.notify();
-      }
+      supabase
+        .channel('public-atelier-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+          this.fetchFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'client_profiles' }, () => {
+          this.fetchFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'supplies' }, () => {
+          this.fetchFromSupabase();
+        })
+        .subscribe();
     } catch {
+      // Realtime fallback to polling / local
+    }
+  }
+
+  // --- Hydrate from Supabase ---
+  public async fetchFromSupabase(): Promise<void> {
+    if (this.isSyncing) return;
+    this.isSyncing = true;
+
+    try {
+      // 1. Services
+      const { data: srvData } = await supabase.from('nail_services').select('*');
+      if (srvData && srvData.length > 0) {
+        const mappedServices: NailService[] = srvData.map(s => ({
+          id: s.id,
+          title: s.title,
+          category: s.category,
+          basePrice: Number(s.base_price),
+          baseDurationMin: Number(s.base_duration_min),
+          description: s.description || '',
+          badge: s.badge || undefined,
+          imageUrl: s.image_url || '',
+          recommendedFor: s.recommended_for || ''
+        }));
+        localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
+      }
+
+      // 2. Technicians
+      const { data: techData } = await supabase.from('nail_technicians').select('*');
+      if (techData && techData.length > 0) {
+        const mappedTechs: NailTechnician[] = techData.map(t => ({
+          id: t.id,
+          name: t.name,
+          role: t.role,
+          avatar: t.avatar || '',
+          specialties: t.specialties || [],
+          rating: Number(t.rating || 5.0),
+          reviewsCount: Number(t.reviews_count || 0),
+          commissionRate: Number(t.commission_rate || 0.50)
+        }));
+        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(mappedTechs));
+      }
+
+      // 3. Appointments
+      const { data: aptData } = await supabase.from('appointments').select('*').order('scheduled_date', { ascending: false });
+      if (aptData && aptData.length > 0) {
+        const mappedApts: Appointment[] = aptData.map(a => ({
+          id: a.id,
+          clientName: a.client_name,
+          clientPhone: a.client_phone,
+          clientEmail: a.client_email || '',
+          techId: a.tech_id,
+          serviceId: a.service_id,
+          removalId: a.removal_id,
+          nailArtTierId: a.nail_art_tier_id,
+          totalDurationMin: Number(a.total_duration_min),
+          totalPrice: Number(a.total_price),
+          depositAmount: Number(a.deposit_amount || 5000),
+          depositPaid: Boolean(a.deposit_paid),
+          scheduledDate: a.scheduled_date,
+          scheduledTime: a.scheduled_time,
+          status: a.status,
+          notes: a.notes || '',
+          createdAt: a.created_at || new Date().toISOString()
+        }));
+        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(mappedApts));
+      }
+
+      // 4. Clients
+      const { data: cliData } = await supabase.from('client_profiles').select('*');
+      if (cliData && cliData.length > 0) {
+        const mappedClients: ClientProfile[] = cliData.map(c => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          email: c.email || '',
+          avatar: c.avatar || undefined,
+          nailPlateCondition: (c.nail_plate_condition || 'healthy') as NailPlateCondition,
+          allergiesHema: Boolean(c.allergies_hema),
+          lampHeatSensitivity: c.lamp_heat_sensitivity || 'low',
+          favoriteColors: c.favorite_colors || [],
+          technicianNotes: c.technician_notes || '',
+          pointsBalance: Number(c.points_balance || 0),
+          tier: c.tier || 'Silver',
+          referralCode: c.referral_code,
+          referredBy: c.referred_by || undefined,
+          totalVisits: Number(c.total_visits || 0),
+          lastVisitDate: c.last_visit_date || '2026-09-20',
+          setsHistory: []
+        }));
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(mappedClients));
+      }
+
+      // 5. Supplies
+      const { data: supData } = await supabase.from('supplies').select('*');
+      if (supData && supData.length > 0) {
+        const mappedSupplies: SupplyItem[] = supData.map(s => ({
+          id: s.id,
+          name: s.name,
+          category: s.category,
+          currentStock: Number(s.current_stock),
+          minStockAlert: Number(s.min_stock_alert),
+          unit: s.unit,
+          brand: s.brand || ''
+        }));
+        localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(mappedSupplies));
+      }
+
+      this.isSupabaseConnected = true;
+      this.notify();
+    } catch (err) {
+      console.warn('Error fetching from Supabase, using local state:', err);
       this.isSupabaseConnected = false;
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -102,15 +227,15 @@ class StorageService {
     const updated = [created, ...apts];
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(updated));
 
-    // Link to client points if client exists
+    // Link points
     const clients = this.getClients();
     const client = clients.find(c => c.phone === newApt.clientPhone || c.email === newApt.clientEmail);
     if (client) {
-      client.pointsBalance += Math.floor(newApt.totalPrice * 0.05); // 5% cashback in points
+      client.pointsBalance += Math.floor(newApt.totalPrice * 0.05); // 5% cashback
       this.updateClient(client);
     }
 
-    // Async push to Supabase if connected
+    // Persist to Supabase
     this.pushAppointmentToSupabase(created);
 
     this.notify();
@@ -137,8 +262,8 @@ class StorageService {
         status: created.status,
         notes: created.notes
       }]);
-    } catch {
-      // Ignored if table not migrated yet
+    } catch (err) {
+      console.error('Error pushing appointment to Supabase:', err);
     }
   }
 
@@ -157,8 +282,8 @@ class StorageService {
   private async updateAppointmentInSupabase(id: string, status: AppointmentStatus) {
     try {
       await supabase.from('appointments').update({ status }).eq('id', id);
-    } catch {
-      // Ignored if table not migrated yet
+    } catch (err) {
+      console.error('Error updating appointment in Supabase:', err);
     }
   }
 
@@ -198,8 +323,8 @@ class StorageService {
         points_balance: updatedClient.pointsBalance,
         tier: updatedClient.tier
       }).eq('id', updatedClient.id);
-    } catch {
-      // Ignored if table not migrated yet
+    } catch (err) {
+      console.error('Error updating client in Supabase:', err);
     }
   }
 
@@ -224,16 +349,21 @@ class StorageService {
   private async updateSupplyInSupabase(id: string, currentStock: number) {
     try {
       await supabase.from('supplies').update({ current_stock: currentStock }).eq('id', id);
-    } catch {
-      // Ignored if table not migrated yet
+    } catch (err) {
+      console.error('Error updating supply in Supabase:', err);
     }
+  }
+
+  // --- Force Reload from Cloud ---
+  public async syncNow(): Promise<void> {
+    await this.fetchFromSupabase();
   }
 
   // --- Reset to Initial Seed ---
   public resetToSeed(): void {
     localStorage.clear();
     this.initDefaults();
-    this.notify();
+    this.fetchFromSupabase();
   }
 }
 

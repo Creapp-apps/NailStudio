@@ -133,6 +133,22 @@ export function App() {
               </div>
             )}
 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontSize: '0.72rem',
+              background: '#EDF7F1',
+              color: '#427A5B',
+              padding: '0.3rem 0.65rem',
+              borderRadius: 'var(--radius-full)',
+              border: '1px solid rgba(66, 122, 91, 0.25)',
+              fontWeight: 600
+            }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#48BB78', display: 'inline-block', boxShadow: '0 0 6px #48BB78' }} />
+              Supabase Online
+            </div>
+
             <button onClick={() => handleOpenBooking()} className="btn-primary" style={{ padding: '0.55rem 1.15rem', fontSize: '0.825rem' }}>
               <Calendar size={15} /> Reservar Turno
             </button>

@@ -15,6 +15,8 @@
 | 2026-09-27 23:48 | Client Experience & PWA Portal | Built luxury booking stepper, metallic Nail Pass PWA card, referral engine, and AI Receptionist Nail-Bot. |
 | 2026-09-27 23:49 | Backoffice Operations Suite | Implemented Multi-Tech Agenda, Ficha Técnica CRM with HEMA alert, Supplies tracker, Finances, and Day 18 WhatsApp retention hub. |
 | 2026-09-27 23:50 | Build Verification & Dev Server | Executed `npm run build` (0 errors) and verified dev server running at `http://localhost:5174/`. |
+| 2026-09-28 00:03 | GitHub Remote Repository Linked | Initialized local git, created `.gitignore` (ignoring `.env`), and pushed initial suite to `https://github.com/Creapp-apps/NailStudio.git`. |
+| 2026-09-28 00:05 | Supabase Integration & Schema | Connected to project `aloqecmxdshpoidhuysx`, created `supabase/schema.sql` & `supabase/seed.sql`, installed `@supabase/supabase-js`, and built hybrid cloud/local reactive storage sync. |
 
 ## Test Results
 | Test Suite | Status | Details |
