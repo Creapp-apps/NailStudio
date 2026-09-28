@@ -19,6 +19,9 @@ export interface ThemeColors {
   marqueeBg: string;
   statementBg: string;
   subnavBg: string;
+  headerBg: string;
+  scrollbarThumb: string;
+  scrollbarHover: string;
   buttonGradient: string;
   buttonShadow: string;
   orb1Rgb: string;
@@ -141,6 +144,11 @@ export const getThemeFromConfig = (config: Partial<WebCustomizationConfig>): The
   }
 
   const { bgApp, bgCard, bgCardSubtle, bgCardHover, orb1Rgb, orb2Rgb, orb3Rgb, stardustRgb } = atmosphere;
+  const bgAppRgb = hexToRgb(bgApp, '255, 247, 250');
+  const headerBg = `rgba(${bgAppRgb}, 0.92)`;
+  const subnavBg = `rgba(${bgAppRgb}, 0.95)`;
+  const scrollbarThumb = `rgba(${primaryRgb}, 0.55)`;
+  const scrollbarHover = primary;
 
   return {
     primary,
@@ -160,7 +168,10 @@ export const getThemeFromConfig = (config: Partial<WebCustomizationConfig>): The
     heroGradient: `radial-gradient(circle at 75% 25%, rgba(${primaryRgb}, 0.22) 0%, rgba(${secondaryRgb}, 0.08) 45%, ${bgApp} 100%)`,
     marqueeBg: `linear-gradient(90deg, rgba(${primaryRgb}, 0.12) 0%, rgba(${accentRgb}, 0.22) 50%, rgba(${primaryRgb}, 0.12) 100%)`,
     statementBg: `linear-gradient(135deg, rgba(${primaryRgb}, 0.08) 0%, rgba(${accentRgb}, 0.16) 100%)`,
-    subnavBg: `rgba(255, 255, 255, 0.94)`,
+    subnavBg,
+    headerBg,
+    scrollbarThumb,
+    scrollbarHover,
     buttonGradient: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
     buttonShadow: `0 8px 24px rgba(${primaryRgb}, 0.35)`,
     orb1Rgb,

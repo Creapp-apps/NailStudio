@@ -116,7 +116,7 @@ export const MacBookMockup: React.FC<Props> = ({
           {/* Scaled Desktop Web Content Area */}
           <div
             ref={containerRef}
-            className="relative w-full bg-[#FFF7FA] overflow-hidden"
+            className="relative w-full bg-transparent overflow-hidden"
             style={{ height: `${scaledHeight}px` }}
           >
             <div
@@ -133,10 +133,10 @@ export const MacBookMockup: React.FC<Props> = ({
                   ref={iframeRef}
                   src={iframeSrc}
                   title="Vista Previa Escritorio MacBook"
-                  className="w-full h-full border-none bg-[#FFF7FA]"
+                  className="w-full h-full border-none bg-transparent"
                 />
               ) : (
-                <div className="w-full h-full overflow-y-auto bg-[#FFF7FA]">
+                <div className="w-full h-full overflow-y-auto bg-transparent">
                   {children}
                 </div>
               )}

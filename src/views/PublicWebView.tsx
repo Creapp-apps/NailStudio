@@ -36,6 +36,34 @@ export const PublicWebView: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Synchronize active theme CSS variables to document.documentElement and document.body
+  // so that root-level browser styles (scrollbars, sticky header, body background) match the palette instantly
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--bg-app', theme.bgApp);
+    root.style.setProperty('--bg-card', theme.bgCard);
+    root.style.setProperty('--bg-card-hover', theme.bgCardHover);
+    root.style.setProperty('--border-subtle', theme.borderSubtle);
+    root.style.setProperty('--border-strong', theme.borderStrong);
+    root.style.setProperty('--border-focus', theme.borderFocus);
+    root.style.setProperty('--brand-pink-satin', theme.primary);
+    root.style.setProperty('--brand-pink-dark', theme.secondary);
+    root.style.setProperty('--brand-gold', theme.accent);
+    root.style.setProperty('--header-bg', theme.headerBg);
+    root.style.setProperty('--subnav-bg', theme.subnavBg);
+    root.style.setProperty('--scrollbar-thumb', theme.scrollbarThumb);
+    root.style.setProperty('--scrollbar-hover', theme.scrollbarHover);
+    root.style.setProperty('--button-gradient', theme.buttonGradient);
+    root.style.setProperty('--button-shadow', theme.buttonShadow);
+    root.style.setProperty('--marquee-bg', theme.marqueeBg);
+    if (liveConfig.headingFont) root.style.setProperty('--font-serif-glam', liveConfig.headingFont);
+    if (liveConfig.accentFont) root.style.setProperty('--font-couture', liveConfig.accentFont);
+    if (liveConfig.bodyFont) root.style.setProperty('--font-body', liveConfig.bodyFont);
+
+    document.body.style.backgroundColor = theme.bgApp;
+    document.body.style.transition = 'background-color 0.3s ease';
+  }, [theme, liveConfig]);
+
   const handleOpenBooking = (serviceId?: string) => {
     setPreselectedService(serviceId);
     setIsBookingOpen(true);

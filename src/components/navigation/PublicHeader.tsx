@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Smartphone, Calendar, ChevronRight } from 'lucide-react';
+import { Sparkles, Smartphone, Calendar, ChevronRight, Menu, X } from 'lucide-react';
 import { WebCustomizationConfig } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { getThemeFromConfig } from '../../lib/themeStyles';
@@ -14,9 +14,22 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
   const { config: hookConfig } = useWebConfig();
   const config = propConfig || hookConfig;
   const theme = getThemeFromConfig(config);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="header-glass" style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: `1px solid ${theme.borderSubtle}` }}>
+    <header
+      className="header-glass"
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        backgroundColor: theme.headerBg,
+        backdropFilter: 'blur(18px)',
+        WebkitBackdropFilter: 'blur(18px)',
+        borderBottom: `1px solid ${theme.borderSubtle}`,
+        transition: 'background-color 0.3s ease, border-color 0.3s ease'
+      }}
+    >
       <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px', padding: '0.5rem 1rem', gap: '0.75rem' }}>
         
         {/* Brand & Logo */}
@@ -30,7 +43,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               overflow: 'hidden',
               background: '#FFFFFF',
               boxShadow: `0 4px 14px rgba(${theme.primaryRgb}, 0.25)`,
-              border: '1.5px solid rgba(255, 255, 255, 0.9)',
+              border: `1.5px solid ${theme.borderSubtle}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -59,7 +72,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               justifyContent: 'center',
               color: '#FFFFFF',
               boxShadow: `0 4px 12px rgba(${theme.primaryRgb}, 0.35)`,
-              border: '1px solid rgba(255, 255, 255, 0.8)',
+              border: `1px solid ${theme.borderSubtle}`,
               fontSize: '1.1rem'
             }}>
               {config.logoEmoji || '💅'}
@@ -108,7 +121,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
 
         {/* Right Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-          {/* Link to Dedicated PWA Client Portal (Hidden on very narrow mobile to prevent wrap) */}
+          {/* Link to Dedicated PWA Client Portal (Hidden on narrow screens) */}
           <Link
             to="/pwa"
             className="hidden md:flex"
@@ -150,9 +163,85 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
           >
             RESERVAR
           </button>
+
+          {/* Mobile Menu Hamburger Toggle */}
+          <button
+            onClick={() => setIsMobileMenuOpen(prev => !prev)}
+            className="flex md:hidden items-center justify-center p-2 rounded-full transition-all"
+            style={{
+              color: theme.primary,
+              backgroundColor: `rgba(${theme.primaryRgb}, 0.08)`,
+              border: `1px solid ${theme.borderSubtle}`,
+              cursor: 'pointer'
+            }}
+            aria-label="Menú de Navegación"
+            title="Menú"
+          >
+            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
 
       </div>
+
+      {/* Mobile Collapsible Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden border-t animate-in fade-in slide-in-from-top-2 duration-200"
+          style={{
+            backgroundColor: theme.headerBg,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderTop: `1px solid ${theme.borderSubtle}`,
+            borderBottom: `1px solid ${theme.borderSubtle}`,
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.85rem',
+            fontFamily: 'var(--font-couture)',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            fontSize: '0.8rem'
+          }}
+        >
+          <a
+            href="#servicios"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{ color: 'var(--brand-espresso)', textDecoration: 'none', fontWeight: 600, padding: '0.35rem 0' }}
+          >
+            Servicios
+          </a>
+          <a
+            href="#why-us"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{ color: 'var(--brand-espresso)', textDecoration: 'none', fontWeight: 600, padding: '0.35rem 0' }}
+          >
+            ¿Por Qué Elegirnos?
+          </a>
+          <a
+            href="#nail-art"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{ color: 'var(--brand-espresso)', textDecoration: 'none', fontWeight: 600, padding: '0.35rem 0' }}
+          >
+            Galería Nail Art
+          </a>
+          <Link
+            to="/pwa"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: theme.primary,
+              textDecoration: 'none',
+              fontWeight: 700,
+              padding: '0.35rem 0'
+            }}
+          >
+            <Smartphone size={14} color={theme.primary} />
+            <span>Club Privilege PWA</span>
+          </Link>
+        </div>
+      )}
     </header>
   );
 };

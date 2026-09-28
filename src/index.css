@@ -111,20 +111,26 @@ h1, h2, h3, .font-serif-glam {
   font-family: var(--font-editorial);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Dynamically adapts to theme */
+html, body {
+  scrollbar-color: var(--scrollbar-thumb, var(--brand-pink-satin, #DE738F)) var(--bg-app, #FFF7FA);
+  scrollbar-width: thin;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-app);
+  background: var(--bg-app, #FFF7FA);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: var(--scrollbar-thumb, var(--brand-pink-satin, #DE738F));
   border-radius: var(--radius-full);
+  transition: background-color 0.25s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--brand-pink-satin);
+  background: var(--scrollbar-hover, var(--brand-pink-dark, #C45774));
 }
 
 /* Layout Utilities */
@@ -165,14 +171,20 @@ h1, h2, h3, .font-serif-glam {
 
 /* Glassmorphism Navigation */
 .header-glass {
-  background: rgba(255, 247, 250, 0.88);
+  background: var(--header-bg, rgba(255, 247, 250, 0.88));
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 50;
-  transition: var(--transition-smooth);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex !important;
+  }
 }
 
 /* Satin Couture Brand Button (Dynamically tinted with selected theme) */

@@ -63,18 +63,18 @@ export const IPhoneMockup: React.FC<Props> = ({
             </div>
 
             {/* 2. Scrollable Viewport Content Area */}
-            <div className="flex-1 overflow-hidden bg-[#FFF7FA] flex flex-col relative">
+            <div className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
               {iframeSrc ? (
                 <iframe
                   ref={iframeRef}
                   src={iframeSrc}
                   title="Vista Previa Móvil iPhone"
-                  className="w-full h-full border-none bg-[#FFF7FA]"
+                  className="w-full h-full border-none bg-transparent"
                 />
               ) : (
                 <div
                   ref={scrollContainerRef}
-                  className="flex-1 overflow-y-auto overflow-x-hidden bg-[#FFF7FA] scroll-smooth"
+                  className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth"
                   style={{
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none'

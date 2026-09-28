@@ -69,9 +69,7 @@ export const BackofficeSidebar: React.FC<Props> = ({
         {
           id: 'web_studio' as BackofficeSection,
           label: 'Personalización de la Web',
-          icon: <Palette className="size-4 text-pink-400" />,
-          badge: 'En Vivo',
-          badgeVariant: 'outline' as const
+          icon: <Palette className="size-4 text-pink-400" />
         }
       ]
     },
