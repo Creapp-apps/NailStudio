@@ -49,8 +49,9 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
     }
     const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS);
-    if (!storedClients || storedClients.includes('cli-1') || storedClients.includes('Lucía Fernández')) {
+    if (!storedClients || storedClients.includes('cli-1') || storedClients.includes('Lucía Fernández') || storedClients.includes('Camila De La Torre') || storedClients.includes('Valentina Albarracín') || storedClients.includes('Lucía Santillán') || storedClients.includes('Valentina Rossi')) {
       localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, '');
     }
     const storedSupplies = localStorage.getItem(STORAGE_KEYS.SUPPLIES);
     if (!storedSupplies || storedSupplies.includes('sup-1')) {
@@ -163,7 +164,11 @@ class StorageService {
       // 4. Clients
       const { data: cliData } = await supabase.from('client_profiles').select('*');
       if (cliData) {
-        const mappedClients: ClientProfile[] = cliData.map(c => ({
+        const filtered = cliData.filter(c =>
+          !['cli-1', 'cli-2', 'cli-3'].includes(c.id) &&
+          !['Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Lucía Fernández', 'Valentina Rossi'].includes(c.name)
+        );
+        const mappedClients: ClientProfile[] = filtered.map(c => ({
           id: c.id,
           name: c.name,
           phone: c.phone,
@@ -183,6 +188,9 @@ class StorageService {
           setsHistory: []
         }));
         localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(mappedClients));
+
+        // Purge mock clients from Supabase in background
+        supabase.from('client_profiles').delete().in('name', ['Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Lucía Fernández', 'Valentina Rossi']).then(() => {});
       }
 
       // 5. Supplies
@@ -375,13 +383,36 @@ class StorageService {
   // --- Clients ---
   public getClients(): ClientProfile[] {
     const raw = localStorage.getItem(STORAGE_KEYS.CLIENTS);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    try {
+      const parsed: ClientProfile[] = JSON.parse(raw);
+      return parsed.filter(c =>
+        !['cli-1', 'cli-2', 'cli-3'].includes(c.id) &&
+        !['Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Lucía Fernández', 'Valentina Rossi'].includes(c.name)
+      );
+    } catch {
+      return [];
+    }
   }
 
-  public getCurrentClient(): ClientProfile {
-    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID) || 'cli-1';
+  public getCurrentClient(): ClientProfile | null {
+    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID);
     const clients = this.getClients();
-    return clients.find((c) => c.id === currentId) || clients[0];
+    if (clients.length === 0) return null;
+    if (currentId) {
+      const found = clients.find((c) => c.id === currentId);
+      if (found) return found;
+    }
+    return clients[0] || null;
+  }
+
+  public getClientByPhone(phone: string): ClientProfile | undefined {
+    const clean = phone.replace(/\D/g, '');
+    if (!clean || clean.length < 6) return undefined;
+    return this.getClients().find(c => {
+      const clientClean = (c.phone || '').replace(/\D/g, '');
+      return clientClean.includes(clean) || clean.includes(clientClean);
+    });
   }
 
   public setCurrentClientId(id: string): void {
@@ -393,6 +424,8 @@ class StorageService {
     const clients = this.getClients();
     const updated = [client, ...clients.filter(c => c.id !== client.id)];
     localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(updated));
+    localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, client.id);
+    this.pushClientToSupabase(client);
     this.notify();
   }
 
@@ -405,6 +438,31 @@ class StorageService {
 
       this.updateClientInSupabase(updatedClient);
       this.notify();
+    }
+  }
+
+  private async pushClientToSupabase(client: ClientProfile) {
+    try {
+      await supabase.from('client_profiles').upsert({
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email || '',
+        avatar: client.avatar || '',
+        nail_plate_condition: client.nailPlateCondition || 'healthy',
+        allergies_hema: client.allergiesHema || false,
+        lamp_heat_sensitivity: client.lampHeatSensitivity || 'low',
+        favorite_colors: client.favoriteColors || [],
+        technician_notes: client.technicianNotes || '',
+        points_balance: client.pointsBalance || 0,
+        tier: client.tier || 'Silver',
+        referral_code: client.referralCode,
+        referred_by: client.referredBy || null,
+        total_visits: client.totalVisits || 0,
+        last_visit_date: client.lastVisitDate || new Date().toISOString().split('T')[0]
+      });
+    } catch (err) {
+      console.warn('Sync client to Supabase fallback:', err);
     }
   }
 

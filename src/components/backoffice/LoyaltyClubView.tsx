@@ -92,65 +92,6 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
     window.open(url, '_blank');
   };
 
-  // Seed sample clients if empty for immediate evaluation
-  const handleSeedClubClients = () => {
-    const demoClients: ClientProfile[] = [
-      {
-        id: `cli-${Date.now()}-1`,
-        name: 'Valentina Albarracín',
-        phone: '+54 9 11 4123-4567',
-        email: 'valentina.a@gmail.com',
-        tier: 'VIP Haute',
-        pointsBalance: 4250,
-        referralCode: 'VALEN-ATELIER',
-        totalVisits: 14,
-        lastVisitDate: '2026-09-12',
-        nailPlateCondition: 'healthy',
-        allergiesHema: false,
-        lampHeatSensitivity: 'low',
-        favoriteColors: ['Nude Rosé', 'Bordeaux Vamp', 'Glazed Donut'],
-        technicianNotes: 'Clienta VIP Flagship. Prefiere té verde durante el service.',
-        setsHistory: []
-      },
-      {
-        id: `cli-${Date.now()}-2`,
-        name: 'Camila De La Torre',
-        phone: '+54 9 11 5234-5678',
-        email: 'camila.torre@outlook.com',
-        tier: 'Gold',
-        pointsBalance: 2100,
-        referralCode: 'CAMI-ATELIER',
-        totalVisits: 7,
-        lastVisitDate: '2026-09-18',
-        nailPlateCondition: 'healthy',
-        allergiesHema: false,
-        lampHeatSensitivity: 'medium',
-        favoriteColors: ['French Minimal', 'Espresso Chrome'],
-        technicianNotes: 'Kapping gel en almendra corta.',
-        setsHistory: []
-      },
-      {
-        id: `cli-${Date.now()}-3`,
-        name: 'Lucía Santillán',
-        phone: '+54 9 11 6345-6789',
-        email: 'lucia.santillan@gmail.com',
-        tier: 'Silver',
-        pointsBalance: 850,
-        referralCode: 'LUCIA-ATELIER',
-        totalVisits: 3,
-        lastVisitDate: '2026-09-24',
-        nailPlateCondition: 'thin_weak',
-        allergiesHema: false,
-        lampHeatSensitivity: 'low',
-        favoriteColors: ['Rojo Clásico', 'Perla Translúcido'],
-        technicianNotes: 'Uñas delicadas, usar preparador sin ácido.',
-        setsHistory: []
-      }
-    ];
-
-    demoClients.forEach(c => storage.createClient(c));
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Top Header Card */}
@@ -168,15 +109,6 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {clients.length === 0 && (
-            <button
-              onClick={handleSeedClubClients}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
-            >
-              <Sparkles className="size-3.5 text-amber-500" />
-              <span>Cargar Clientas de Ejemplo</span>
-            </button>
-          )}
 
           <div className="px-3.5 py-2 rounded-xl bg-muted text-xs font-medium text-muted-foreground flex items-center gap-2">
             <Coins className="size-4 text-amber-500" />

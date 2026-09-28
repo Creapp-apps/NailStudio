@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Sparkles, PlusCircle, Smartphone, ShieldCheck, Heart } from 'lucide-react';
+import { ArrowLeft, UserCheck, Sparkles, PlusCircle, Crown } from 'lucide-react';
 import { storage } from '../services/storage';
 import { ClientProfile } from '../types/nailStudio';
 import { ClientPortal } from '../components/client/ClientPortal';
@@ -9,7 +9,7 @@ import { BookingModal } from '../components/booking/BookingModal';
 export const PwaClientView: React.FC = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientProfile[]>(storage.getClients());
-  const [currentClient, setCurrentClient] = useState<ClientProfile>(storage.getCurrentClient());
+  const [currentClient, setCurrentClient] = useState<ClientProfile | null>(storage.getCurrentClient());
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
@@ -79,42 +79,59 @@ export const PwaClientView: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Controls: Client Switcher & Booking */}
+          {/* Right Controls: Client Switcher or Status & Booking */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Client Profile Switcher (For Demo & Testing) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              fontSize: '0.75rem',
-              background: '#FFFFFF',
-              padding: '0.35rem 0.75rem',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-            }}>
-              <UserCheck size={13} color="var(--brand-pink-dark)" />
-              <span style={{ color: 'var(--text-secondary)', display: 'none' }} className="desktop-nav">Clienta:</span>
-              <select
-                value={currentClient?.id}
-                onChange={(e) => handleChangeClient(e.target.value)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontWeight: 700,
-                  color: 'var(--brand-espresso)',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem'
-                }}
-              >
-                {clients.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.pointsBalance} pts)
-                  </option>
-                ))}
-              </select>
-            </div>
+            {clients.length > 0 ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.75rem',
+                background: '#FFFFFF',
+                padding: '0.35rem 0.75rem',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+              }}>
+                <UserCheck size={13} color="var(--brand-pink-dark)" />
+                <select
+                  value={currentClient?.id || ''}
+                  onChange={(e) => handleChangeClient(e.target.value)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontWeight: 700,
+                    color: 'var(--brand-espresso)',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  <option value="">-- Sin Identificar (Invitada) --</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.pointsBalance} pts)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.75rem',
+                background: 'rgba(212, 175, 55, 0.12)',
+                color: '#997300',
+                padding: '0.35rem 0.75rem',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                fontWeight: 600
+              }}>
+                <Crown size={13} color="#D4AF37" />
+                <span>Pase Digital</span>
+              </div>
+            )}
 
             {/* Quick Booking CTA */}
             <button
