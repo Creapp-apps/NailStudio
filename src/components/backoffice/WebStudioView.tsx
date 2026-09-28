@@ -149,35 +149,40 @@ export const WebStudioView: React.FC = () => {
       primary: '#DE738F',
       secondary: '#C45774',
       accent: '#E0C89E',
-      theme: 'rose_quartz' as const
+      theme: 'rose_quartz' as const,
+      glow: 'rose_quartz' as const
     },
     {
       name: 'Espresso & Champagne',
       primary: '#9C6644',
-      secondary: '#7F4F24',
+      secondary: '#5C3826',
       accent: '#D4AF37',
-      theme: 'dark_espresso' as const
+      theme: 'dark_espresso' as const,
+      glow: 'gold_glamour' as const
     },
     {
       name: 'Noir Glamour & Velvet',
-      primary: '#B8506C',
-      secondary: '#8B2E48',
+      primary: '#B83A58',
+      secondary: '#6B1D30',
       accent: '#DDB892',
-      theme: 'noir_gold' as const
+      theme: 'noir_gold' as const,
+      glow: 'rose_quartz' as const
     },
     {
       name: 'Burgundy & Gold Chic',
       primary: '#800020',
-      secondary: '#5B061A',
+      secondary: '#4A0213',
       accent: '#E6C280',
-      theme: 'rose_quartz' as const
+      theme: 'burgundy' as const,
+      glow: 'gold_glamour' as const
     },
     {
       name: 'Lilac Dream & Chrome',
-      primary: '#9B72CF',
-      secondary: '#7851A9',
-      accent: '#E8D7F1',
-      theme: 'rose_quartz' as const
+      primary: '#8A58DC',
+      secondary: '#5E2FB8',
+      accent: '#C0C2DE',
+      theme: 'lilac' as const,
+      glow: 'celestial_silver' as const
     }
   ];
 
@@ -920,7 +925,8 @@ export const WebStudioView: React.FC = () => {
                               primaryColor: p.primary,
                               secondaryColor: p.secondary,
                               accentGold: p.accent,
-                              themePreset: p.theme
+                              themePreset: p.theme,
+                              glowColor: p.glow
                             }));
                           }}
                           className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-left ${

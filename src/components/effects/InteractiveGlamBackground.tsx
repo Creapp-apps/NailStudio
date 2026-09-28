@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { WebCustomizationConfig } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { getThemeFromConfig } from '../../lib/themeStyles';
 
 interface Particle {
   x: number;
@@ -21,9 +22,15 @@ interface Props {
 export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig }) => {
   const { config: hookConfig } = useWebConfig();
   const config = propConfig || hookConfig;
+  const theme = getThemeFromConfig(config);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mouseRef = useRef({ x: -1000, y: -1000, targetX: -1000, targetY: -1000 });
+  const themeRef = useRef(theme);
+
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,16 +56,16 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
     window.addEventListener('mousemove', handleMouseMove);
 
     // Generate Diamond/Stardust Particles
-    const particleCount = 45;
+    const particleCount = 38;
     const particles: Particle[] = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 3 + 1,
-        speedX: (Math.random() - 0.5) * 0.4,
-        speedY: (Math.random() - 0.5) * 0.4 - 0.15, // gentle upward drift
-        opacity: Math.random() * 0.7 + 0.2,
+        size: Math.random() * 2.8 + 1.2,
+        speedX: (Math.random() - 0.5) * 0.35,
+        speedY: (Math.random() - 0.5) * 0.35 - 0.12, // gentle upward drift
+        opacity: Math.random() * 0.7 + 0.3,
         pulseSpeed: Math.random() * 0.02 + 0.01,
         angle: Math.random() * Math.PI * 2,
         spin: (Math.random() - 0.5) * 0.02
@@ -72,6 +79,7 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
 
     const render = () => {
       time += 0.015;
+      const currentTheme = themeRef.current;
 
       // Smooth mouse lerp
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
@@ -79,31 +87,31 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Draw Organic Breathing Ambient Mesh Orbs
+      // 1. Draw Organic Breathing Ambient Mesh Orbs in the Selected Theme Atmosphere
       const orb1X = width * 0.75 + Math.sin(time * 0.8) * 60;
       const orb1Y = height * 0.3 + Math.cos(time * 0.7) * 50;
-      const grad1 = ctx.createRadialGradient(orb1X, orb1Y, 10, orb1X, orb1Y, 450);
-      grad1.addColorStop(0, 'rgba(255, 185, 208, 0.45)');
-      grad1.addColorStop(0.5, 'rgba(255, 214, 230, 0.2)');
-      grad1.addColorStop(1, 'rgba(255, 247, 250, 0)');
+      const grad1 = ctx.createRadialGradient(orb1X, orb1Y, 10, orb1X, orb1Y, 460);
+      grad1.addColorStop(0, `rgba(${currentTheme.orb1Rgb}, 0.35)`);
+      grad1.addColorStop(0.5, `rgba(${currentTheme.orb1Rgb}, 0.14)`);
+      grad1.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad1;
       ctx.fillRect(0, 0, width, height);
 
       const orb2X = width * 0.2 + Math.cos(time * 0.6) * 50;
       const orb2Y = height * 0.7 + Math.sin(time * 0.9) * 60;
-      const grad2 = ctx.createRadialGradient(orb2X, orb2Y, 10, orb2X, orb2Y, 500);
-      grad2.addColorStop(0, 'rgba(255, 235, 205, 0.4)');
-      grad2.addColorStop(0.5, 'rgba(255, 220, 235, 0.15)');
-      grad2.addColorStop(1, 'rgba(255, 247, 250, 0)');
+      const grad2 = ctx.createRadialGradient(orb2X, orb2Y, 10, orb2X, orb2Y, 520);
+      grad2.addColorStop(0, `rgba(${currentTheme.orb2Rgb}, 0.3)`);
+      grad2.addColorStop(0.5, `rgba(${currentTheme.orb2Rgb}, 0.12)`);
+      grad2.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad2;
       ctx.fillRect(0, 0, width, height);
 
       const orb3X = width * 0.5 + Math.sin(time * 0.5) * 80;
       const orb3Y = height * 0.15 + Math.cos(time * 0.6) * 40;
-      const grad3 = ctx.createRadialGradient(orb3X, orb3Y, 10, orb3X, orb3Y, 400);
-      grad3.addColorStop(0, 'rgba(235, 210, 255, 0.35)');
-      grad3.addColorStop(0.6, 'rgba(255, 225, 240, 0.1)');
-      grad3.addColorStop(1, 'rgba(255, 247, 250, 0)');
+      const grad3 = ctx.createRadialGradient(orb3X, orb3Y, 10, orb3X, orb3Y, 420);
+      grad3.addColorStop(0, `rgba(${currentTheme.orb3Rgb}, 0.26)`);
+      grad3.addColorStop(0.6, `rgba(${currentTheme.orb3Rgb}, 0.08)`);
+      grad3.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad3;
       ctx.fillRect(0, 0, width, height);
 
@@ -117,9 +125,9 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
           mouseRef.current.y,
           320
         );
-        mouseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-        mouseGrad.addColorStop(0.3, 'rgba(248, 187, 208, 0.22)');
-        mouseGrad.addColorStop(1, 'rgba(255, 247, 250, 0)');
+        mouseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+        mouseGrad.addColorStop(0.3, `rgba(${currentTheme.primaryRgb}, 0.18)`);
+        mouseGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = mouseGrad;
         ctx.fillRect(0, 0, width, height);
 
@@ -152,8 +160,8 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
-        ctx.fillStyle = `rgba(222, 115, 143, ${currentOpacity * 0.85})`;
-        ctx.shadowColor = 'rgba(255, 200, 220, 0.9)';
+        ctx.fillStyle = `rgba(${currentTheme.primaryRgb}, ${currentOpacity * 0.85})`;
+        ctx.shadowColor = `rgba(${currentTheme.accentRgb}, 0.9)`;
         ctx.shadowBlur = 8;
 
         const s = p.size;
@@ -186,7 +194,7 @@ export const InteractiveGlamBackground: React.FC<Props> = ({ config: propConfig 
 
         ctx.save();
         ctx.translate(tp.x, tp.y);
-        ctx.fillStyle = `rgba(222, 115, 143, ${tp.life * 0.65})`;
+        ctx.fillStyle = `rgba(${currentTheme.stardustRgb}, ${tp.life * 0.65})`;
         ctx.shadowColor = '#FFF';
         ctx.shadowBlur = 6;
         ctx.beginPath();

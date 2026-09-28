@@ -175,9 +175,9 @@ h1, h2, h3, .font-serif-glam {
   transition: var(--transition-smooth);
 }
 
-/* Satin Pink Button (As shown in reference) */
+/* Satin Couture Brand Button (Dynamically tinted with selected theme) */
 .btn-satin-pink {
-  background: linear-gradient(135deg, #E67A95 0%, #D45B7C 100%);
+  background: var(--button-gradient, linear-gradient(135deg, var(--brand-pink-satin, #DE738F) 0%, var(--brand-pink-dark, #C45774) 100%));
   color: #FFFFFF;
   padding: 0.8rem 1.8rem;
   border-radius: var(--radius-xs);
@@ -192,13 +192,13 @@ h1, h2, h3, .font-serif-glam {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  box-shadow: 0 8px 24px rgba(212, 91, 124, 0.35);
+  box-shadow: var(--button-shadow, 0 8px 24px rgba(222, 115, 143, 0.35));
   transition: var(--transition-smooth);
 }
 .btn-satin-pink:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(212, 91, 124, 0.5);
-  background: linear-gradient(135deg, #EA859F 0%, #D86384 100%);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
 }
 .btn-satin-pink:active {
   transform: translateY(0);
@@ -278,7 +278,7 @@ h1, h2, h3, .font-serif-glam {
   overflow: hidden;
   white-space: nowrap;
   position: relative;
-  background: linear-gradient(90deg, #FDECF2 0%, #FFF4F8 50%, #FDECF2 100%);
+  background: var(--marquee-bg, linear-gradient(90deg, #FDECF2 0%, #FFF4F8 50%, #FDECF2 100%));
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 0;

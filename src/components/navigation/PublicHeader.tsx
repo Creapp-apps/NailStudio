@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Smartphone, Calendar, ChevronRight } from 'lucide-react';
 import { WebCustomizationConfig } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { getThemeFromConfig } from '../../lib/themeStyles';
 
 interface Props {
   onOpenBooking: () => void;
@@ -12,9 +13,10 @@ interface Props {
 export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfig }) => {
   const { config: hookConfig } = useWebConfig();
   const config = propConfig || hookConfig;
+  const theme = getThemeFromConfig(config);
 
   return (
-    <header className="header-glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+    <header className="header-glass" style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: `1px solid ${theme.borderSubtle}` }}>
       <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px', padding: '0.5rem 1rem', gap: '0.75rem' }}>
         
         {/* Brand & Logo */}
@@ -27,7 +29,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               borderRadius: '50%',
               overflow: 'hidden',
               background: '#FFFFFF',
-              boxShadow: `0 4px 14px ${config.primaryColor}35`,
+              boxShadow: `0 4px 14px rgba(${theme.primaryRgb}, 0.25)`,
               border: '1.5px solid rgba(255, 255, 255, 0.9)',
               display: 'flex',
               alignItems: 'center',
@@ -51,12 +53,12 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               height: '38px',
               flexShrink: 0,
               borderRadius: '50%',
-              background: `linear-gradient(135deg, ${config.primaryColor} 0%, #301720 100%)`,
+              background: theme.buttonGradient,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
-              boxShadow: `0 4px 12px ${config.primaryColor}55`,
+              boxShadow: `0 4px 12px rgba(${theme.primaryRgb}, 0.35)`,
               border: '1px solid rgba(255, 255, 255, 0.8)',
               fontSize: '1.1rem'
             }}>
@@ -78,7 +80,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
             </div>
             <div className="hidden sm:block" style={{
               fontSize: '0.58rem',
-              color: config.secondaryColor || 'var(--brand-pink-dark)',
+              color: theme.secondary,
               fontFamily: 'var(--font-couture)',
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
@@ -115,9 +117,9 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
               gap: '0.45rem',
               padding: '0.45rem 0.85rem',
               borderRadius: 'var(--radius-full)',
-              background: 'linear-gradient(135deg, rgba(222, 115, 143, 0.12) 0%, rgba(212, 175, 55, 0.12) 100%)',
-              border: '1px solid rgba(222, 115, 143, 0.35)',
-              color: 'var(--brand-pink-dark)',
+              background: `linear-gradient(135deg, rgba(${theme.primaryRgb}, 0.12) 0%, rgba(${theme.accentRgb}, 0.18) 100%)`,
+              border: `1px solid ${theme.borderSubtle}`,
+              color: theme.secondary,
               textDecoration: 'none',
               fontSize: '0.75rem',
               fontWeight: 700,
@@ -128,7 +130,7 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
             }}
             title="Acceso al Portal PWA para Clientas"
           >
-            <Smartphone size={13} color="var(--brand-pink-satin)" />
+            <Smartphone size={13} color={theme.primary} />
             <span>Club Privilege</span>
           </Link>
 
@@ -137,6 +139,8 @@ export const PublicHeader: React.FC<Props> = ({ onOpenBooking, config: propConfi
             onClick={onOpenBooking}
             className="btn-satin-pink"
             style={{
+              background: theme.buttonGradient,
+              boxShadow: theme.buttonShadow,
               padding: '0.5rem 1rem',
               fontSize: '0.72rem',
               letterSpacing: '0.08em',

@@ -7,6 +7,7 @@ import { BookingModal } from '../components/booking/BookingModal';
 import { NailBotModal } from '../components/ai/NailBotModal';
 import { useWebConfig } from '../hooks/useWebConfig';
 import { WebCustomizationConfig } from '../types/webConfig';
+import { getThemeFromConfig } from '../lib/themeStyles';
 
 export const PublicWebView: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export const PublicWebView: React.FC = () => {
   const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
 
   const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
+  const theme = getThemeFromConfig(liveConfig);
 
   // Keep local config in sync with global hook
   useEffect(() => {
@@ -40,7 +42,29 @@ export const PublicWebView: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: theme.bgApp,
+        '--bg-app': theme.bgApp,
+        '--bg-card': theme.bgCard,
+        '--bg-card-hover': theme.bgCardHover,
+        '--border-subtle': theme.borderSubtle,
+        '--border-strong': theme.borderStrong,
+        '--brand-pink-satin': theme.primary,
+        '--brand-pink-dark': theme.secondary,
+        '--brand-gold': theme.accent,
+        '--button-gradient': theme.buttonGradient,
+        '--button-shadow': theme.buttonShadow,
+        '--marquee-bg': theme.marqueeBg,
+        '--font-serif-glam': liveConfig.headingFont,
+        '--font-couture': liveConfig.accentFont,
+        '--font-body': liveConfig.bodyFont,
+        transition: 'background-color 0.4s ease'
+      } as React.CSSProperties}
+    >
       {/* Dedicated Luxury Public Header */}
       <PublicHeader onOpenBooking={() => handleOpenBooking()} config={liveConfig} />
 

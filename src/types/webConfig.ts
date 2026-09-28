@@ -18,7 +18,7 @@ export interface WebCustomizationConfig {
   primaryColor: string;
   secondaryColor: string;
   accentGold: string;
-  themePreset: 'dark_espresso' | 'rose_quartz' | 'noir_gold' | 'porcelain_light';
+  themePreset: 'dark_espresso' | 'rose_quartz' | 'noir_gold' | 'burgundy' | 'lilac' | 'porcelain_light' | string;
   glowColor: 'rose_quartz' | 'gold_glamour' | 'emerald_velvet' | 'celestial_silver' | 'custom';
   glowCustomColor: string;
   glowIntensity: number; // 0 to 100

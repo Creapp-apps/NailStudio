@@ -22,6 +22,7 @@ import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
 import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
 import { WebCustomizationConfig } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { getThemeFromConfig } from '../../lib/themeStyles';
 
 interface Props {
   onOpenBooking: (serviceId?: string) => void;
@@ -38,6 +39,7 @@ export const PublicLanding: React.FC<Props> = ({
 }) => {
   const { config: hookConfig } = useWebConfig();
   const config = propConfig || hookConfig;
+  const theme = getThemeFromConfig(config);
   const [activeFeature, setActiveFeature] = useState<number>(0);
 
   const whyChooseUs = [
@@ -45,7 +47,7 @@ export const PublicLanding: React.FC<Props> = ({
       id: 0,
       title: 'TRATAMIENTOS DE AUTOR',
       icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
           <path d="M12 2v4" />
           <path d="m4.93 4.93 2.83 2.83" />
           <path d="M2 12h4" />
@@ -61,7 +63,7 @@ export const PublicLanding: React.FC<Props> = ({
       id: 1,
       title: 'PRODUCTOS HIPOALERGÉNICOS',
       icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
           <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4Z" />
           <path d="M10 8h4" />
           <circle cx="12" cy="15" r="2" />
@@ -73,7 +75,7 @@ export const PublicLanding: React.FC<Props> = ({
       id: 2,
       title: 'MANICURISTAS EXPERTAS',
       icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
           <rect width="20" height="14" x="2" y="7" rx="2" />
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
         </svg>
@@ -84,7 +86,7 @@ export const PublicLanding: React.FC<Props> = ({
       id: 3,
       title: 'AMBIENTE BOUTIQUE',
       icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
           <circle cx="12" cy="12" r="8" />
           <path d="M12 2v2" />
           <path d="M12 20v2" />
@@ -103,10 +105,22 @@ export const PublicLanding: React.FC<Props> = ({
       className="animate-fade-in"
       style={{
         position: 'relative',
-        '--brand-pink-satin': config.primaryColor,
-        '--brand-pink-dark': config.secondaryColor,
+        backgroundColor: theme.bgApp,
+        '--bg-app': theme.bgApp,
+        '--bg-card': theme.bgCard,
+        '--bg-card-hover': theme.bgCardHover,
+        '--border-subtle': theme.borderSubtle,
+        '--border-strong': theme.borderStrong,
+        '--brand-pink-satin': theme.primary,
+        '--brand-pink-dark': theme.secondary,
+        '--brand-gold': theme.accent,
+        '--button-gradient': theme.buttonGradient,
+        '--button-shadow': theme.buttonShadow,
+        '--marquee-bg': theme.marqueeBg,
         '--font-serif-glam': config.headingFont,
-        '--font-couture': config.accentFont
+        '--font-couture': config.accentFont,
+        '--font-body': config.bodyFont,
+        transition: 'background-color 0.4s ease'
       } as React.CSSProperties}
     >
       {/* Living Ambient Stardust & Breathing Liquid Aurora Canvas */}
@@ -116,9 +130,9 @@ export const PublicLanding: React.FC<Props> = ({
       <div
         className="subnav-scroll"
         style={{
-          background: 'rgba(255, 247, 250, 0.92)',
+          background: theme.subnavBg,
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--border-subtle)',
+          borderBottom: `1px solid ${theme.borderSubtle}`,
           padding: '0.65rem 1.25rem',
           fontSize: '0.75rem',
           letterSpacing: '0.1em',
@@ -130,16 +144,16 @@ export const PublicLanding: React.FC<Props> = ({
         }}
       >
         <span>Inicio</span>
-        <span style={{ color: config.primaryColor }}>•</span>
+        <span style={{ color: theme.primary }}>•</span>
         <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
-        <span style={{ color: config.primaryColor }}>•</span>
+        <span style={{ color: theme.primary }}>•</span>
         <a href="#why-us" style={{ color: 'inherit', textDecoration: 'none' }}>¿Por Qué Elegirnos?</a>
-        <span style={{ color: config.primaryColor }}>•</span>
+        <span style={{ color: theme.primary }}>•</span>
         <a href="#nail-art" style={{ color: 'inherit', textDecoration: 'none' }}>Galería Nail Art</a>
-        <span style={{ color: config.primaryColor }}>•</span>
-        <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: config.primaryColor, fontWeight: 700 }}>Nail-Bot IA</span>
-        <span style={{ color: config.primaryColor }}>•</span>
-        <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: '#B8860B', fontWeight: 700 }}>Club Privilege</span>
+        <span style={{ color: theme.primary }}>•</span>
+        <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: theme.primary, fontWeight: 700 }}>Nail-Bot IA</span>
+        <span style={{ color: theme.primary }}>•</span>
+        <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: theme.accent, fontWeight: 700 }}>Club Privilege</span>
       </div>
 
       {/* HERO SECTION: Editorial High Glamour with 3D Specular Tilt */}
@@ -149,9 +163,9 @@ export const PublicLanding: React.FC<Props> = ({
         display: 'flex',
         alignItems: 'center',
         padding: '2.5rem 1rem 3.5rem 1rem',
-        background: `radial-gradient(circle at 75% 25%, ${config.primaryColor}25 0%, rgba(255, 245, 248, 0.25) 45%, rgba(252, 245, 248, 0.1) 100%)`,
+        background: theme.heroGradient,
         overflow: 'hidden',
-        borderBottom: '1px solid var(--border-subtle)',
+        borderBottom: `1px solid ${theme.borderSubtle}`,
         zIndex: 10
       }}>
         <div className="app-container hero-grid-responsive" style={{ width: '100%' }}>
@@ -162,15 +176,15 @@ export const PublicLanding: React.FC<Props> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
-              background: 'rgba(255, 255, 255, 0.85)',
+              background: 'rgba(255, 255, 255, 0.88)',
               padding: '0.4rem 0.9rem',
               borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--border-subtle)',
+              border: `1px solid ${theme.borderSubtle}`,
               marginBottom: '1.25rem',
-              boxShadow: '0 4px 15px rgba(222, 115, 143, 0.1)'
+              boxShadow: `0 4px 15px rgba(${theme.primaryRgb}, 0.12)`
             }}>
-              <Sparkles size={14} color={config.primaryColor} />
-              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: config.secondaryColor, fontWeight: 700 }}>
+              <Sparkles size={14} color={theme.primary} />
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: theme.secondary, fontWeight: 700 }}>
                 {config.badgeText || config.heroPill}
               </span>
             </div>
@@ -203,7 +217,10 @@ export const PublicLanding: React.FC<Props> = ({
               <button
                 onClick={() => onOpenBooking()}
                 className="btn-satin-pink"
-                style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.secondaryColor} 100%)` }}
+                style={{
+                  background: theme.buttonGradient,
+                  boxShadow: theme.buttonShadow
+                }}
               >
                 {config.ctaPrimaryText}
               </button>
@@ -211,9 +228,9 @@ export const PublicLanding: React.FC<Props> = ({
               <button
                 onClick={onOpenNailBot}
                 className="btn-outline-couture"
-                style={{ borderColor: config.primaryColor, color: config.secondaryColor }}
+                style={{ borderColor: theme.primary, color: theme.secondary }}
               >
-                <Sparkles size={15} color={config.primaryColor} />
+                <Sparkles size={15} color={theme.primary} />
                 {config.ctaSecondaryText}
               </button>
             </div>
@@ -293,9 +310,9 @@ export const PublicLanding: React.FC<Props> = ({
       {/* MASSIVE EDITORIAL STATEMENT BANNER (Exact Reference Match) */}
       <section style={{
         padding: '5.5rem 1.5rem',
-        background: '#FAF5F8',
-        borderTop: '1px solid var(--border-subtle)',
-        borderBottom: '1px solid var(--border-subtle)',
+        background: theme.statementBg,
+        borderTop: `1px solid ${theme.borderSubtle}`,
+        borderBottom: `1px solid ${theme.borderSubtle}`,
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -307,7 +324,7 @@ export const PublicLanding: React.FC<Props> = ({
           opacity: 0.12,
           pointerEvents: 'none',
           fontSize: '320px',
-          color: 'var(--brand-pink-satin)'
+          color: theme.primary
         }}>
           🌸
         </div>
@@ -318,7 +335,7 @@ export const PublicLanding: React.FC<Props> = ({
             fontFamily: 'var(--font-couture)',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: 'var(--brand-pink-dark)',
+            color: theme.secondary,
             marginBottom: '1.25rem'
           }}>
             Atelier Nails • Estudio Boutique Buenos Aires
@@ -358,6 +375,10 @@ export const PublicLanding: React.FC<Props> = ({
             <button
               onClick={() => onOpenBooking()}
               className="btn-satin-pink"
+              style={{
+                background: theme.buttonGradient,
+                boxShadow: theme.buttonShadow
+              }}
             >
               VER TURNOS Y DISPONIBILIDAD
             </button>
@@ -369,7 +390,15 @@ export const PublicLanding: React.FC<Props> = ({
       <section id="servicios" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.82)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
-            <span className="badge-luxury badge-rose" style={{ marginBottom: '0.75rem' }}>
+            <span
+              className="badge-luxury"
+              style={{
+                background: `rgba(${theme.primaryRgb}, 0.12)`,
+                color: theme.secondary,
+                border: `1px solid ${theme.borderSubtle}`,
+                marginBottom: '0.75rem'
+              }}
+            >
               MENÚ DE ALTA MANICURÍA
             </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
@@ -385,11 +414,11 @@ export const PublicLanding: React.FC<Props> = ({
               <div
                 key={service.id}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
+                  background: 'rgba(255, 255, 255, 0.92)',
                   backdropFilter: 'blur(8px)',
                   borderRadius: 'var(--radius-md)',
                   overflow: 'hidden',
-                  border: '1px solid var(--border-subtle)',
+                  border: `1px solid ${theme.borderSubtle}`,
                   boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -403,7 +432,17 @@ export const PublicLanding: React.FC<Props> = ({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   {service.badge && (
-                    <span className="badge-luxury badge-rose" style={{ position: 'absolute', top: '14px', right: '14px' }}>
+                    <span
+                      className="badge-luxury"
+                      style={{
+                        background: `rgba(${theme.primaryRgb}, 0.18)`,
+                        color: theme.secondary,
+                        border: `1px solid ${theme.borderSubtle}`,
+                        position: 'absolute',
+                        top: '14px',
+                        right: '14px'
+                      }}
+                    >
                       {service.badge}
                     </span>
                   )}
@@ -416,7 +455,7 @@ export const PublicLanding: React.FC<Props> = ({
                     </h3>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)' }}>
+                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: theme.secondary, fontFamily: 'var(--font-couture)' }}>
                         ${service.basePrice.toLocaleString('es-AR')}
                       </span>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -428,7 +467,15 @@ export const PublicLanding: React.FC<Props> = ({
                       {service.description}
                     </p>
 
-                    <div style={{ background: '#FFF0F5', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', color: 'var(--brand-pink-dark)', marginBottom: '1.5rem', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{
+                      background: `rgba(${theme.primaryRgb}, 0.08)`,
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.75rem',
+                      color: theme.secondary,
+                      marginBottom: '1.5rem',
+                      border: `1px solid ${theme.borderSubtle}`
+                    }}>
                       <strong>Recomendado:</strong> {service.recommendedFor}
                     </div>
                   </div>
@@ -436,7 +483,12 @@ export const PublicLanding: React.FC<Props> = ({
                   <button
                     onClick={() => onOpenBooking(service.id)}
                     className="btn-satin-pink"
-                    style={{ width: '100%', borderRadius: 'var(--radius-full)' }}
+                    style={{
+                      background: theme.buttonGradient,
+                      boxShadow: theme.buttonShadow,
+                      width: '100%',
+                      borderRadius: 'var(--radius-full)'
+                    }}
                   >
                     Reservar este Set <ChevronRight size={16} />
                   </button>
@@ -448,10 +500,18 @@ export const PublicLanding: React.FC<Props> = ({
       </section>
 
       {/* NAIL ART TIERS (Glitter & Shiny Finishes) */}
-      <section id="nail-art" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 247, 250, 0.82)', backdropFilter: 'blur(16px)', borderTop: '1px solid var(--border-subtle)', position: 'relative', zIndex: 10 }}>
+      <section id="nail-art" style={{ padding: '5.5rem 1.5rem', background: theme.bgApp, backdropFilter: 'blur(16px)', borderTop: `1px solid ${theme.borderSubtle}`, position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
-            <span className="badge-luxury badge-gold" style={{ marginBottom: '0.75rem' }}>
+            <span
+              className="badge-luxury"
+              style={{
+                background: `rgba(${theme.accentRgb}, 0.25)`,
+                color: theme.secondary,
+                border: `1px solid ${theme.borderSubtle}`,
+                marginBottom: '0.75rem'
+              }}
+            >
               BARRA DE NAIL ART & DISEÑO
             </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
@@ -470,7 +530,7 @@ export const PublicLanding: React.FC<Props> = ({
                   background: 'var(--bg-surface)',
                   borderRadius: 'var(--radius-md)',
                   padding: '1.5rem',
-                  border: '1px solid var(--border-subtle)',
+                  border: `1px solid ${theme.borderSubtle}`,
                   boxShadow: 'var(--shadow-sm)'
                 }}
               >
@@ -480,7 +540,7 @@ export const PublicLanding: React.FC<Props> = ({
                 <h4 style={{ fontSize: '1rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.3rem' }}>
                   {tier.name}
                 </h4>
-                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--brand-pink-dark)', marginBottom: '0.5rem', fontFamily: 'var(--font-couture)' }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: theme.secondary, marginBottom: '0.5rem', fontFamily: 'var(--font-couture)' }}>
                   {tier.price > 0 ? `+$${tier.price.toLocaleString('es-AR')}` : 'Sin costo adicional'}
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
@@ -488,7 +548,7 @@ export const PublicLanding: React.FC<Props> = ({
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                   {tier.examples.map(ex => (
-                    <span key={ex} style={{ fontSize: '0.7rem', background: '#FFF0F5', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', color: 'var(--brand-pink-dark)', border: '1px solid var(--border-subtle)' }}>
+                    <span key={ex} style={{ fontSize: '0.7rem', background: `rgba(${theme.primaryRgb}, 0.08)`, padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', color: theme.secondary, border: `1px solid ${theme.borderSubtle}` }}>
                       {ex}
                     </span>
                   ))}
