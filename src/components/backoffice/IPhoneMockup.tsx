@@ -2,13 +2,17 @@ import React, { useRef } from 'react';
 import { Wifi, Battery, RotateCcw, Share, BookOpen, Layers, Lock } from 'lucide-react';
 
 interface Props {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  iframeSrc?: string;
+  iframeRef?: React.RefObject<HTMLIFrameElement>;
   url?: string;
   className?: string;
 }
 
 export const IPhoneMockup: React.FC<Props> = ({
   children,
+  iframeSrc,
+  iframeRef,
   url = 'ateliernails.com',
   className = ''
 }) => {
@@ -33,7 +37,7 @@ export const IPhoneMockup: React.FC<Props> = ({
           <div className="relative h-full w-full overflow-hidden rounded-[42px] bg-black ring-1 ring-white/10 flex flex-col">
             
             {/* 1. iOS Status Bar & Dynamic Island */}
-            <div className="relative z-50 flex h-11 w-full items-center justify-between px-7 pt-1.5 text-[13px] font-semibold text-zinc-900 bg-white/70 backdrop-blur-md">
+            <div className="relative z-50 flex h-11 w-full items-center justify-between px-7 pt-1.5 text-[13px] font-semibold text-zinc-900 bg-white/80 backdrop-blur-md border-b border-black/5">
               {/* iOS Time */}
               <span className="font-semibold tracking-tight text-xs text-zinc-900">9:41</span>
 
@@ -59,19 +63,30 @@ export const IPhoneMockup: React.FC<Props> = ({
             </div>
 
             {/* 2. Scrollable Viewport Content Area */}
-            <div
-              ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto overflow-x-hidden bg-[#FFF7FA] scroll-smooth"
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}
-            >
-              {children}
+            <div className="flex-1 overflow-hidden bg-[#FFF7FA] flex flex-col relative">
+              {iframeSrc ? (
+                <iframe
+                  ref={iframeRef}
+                  src={iframeSrc}
+                  title="Vista Previa Móvil iPhone"
+                  className="w-full h-full border-none bg-[#FFF7FA]"
+                />
+              ) : (
+                <div
+                  ref={scrollContainerRef}
+                  className="flex-1 overflow-y-auto overflow-x-hidden bg-[#FFF7FA] scroll-smooth"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
+                  }}
+                >
+                  {children}
+                </div>
+              )}
             </div>
 
             {/* 3. iOS Safari Floating Address Bar & Home Indicator */}
-            <div className="relative z-40 flex flex-col items-center border-t border-black/5 bg-white/85 px-4 pt-2 pb-1.5 backdrop-blur-md shadow-lg">
+            <div className="relative z-40 flex flex-col items-center border-t border-black/5 bg-white/90 px-4 pt-2 pb-1.5 backdrop-blur-md shadow-lg">
               {/* Safari URL Pill */}
               <div className="flex h-8 w-full items-center justify-between rounded-xl bg-black/5 px-3 text-[11px] text-zinc-700">
                 <div className="flex items-center gap-1.5 truncate">
@@ -80,12 +95,14 @@ export const IPhoneMockup: React.FC<Props> = ({
                 </div>
                 <button
                   onClick={() => {
-                    if (scrollContainerRef.current) {
+                    if (iframeRef?.current?.contentWindow) {
+                      iframeRef.current.contentWindow.location.reload();
+                    } else if (scrollContainerRef.current) {
                       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                   }}
                   className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
-                  title="Volver arriba"
+                  title="Recargar vista previa"
                 >
                   <RotateCcw className="size-3" />
                 </button>

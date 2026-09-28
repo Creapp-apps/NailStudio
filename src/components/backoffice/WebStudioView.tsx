@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Palette,
@@ -50,6 +50,23 @@ export const WebStudioView: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<StudioCategory>('identidad');
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const mobileIframeRef = useRef<HTMLIFrameElement>(null);
+  const desktopIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Broadcast real-time config updates to the preview iframes
+  useEffect(() => {
+    const payload = {
+      type: 'STUDIO_CONFIG_UPDATE',
+      config: draftConfig
+    };
+    if (mobileIframeRef.current?.contentWindow) {
+      mobileIframeRef.current.contentWindow.postMessage(payload, '*');
+    }
+    if (desktopIframeRef.current?.contentWindow) {
+      desktopIframeRef.current.contentWindow.postMessage(payload, '*');
+    }
+  }, [draftConfig]);
 
   // Quick Luxury Palettes
   const palettePresets = [
@@ -1001,38 +1018,33 @@ export const WebStudioView: React.FC = () => {
           {/* Device Preview Container */}
           {previewDevice === 'mobile' ? (
             <div className="flex justify-center py-1">
-              <IPhoneMockup url="ateliernails.com">
-                <PublicHeader onOpenBooking={() => {}} config={draftConfig} />
-                <PublicLanding
-                  onOpenBooking={() => {}}
-                  onOpenNailBot={() => {}}
-                  onOpenPortal={() => {}}
-                  config={draftConfig}
-                />
-              </IPhoneMockup>
+              <IPhoneMockup
+                iframeSrc="/?preview=true"
+                iframeRef={mobileIframeRef}
+                url="ateliernails.com"
+              />
             </div>
           ) : (
             /* Desktop Preview Box */
-            <div className="rounded-xl border border-border bg-[#140D10] shadow-xl overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/10 bg-[#1E1216] px-3 py-2 text-xs text-zinc-400">
+            <div className="rounded-2xl border border-rose-200/60 dark:border-rose-900/40 bg-[#140D10] shadow-xl overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/10 bg-[#1E1216] px-3.5 py-2.5 text-xs text-zinc-400">
                 <div className="flex items-center gap-1.5">
                   <span className="size-2.5 rounded-full bg-red-500/80" />
                   <span className="size-2.5 rounded-full bg-amber-500/80" />
                   <span className="size-2.5 rounded-full bg-emerald-500/80" />
                 </div>
-                <div className="flex items-center gap-1 rounded-md border border-white/10 bg-black/40 px-3 py-0.5 text-[10px] text-zinc-300">
+                <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-black/40 px-3 py-0.5 text-[10px] text-zinc-300">
                   <span className="text-emerald-400">🔒</span>
                   <span>https://ateliernails.com</span>
                 </div>
-                <span className="text-[10px] text-zinc-500">v1.0 Desktop</span>
+                <span className="text-[10px] text-zinc-500 font-mono">100% Desktop Viewport</span>
               </div>
-              <div className="bg-[#FFF7FA] overflow-y-auto max-h-[780px]">
-                <PublicHeader onOpenBooking={() => {}} config={draftConfig} />
-                <PublicLanding
-                  onOpenBooking={() => {}}
-                  onOpenNailBot={() => {}}
-                  onOpenPortal={() => {}}
-                  config={draftConfig}
+              <div className="bg-[#FFF7FA] h-[780px] w-full">
+                <iframe
+                  ref={desktopIframeRef}
+                  src="/?preview=true"
+                  title="Vista Previa Escritorio"
+                  className="w-full h-full border-none"
                 />
               </div>
             </div>

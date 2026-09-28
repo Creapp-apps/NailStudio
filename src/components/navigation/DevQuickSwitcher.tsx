@@ -32,6 +32,11 @@ export const DevQuickSwitcher: React.FC = () => {
 
   const currentView = views.find(v => v.path === currentPath) || views[0];
 
+  // Do not render if embedded inside a preview iframe
+  if (typeof window !== 'undefined' && window.self !== window.top) {
+    return null;
+  }
+
   return (
     <div style={{
       position: 'fixed',
