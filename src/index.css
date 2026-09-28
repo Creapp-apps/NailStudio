@@ -582,3 +582,55 @@ html, body {
     letter-spacing: 0.015em;
   }
 }
+
+/* ==========================================================================
+   CINEMATIC GRAND REVEAL & PRELOADER ANIMATIONS
+   ========================================================================== */
+@keyframes cinematicRevealDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cinematicRevealUp {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cinematicSoftGlow {
+  0%, 100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+.cinematic-stagger-header {
+  animation: cinematicRevealDown 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cinematic-stagger-hero {
+  animation: cinematicRevealUp 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
+.cinematic-stagger-content {
+  animation: cinematicRevealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+}
+
+.cinematic-stagger-floating {
+  animation: cinematicRevealUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+}

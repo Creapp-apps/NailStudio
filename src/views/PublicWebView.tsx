@@ -5,6 +5,7 @@ import { PublicHeader } from '../components/navigation/PublicHeader';
 import { PublicLanding } from '../components/public/PublicLanding';
 import { BookingModal } from '../components/booking/BookingModal';
 import { NailBotModal } from '../components/ai/NailBotModal';
+import { CinematicPreloader } from '../components/public/CinematicPreloader';
 import { useWebConfig } from '../hooks/useWebConfig';
 import { WebCustomizationConfig } from '../types/webConfig';
 import { getThemeFromConfig } from '../lib/themeStyles';
@@ -19,6 +20,30 @@ export const PublicWebView: React.FC = () => {
 
   const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
   const theme = getThemeFromConfig(liveConfig);
+
+  // Cinematic preloader state (displayed on initial entrance per session, skipped in studio iframe)
+  const [showPreloader, setShowPreloader] = useState(() => {
+    if (isEmbedded) return false;
+    const seen = sessionStorage.getItem('atelier_intro_seen');
+    return !seen;
+  });
+  const [isRevealed, setIsRevealed] = useState(() => isEmbedded || Boolean(sessionStorage.getItem('atelier_intro_seen')));
+
+  // Allow re-triggering from DevSwitcher or user preference
+  useEffect(() => {
+    const handleReplayIntro = () => {
+      setShowPreloader(true);
+      setIsRevealed(false);
+    };
+    window.addEventListener('replay_atelier_intro', handleReplayIntro);
+    return () => window.removeEventListener('replay_atelier_intro', handleReplayIntro);
+  }, []);
+
+  const handlePreloaderFinish = () => {
+    sessionStorage.setItem('atelier_intro_seen', 'true');
+    setShowPreloader(false);
+    setIsRevealed(true);
+  };
 
   // Keep local config in sync with global hook
   useEffect(() => {
@@ -93,11 +118,21 @@ export const PublicWebView: React.FC = () => {
         transition: 'background-color 0.4s ease'
       } as React.CSSProperties}
     >
+      {/* Cinematic Haute Glam Preloader */}
+      {showPreloader && (
+        <CinematicPreloader
+          brandName={liveConfig.brandName || 'Atelier Nails & Co.'}
+          onFinish={handlePreloaderFinish}
+        />
+      )}
+
       {/* Dedicated Luxury Public Header */}
-      <PublicHeader onOpenBooking={() => handleOpenBooking()} config={liveConfig} />
+      <div className={isRevealed ? 'cinematic-stagger-header' : ''} style={{ opacity: isRevealed ? 1 : 0 }}>
+        <PublicHeader onOpenBooking={() => handleOpenBooking()} config={liveConfig} />
+      </div>
 
       {/* Main Public Web Landing */}
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, opacity: isRevealed ? 1 : 0 }} className={isRevealed ? 'cinematic-stagger-hero' : ''}>
         <PublicLanding
           onOpenBooking={handleOpenBooking}
           onOpenNailBot={() => setIsNailBotOpen(true)}
@@ -108,7 +143,16 @@ export const PublicWebView: React.FC = () => {
 
       {/* Floating AI Receptionist Trigger (hidden in studio preview iframe to prevent obstruction) */}
       {!isEmbedded && (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 80 }}>
+        <div
+          className={isRevealed ? 'cinematic-stagger-floating' : ''}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 80,
+            opacity: isRevealed ? 1 : 0
+          }}
+        >
         {!isNailBotOpen && (
           <button
             onClick={() => setIsNailBotOpen(true)}

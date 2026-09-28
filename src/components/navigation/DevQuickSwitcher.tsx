@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Globe, Smartphone, Settings, Layers, ChevronUp, ChevronDown } from 'lucide-react';
+import { Globe, Smartphone, Settings, Layers, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
 
 export const DevQuickSwitcher: React.FC = () => {
   const location = useLocation();
@@ -123,6 +123,40 @@ export const DevQuickSwitcher: React.FC = () => {
                 </button>
               );
             })}
+          </div>
+
+          {/* Replay Cinematic Intro Trigger */}
+          <div style={{ marginTop: '0.45rem', paddingTop: '0.45rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem('atelier_intro_seen');
+                window.dispatchEvent(new CustomEvent('replay_atelier_intro'));
+                if (location.pathname !== '/') {
+                  navigate('/');
+                }
+                setIsExpanded(false);
+              }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '8px',
+                border: '1px dashed rgba(224, 200, 158, 0.45)',
+                background: 'rgba(224, 200, 158, 0.08)',
+                color: '#E0C89E',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Sparkles size={12} color="#E0C89E" />
+              <span>Ver Carga Cinemática</span>
+            </button>
           </div>
         </div>
       ) : (
