@@ -1,0 +1,273 @@
+/* ==========================================================================
+   ATELIER NAILS & CO. - DESIGN SYSTEM TOKENS
+   Aesthetic: Haute Editorial & Warm Nude Minimalism
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Warm Nude & Haute Editorial */
+  --bg-app: #FAF7F5;
+  --bg-surface: #FFFFFF;
+  --bg-card: #F7F3EE;
+  --bg-card-subtle: #FDFBF9;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+
+  --border-subtle: #ECE4DC;
+  --border-strong: #DFD3C6;
+  --border-focus: #B8735C;
+
+  /* Accent & Luxury Branding */
+  --brand-terracotta: #A65D4E;
+  --brand-terracotta-dark: #8C473A;
+  --brand-rose: #D99B8B;
+  --brand-rose-light: #F7EAE6;
+  --brand-champagne: #C8AA82;
+  --brand-champagne-light: #F6F0E7;
+  --brand-espresso: #201715;
+
+  /* Typography Colors */
+  --text-main: #231916;
+  --text-secondary: #6B5E57;
+  --text-muted: #9C8F87;
+  --text-white: #FFFFFF;
+  --text-terracotta: #A65D4E;
+
+  /* Status Colors */
+  --status-pending: #C28B38;
+  --status-pending-bg: #FDF5E8;
+  --status-confirmed: #427A5B;
+  --status-confirmed-bg: #EDF7F1;
+  --status-in-progress: #805AD5;
+  --status-in-progress-bg: #F3E8FF;
+  --status-alert: #C53030;
+  --status-alert-bg: #FFF5F5;
+
+  /* Typography Families */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-editorial: 'Syne', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Shadows & Elevation */
+  --shadow-sm: 0 2px 8px rgba(35, 25, 22, 0.04);
+  --shadow-md: 0 8px 24px rgba(35, 25, 22, 0.07);
+  --shadow-lg: 0 16px 40px rgba(35, 25, 22, 0.1);
+  --shadow-luxury: 0 20px 50px -10px rgba(166, 93, 78, 0.18);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial);
+  letter-spacing: -0.02em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-terracotta);
+}
+
+/* Layout Utilities */
+.app-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Glassmorphism Navigation */
+.header-glass {
+  background: rgba(250, 247, 245, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: var(--transition-smooth);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-terracotta) 0%, var(--brand-terracotta-dark) 100%);
+  color: var(--text-white);
+  padding: 0.75rem 1.6rem;
+  border-radius: var(--radius-full);
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.925rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(166, 93, 78, 0.28);
+  transition: var(--transition-smooth);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(166, 93, 78, 0.4);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.925rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: var(--transition-smooth);
+}
+.btn-secondary:hover {
+  background: var(--bg-card);
+  border-color: var(--brand-terracotta);
+  color: var(--brand-terracotta);
+}
+
+/* Luxury Metallic / Iridescent PWA Card */
+.nail-pass-card {
+  background: linear-gradient(135deg, #1f1816 0%, #352622 50%, #1a1412 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-luxury);
+  border: 1px solid rgba(212, 175, 122, 0.3);
+}
+.nail-pass-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(217, 155, 139, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+  animation: shineRotate 12s linear infinite;
+}
+@keyframes shineRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Additive Nail-Time Progress Pill */
+.nail-time-meter {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Badges */
+.badge-luxury {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+}
+.badge-gold {
+  background: var(--brand-champagne-light);
+  color: #8C6D3F;
+  border: 1px solid rgba(200, 170, 130, 0.4);
+}
+.badge-rose {
+  background: var(--brand-rose-light);
+  color: var(--brand-terracotta);
+  border: 1px solid rgba(217, 155, 139, 0.4);
+}
+
+/* Interactive Tabs */
+.tab-pills {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 0.35rem;
+  gap: 0.35rem;
+}
+.tab-pill-btn {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+.tab-pill-btn.active {
+  background: var(--bg-surface);
+  color: var(--brand-terracotta);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Smooth Fade In */
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
