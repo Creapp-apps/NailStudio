@@ -233,7 +233,9 @@ export const BookingModal: React.FC<Props> = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           {confirmedApt ? (
             /* Confirmation View */
@@ -301,11 +303,13 @@ export const BookingModal: React.FC<Props> = ({
             <>
               {/* STEP 1: SERVICE (2x2 Compact Grid - Badges Never Overlap) */}
               {step === 1 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '0.65rem'
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: '0.65rem',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}>
                     {services.slice(0, 4).map(srv => {
                       const isSelected = selectedService?.id === srv.id;
@@ -326,7 +330,11 @@ export const BookingModal: React.FC<Props> = ({
                             flexDirection: 'column',
                             justifyContent: 'space-between',
                             height: '110px',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)'
+                            minWidth: 0,
+                            maxWidth: '100%',
+                            boxSizing: 'border-box',
+                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                            overflow: 'hidden'
                           }}
                         >
                           <div>
@@ -416,8 +424,8 @@ export const BookingModal: React.FC<Props> = ({
 
               {/* STEP 2: REMOVAL (3 Compact Row Cards) */}
               {step === 2 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%', boxSizing: 'border-box' }}>
                     {REMOVAL_OPTIONS.map(rem => {
                       const isSelected = selectedRemoval.id === rem.id;
                       return (
@@ -436,10 +444,13 @@ export const BookingModal: React.FC<Props> = ({
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.12)' : 'none'
+                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.12)' : 'none',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            minWidth: 0
                           }}
                         >
-                          <div>
+                          <div style={{ minWidth: 0, paddingRight: '0.5rem' }}>
                             <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-espresso)', margin: '0 0 0.15rem 0' }}>
                               {rem.label}
                             </h4>
@@ -462,13 +473,15 @@ export const BookingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* STEP 3: NAIL ART (2x2 Compact Cards) */}
+              {/* STEP 3: NAIL ART (2x2 Compact Cards - Guaranteed Zero Clip) */}
               {step === 3 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '0.65rem'
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: '0.65rem',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}>
                     {NAIL_ART_TIERS.map(tier => {
                       const isSelected = selectedNailArt.id === tier.id;
@@ -481,7 +494,7 @@ export const BookingModal: React.FC<Props> = ({
                               ? '2px solid var(--brand-pink-dark)'
                               : '1px solid rgba(222, 115, 143, 0.25)',
                             borderRadius: '12px',
-                            padding: '0.65rem 0.85rem',
+                            padding: '0.65rem 0.8rem',
                             cursor: 'pointer',
                             background: isSelected ? 'rgba(222, 115, 143, 0.06)' : '#FFFFFF',
                             transition: 'all 0.2s ease',
@@ -489,15 +502,19 @@ export const BookingModal: React.FC<Props> = ({
                             flexDirection: 'column',
                             justifyContent: 'space-between',
                             height: '110px',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : 'none'
+                            minWidth: 0,
+                            maxWidth: '100%',
+                            boxSizing: 'border-box',
+                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : 'none',
+                            overflow: 'hidden'
                           }}
                         >
-                          <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-                              <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--brand-espresso)', margin: 0 }}>
+                          <div style={{ minWidth: 0, width: '100%' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem', gap: '0.4rem', minWidth: 0 }}>
+                              <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--brand-espresso)', margin: 0, whiteSpace: 'nowrap' }}>
                                 {tier.name.split(':')[0]}
                               </h4>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--brand-pink-dark)' }}>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--brand-pink-dark)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                                 {tier.price > 0 ? `+$${tier.price.toLocaleString('es-AR')}` : 'Incluido'}
                               </span>
                             </div>
@@ -508,13 +525,15 @@ export const BookingModal: React.FC<Props> = ({
                               lineHeight: 1.25,
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                              textOverflow: 'ellipsis',
+                              minWidth: 0,
+                              width: '100%'
                             }}>
                               {tier.description}
                             </p>
                           </div>
 
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                          <div style={{ display: 'flex', gap: '0.25rem', width: '100%', minWidth: 0, overflow: 'hidden' }}>
                             {tier.examples.slice(0, 2).map(ex => (
                               <span
                                 key={ex}
@@ -522,9 +541,14 @@ export const BookingModal: React.FC<Props> = ({
                                   fontSize: '0.62rem',
                                   background: 'rgba(222, 115, 143, 0.1)',
                                   color: 'var(--brand-espresso)',
-                                  padding: '0.1rem 0.4rem',
+                                  padding: '0.12rem 0.4rem',
                                   borderRadius: '4px',
-                                  whiteSpace: 'nowrap'
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: '100%',
+                                  flexShrink: 1,
+                                  minWidth: 0
                                 }}
                               >
                                 {ex}
@@ -540,10 +564,10 @@ export const BookingModal: React.FC<Props> = ({
 
               {/* STEP 4: TECH, DATE & TIME (2 Columns Compact) */}
               {step === 4 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
                     {/* Left: Professional & Date */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                       <div>
                         <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
                           Mesa & Especialista
@@ -558,7 +582,9 @@ export const BookingModal: React.FC<Props> = ({
                           gap: '0.5rem',
                           fontSize: '0.78rem',
                           fontWeight: 600,
-                          color: 'var(--brand-espresso)'
+                          color: 'var(--brand-espresso)',
+                          boxSizing: 'border-box',
+                          width: '100%'
                         }}>
                           <Sparkles size={14} color="var(--brand-pink-dark)" />
                           <span>Mesa de Alta Precisión (Asignada)</span>
@@ -575,6 +601,7 @@ export const BookingModal: React.FC<Props> = ({
                           onChange={(e) => setSelectedDate(e.target.value)}
                           style={{
                             width: '100%',
+                            boxSizing: 'border-box',
                             padding: '0.55rem 0.75rem',
                             borderRadius: '10px',
                             border: '1px solid rgba(0,0,0,0.12)',
@@ -589,11 +616,11 @@ export const BookingModal: React.FC<Props> = ({
                     </div>
 
                     {/* Right: Available Hours Grid */}
-                    <div>
+                    <div style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
                         Horarios Disponibles (Sesión {totalDuration} min)
                       </label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.4rem', width: '100%', boxSizing: 'border-box' }}>
                         {availableHours.map(hour => {
                           const isSelected = selectedTime === hour;
                           return (
@@ -612,7 +639,9 @@ export const BookingModal: React.FC<Props> = ({
                                 fontWeight: 700,
                                 fontSize: '0.78rem',
                                 cursor: 'pointer',
-                                transition: 'all 0.15s ease'
+                                transition: 'all 0.15s ease',
+                                boxSizing: 'border-box',
+                                minWidth: 0
                               }}
                             >
                               {hour}
@@ -627,9 +656,9 @@ export const BookingModal: React.FC<Props> = ({
 
               {/* STEP 5: CONTACT FORM (Compact 2x2 Grid) */}
               {step === 5 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginBottom: '0.65rem' }}>
-                    <div>
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '0.65rem', width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ minWidth: 0 }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
                         Nombre y Apellido *
                       </label>
@@ -640,6 +669,7 @@ export const BookingModal: React.FC<Props> = ({
                         onChange={(e) => setClientName(e.target.value)}
                         style={{
                           width: '100%',
+                          boxSizing: 'border-box',
                           padding: '0.55rem 0.75rem',
                           borderRadius: '10px',
                           border: '1px solid rgba(0,0,0,0.15)',
@@ -648,7 +678,7 @@ export const BookingModal: React.FC<Props> = ({
                         }}
                       />
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
                         WhatsApp de Contacto *
                       </label>
@@ -659,6 +689,7 @@ export const BookingModal: React.FC<Props> = ({
                         onChange={(e) => setClientPhone(e.target.value)}
                         style={{
                           width: '100%',
+                          boxSizing: 'border-box',
                           padding: '0.55rem 0.75rem',
                           borderRadius: '10px',
                           border: '1px solid rgba(0,0,0,0.15)',
@@ -669,8 +700,8 @@ export const BookingModal: React.FC<Props> = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                    <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ minWidth: 0 }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
                         Email (opcional)
                       </label>
@@ -681,6 +712,7 @@ export const BookingModal: React.FC<Props> = ({
                         onChange={(e) => setClientEmail(e.target.value)}
                         style={{
                           width: '100%',
+                          boxSizing: 'border-box',
                           padding: '0.55rem 0.75rem',
                           borderRadius: '10px',
                           border: '1px solid rgba(0,0,0,0.15)',
@@ -689,7 +721,7 @@ export const BookingModal: React.FC<Props> = ({
                         }}
                       />
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
                         Notas o alergias al HEMA
                       </label>
@@ -700,6 +732,7 @@ export const BookingModal: React.FC<Props> = ({
                         onChange={(e) => setBookingNotes(e.target.value)}
                         style={{
                           width: '100%',
+                          boxSizing: 'border-box',
                           padding: '0.55rem 0.75rem',
                           borderRadius: '10px',
                           border: '1px solid rgba(0,0,0,0.15)',
@@ -721,7 +754,9 @@ export const BookingModal: React.FC<Props> = ({
                     alignItems: 'center',
                     gap: '0.4rem',
                     fontSize: '0.7rem',
-                    color: '#8A6D1C'
+                    color: '#8A6D1C',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}>
                     <ShieldCheck size={14} />
                     <span>Seña protegida de $5.000 ARS deducible al presentarte en el salón. Cancelación gratuita con 24h de aviso.</span>
