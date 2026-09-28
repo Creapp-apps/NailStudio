@@ -128,6 +128,69 @@ export const WebStudioView: React.FC = () => {
     }
   };
 
+  // Hero Card Image Upload & Drag-and-Drop state
+  const heroFileInputRef = useRef<HTMLInputElement>(null);
+  const [heroImageTab, setHeroImageTab] = useState<'upload' | 'url' | 'presets'>('upload');
+  const [heroImageUrlInputValue, setHeroImageUrlInputValue] = useState(
+    draftConfig.heroCardImage?.startsWith('http') ? draftConfig.heroCardImage : ''
+  );
+  const [isDraggingHeroImg, setIsDraggingHeroImg] = useState(false);
+
+  const processHeroImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor seleccioná un archivo de imagen válido (PNG, JPG, WebP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no debe superar los 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        handleFieldChange('heroCardImage', result);
+        setHeroImageUrlInputValue('');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processHeroImageFile(file);
+    }
+  };
+
+  const handleHeroDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingHeroImg(true);
+  };
+
+  const handleHeroDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingHeroImg(true);
+  };
+
+  const handleHeroDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingHeroImg(false);
+  };
+
+  const handleHeroDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingHeroImg(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processHeroImageFile(file);
+    }
+  };
+
   // Broadcast real-time config updates to the preview iframes
   useEffect(() => {
     const payload = {
@@ -1137,88 +1200,271 @@ export const WebStudioView: React.FC = () => {
               {/* 5. HERO & PORTADA */}
               {activeCategory === 'hero' && (
                 <div className="space-y-4 text-xs">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                      Título Principal (H1)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={draftConfig.heroTitle}
-                      onChange={e => handleFieldChange('heroTitle', e.target.value)}
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-serif font-bold text-foreground focus:border-[#DE738F] focus:outline-none"
-                    />
-                  </div>
+                  {/* 1. Titulares Principales */}
+                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                    <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
+                      1. Titulares & Botones del Hero
+                    </span>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                      Bajada / Subtítulo
-                    </label>
-                    <input
-                      type="text"
-                      value={draftConfig.heroSubtitle}
-                      onChange={e => handleFieldChange('heroSubtitle', e.target.value)}
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                        Botón Reserva
+                      <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                        Título Principal (H1)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={draftConfig.heroTitle}
+                        onChange={e => handleFieldChange('heroTitle', e.target.value)}
+                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs font-serif font-bold text-foreground focus:border-[#DE738F] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                        Bajada / Subtítulo
                       </label>
                       <input
                         type="text"
-                        value={draftConfig.ctaPrimaryText}
-                        onChange={e => handleFieldChange('ctaPrimaryText', e.target.value)}
-                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                        value={draftConfig.heroSubtitle}
+                        onChange={e => handleFieldChange('heroSubtitle', e.target.value)}
+                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                        Botón Nail-Bot
-                      </label>
-                      <input
-                        type="text"
-                        value={draftConfig.ctaSecondaryText}
-                        onChange={e => handleFieldChange('ctaSecondaryText', e.target.value)}
-                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="h-[1px] bg-rose-100 dark:bg-rose-900/30" />
-
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                      Fotografía de la Tarjeta 3D
-                    </label>
-                    <input
-                      type="text"
-                      value={draftConfig.heroCardImage}
-                      onChange={e => handleFieldChange('heroCardImage', e.target.value)}
-                      placeholder="https://..."
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs font-mono text-foreground focus:border-[#DE738F] focus:outline-none"
-                    />
-
-                    <span className="text-[10px] text-muted-foreground block">O seleccioná una foto de estudio de alta resolución:</span>
                     <div className="grid grid-cols-2 gap-2">
-                      {imagePresets.map(img => (
-                        <div
-                          key={img.title}
-                          onClick={() => handleFieldChange('heroCardImage', img.url)}
-                          className={`group cursor-pointer rounded-xl border p-1 text-center transition-all ${
-                            draftConfig.heroCardImage === img.url
-                              ? 'border-rose-500 bg-rose-500/10 shadow-xs ring-1 ring-rose-500/30'
-                              : 'border-rose-200/60 dark:border-rose-900/30 hover:border-rose-300'
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                          Botón Reserva
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.ctaPrimaryText}
+                          onChange={e => handleFieldChange('ctaPrimaryText', e.target.value)}
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                          Botón Nail-Bot
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.ctaSecondaryText}
+                          onChange={e => handleFieldChange('ctaSecondaryText', e.target.value)}
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Información de la Tarjeta 3D ("Tendencia 2026") */}
+                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
+                        2. Textos de la Tarjeta 3D ("Tendencia 2026")
+                      </span>
+                      <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[9px] font-semibold">
+                        Pie Flotante 3D
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                        Etiqueta Superior (Badge)
+                      </label>
+                      <input
+                        type="text"
+                        value={draftConfig.heroCardBadge}
+                        onChange={e => handleFieldChange('heroCardBadge', e.target.value)}
+                        placeholder="Ej: TENDENCIA 2026, TÉCNICA ESTRELLA..."
+                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs font-couture tracking-wider text-foreground focus:border-[#DE738F] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                        Título de la Técnica o Set
+                      </label>
+                      <input
+                        type="text"
+                        value={draftConfig.heroCardTitle}
+                        onChange={e => handleFieldChange('heroCardTitle', e.target.value)}
+                        placeholder="Ej: Arquitectura Soft Gel & Kapping"
+                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs font-semibold text-foreground focus:border-[#DE738F] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                          Insignia / Reseñas / Rating
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.heroCardRating}
+                          onChange={e => handleFieldChange('heroCardRating', e.target.value)}
+                          placeholder="Ej: ★ 5.0 (420+ Clientas Felices)"
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                          Detalle / Subtítulo (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.heroCardSubtitle || ''}
+                          onChange={e => handleFieldChange('heroCardSubtitle', e.target.value)}
+                          placeholder="Ej: Nivelación Rubber con Manicura Rusa"
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Fotografía de la Portada 3D */}
+                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
+                        3. Fotografía de la Portada 3D
+                      </span>
+                      <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border/60">
+                        <button
+                          type="button"
+                          onClick={() => setHeroImageTab('upload')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                            heroImageTab === 'upload' ? 'bg-background shadow-xs text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
-                          <img src={img.url} alt={img.title} className="h-16 w-full object-cover rounded-lg" />
-                          <span className="text-[10px] text-muted-foreground font-medium block truncate mt-1">
-                            {img.title}
-                          </span>
-                        </div>
-                      ))}
+                          Subir Foto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHeroImageTab('url')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                            heroImageTab === 'url' ? 'bg-background shadow-xs text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Enlace URL
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHeroImageTab('presets')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                            heroImageTab === 'presets' ? 'bg-background shadow-xs text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Catálogo
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Vista Previa de la foto activa */}
+                    <div className="flex items-center gap-3 p-2 rounded-xl bg-background/80 border border-border/80">
+                      <div className="size-14 rounded-lg overflow-hidden border border-border shrink-0 bg-muted/30">
+                        <img
+                          src={draftConfig.heroCardImage}
+                          alt="Portada 3D actual"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-semibold text-foreground block truncate">
+                          Foto Activa en Tarjeta 3D
+                        </span>
+                        <span className="text-[9px] text-muted-foreground block truncate">
+                          {draftConfig.heroCardImage.startsWith('data:') ? 'Imagen propia subida desde tu dispositivo' : draftConfig.heroCardImage}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Tab: Subir Archivo / Drag & Drop */}
+                    {heroImageTab === 'upload' && (
+                      <div
+                        onDragOver={handleHeroDragOver}
+                        onDragEnter={handleHeroDragEnter}
+                        onDragLeave={handleHeroDragLeave}
+                        onDrop={handleHeroDrop}
+                        onClick={() => heroFileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                          isDraggingHeroImg
+                            ? 'border-rose-500 bg-rose-500/10 scale-[1.01]'
+                            : 'border-rose-200/80 dark:border-rose-900/40 hover:border-rose-400/80 bg-background/50'
+                        }`}
+                      >
+                        <input
+                          ref={heroFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleHeroFileUpload}
+                          className="hidden"
+                        />
+                        <div className="flex flex-col items-center justify-center gap-1.5">
+                          <div className="size-8 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center">
+                            <UploadCloud className="size-4" />
+                          </div>
+                          <div>
+                            <span className="text-[11px] font-semibold text-foreground block">
+                              Arrastrá tu foto de Nail Art aquí
+                            </span>
+                            <span className="text-[10px] text-muted-foreground block">
+                              o hacé clic para explorar desde tu dispositivo (PNG, JPG, WebP hasta 5MB)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab: URL */}
+                    {heroImageTab === 'url' && (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={heroImageUrlInputValue}
+                            onChange={e => setHeroImageUrlInputValue(e.target.value)}
+                            placeholder="https://images.unsplash.com/... o link directo de foto"
+                            className="flex-1 rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-2 text-xs font-mono text-foreground focus:border-[#DE738F] focus:outline-none"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                              if (heroImageUrlInputValue.trim()) {
+                                handleFieldChange('heroCardImage', heroImageUrlInputValue.trim());
+                              }
+                            }}
+                            className="text-xs bg-rose-500 hover:bg-rose-600 text-white"
+                          >
+                            Aplicar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab: Presets de Catálogo */}
+                    {heroImageTab === 'presets' && (
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-muted-foreground block">O seleccioná una foto de estudio de alta resolución:</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {imagePresets.map(img => (
+                            <div
+                              key={img.title}
+                              onClick={() => handleFieldChange('heroCardImage', img.url)}
+                              className={`group cursor-pointer rounded-xl border p-1 text-center transition-all ${
+                                draftConfig.heroCardImage === img.url
+                                  ? 'border-rose-500 bg-rose-500/10 shadow-xs ring-1 ring-rose-500/30'
+                                  : 'border-rose-200/60 dark:border-rose-900/30 hover:border-rose-300'
+                              }`}
+                            >
+                              <img src={img.url} alt={img.title} className="h-16 w-full object-cover rounded-lg" />
+                              <span className="text-[10px] text-muted-foreground font-medium block truncate mt-1">
+                                {img.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
