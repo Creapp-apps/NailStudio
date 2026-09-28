@@ -122,10 +122,10 @@ export const Hero3DTiltCard: React.FC = () => {
               fontWeight: 700,
               fontFamily: 'var(--font-couture)'
             }}>
-              HAUTE SPECULAR FINISH
+              ACABADO ESPEJO & CRISTALES
             </div>
             <div style={{ fontSize: '0.925rem', color: 'var(--brand-espresso)', fontWeight: 600 }}>
-              Glazed Violet Chrome & Cristales 3D
+              Cromado Glaseado Violeta & Cristales 3D
             </div>
           </div>
           <div style={{
@@ -139,7 +139,7 @@ export const Hero3DTiltCard: React.FC = () => {
             alignItems: 'center',
             gap: '0.3rem'
           }}>
-            <Sparkles size={13} /> 3D Holo
+            <Sparkles size={13} /> Efecto 3D
           </div>
         </div>
       </div>

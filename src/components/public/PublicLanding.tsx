@@ -32,7 +32,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
   const whyChooseUs = [
     {
       id: 0,
-      title: 'LUXURY TREATMENTS',
+      title: 'TRATAMIENTOS DE AUTOR',
       icon: (
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
           <path d="M12 2v4" />
@@ -44,11 +44,11 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
           <path d="m17 12 3 3" />
         </svg>
       ),
-      description: 'Experience unparalleled luxury with our treatments, including Russian manicure, rubber level therapies, and premium nail care.'
+      description: 'Viví una experiencia exclusiva con nuestros tratamientos: manicuría rusa combinada, nivelación con gel Rubber y cuidado profundo de la uña.'
     },
     {
       id: 1,
-      title: 'PREMIUM PRODUCTS',
+      title: 'PRODUCTOS HIPOALERGÉNICOS',
       icon: (
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
           <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4Z" />
@@ -56,22 +56,22 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
           <circle cx="12" cy="15" r="2" />
         </svg>
       ),
-      description: 'We use only biocompatible HEMA-Free premium products to ensure exceptional results, offering lasting beauty and unmatched care.'
+      description: 'Utilizamos exclusivamente productos biocompatibles 100% libres de HEMA para garantizar un acabado impecable, seguro y sin alergias.'
     },
     {
       id: 2,
-      title: 'CERTIFIED PROFESSIONALS',
+      title: 'MANICURISTAS EXPERTAS',
       icon: (
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
           <rect width="20" height="14" x="2" y="7" rx="2" />
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
         </svg>
       ),
-      description: 'Our certified master nail artists ensure expert care, precision, and exceptional results for all nail and sculpting services.'
+      description: 'Nuestras manicuristas maestras dominan la arquitectura ungueal, el corte milimétrico de cutículas y el diseño a mano alzada de precisión.'
     },
     {
       id: 3,
-      title: 'RELAXING ATMOSPHERE',
+      title: 'AMBIENTE BOUTIQUE',
       icon: (
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-pink-satin)' }}>
           <circle cx="12" cy="12" r="8" />
@@ -83,7 +83,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
           <path d="M20 12h2" />
         </svg>
       ),
-      description: 'Unwind in our relaxing atmosphere, designed to provide comfort and tranquility during your beauty treatments.'
+      description: 'Relajate en un ambiente de spa exclusivo, pensado para brindarte tranquilidad, café de especialidad y desconexión absoluta.'
     }
   ];
 
@@ -110,17 +110,17 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         position: 'relative',
         zIndex: 20
       }}>
-        <span>Home</span>
+        <span>Inicio</span>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
         <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
-        <a href="#why-us" style={{ color: 'inherit', textDecoration: 'none' }}>Por Qué Elegirnos</a>
+        <a href="#why-us" style={{ color: 'inherit', textDecoration: 'none' }}>¿Por Qué Elegirnos?</a>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
         <a href="#nail-art" style={{ color: 'inherit', textDecoration: 'none' }}>Galería Nail Art</a>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
         <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: 'var(--brand-pink-satin)', fontWeight: 700 }}>Nail-Bot IA</span>
         <span style={{ color: 'var(--brand-pink-satin)' }}>•</span>
-        <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: '#B8860B', fontWeight: 700 }}>Privilege Pass</span>
+        <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: '#B8860B', fontWeight: 700 }}>Club Privilege</span>
       </div>
 
       {/* HERO SECTION: Editorial High Glamour with 3D Specular Tilt */}
@@ -152,7 +152,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             }}>
               <Sparkles size={14} color="var(--brand-pink-satin)" />
               <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--brand-pink-dark)', fontWeight: 700 }}>
-                HAUTE COUTURE NAIL LAB
+                ESTUDIO DE ALTA MANICURÍA
               </span>
             </div>
 
@@ -165,7 +165,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               fontWeight: 400,
               marginBottom: '1rem'
             }}>
-              INDULGE IN LUXURY NAIL AND COUTURE TREATMENTS
+              ARTE, PRECISIÓN Y ALTA COSTURA PARA TUS UÑAS
             </h1>
 
             <p style={{
@@ -176,7 +176,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               marginBottom: '2rem',
               letterSpacing: '0.02em'
             }}>
-              @ Atelier Nails Haute Studio & Co.
+              @ Atelier Nails Studio • Buenos Aires
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
@@ -184,7 +184,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
                 onClick={() => onOpenBooking()}
                 className="btn-satin-pink"
               >
-                VIEW SERVICES & BOOK
+                VER SERVICIOS Y RESERVAR
               </button>
 
               <button
@@ -192,7 +192,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
                 className="btn-outline-couture"
               >
                 <Sparkles size={15} color="var(--brand-pink-satin)" />
-                CONSULTA CON NAIL-BOT IA
+                CONSULTAR CON NAIL-BOT IA
               </button>
             </div>
           </div>
@@ -216,7 +216,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             letterSpacing: '0.03em',
             fontWeight: 400
           }}>
-            WHY CHOOSE US?
+            ¿POR QUÉ ELEGIRNOS?
           </h2>
 
           <div style={{
@@ -299,7 +299,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             color: 'var(--brand-pink-dark)',
             marginBottom: '1.25rem'
           }}>
-            Atelier Nails by Haute Studio
+            Atelier Nails • Estudio Boutique Buenos Aires
           </div>
 
           <div style={{
@@ -310,25 +310,25 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
             textTransform: 'uppercase'
           }}>
             <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              NAIL AND COUTURE SALON OFFERING
+              ESTUDIO EXCLUSIVO DE ALTA MANICURÍA
             </span>
             <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              MANICURES AND NAIL ART WITH
+              Y NAIL ART DE AUTOR CON
             </span>
             <span style={{ color: 'var(--brand-espresso)' }}>
-              LUXURY TREATMENTS{' '}
+              TRATAMIENTOS DE VANGUARDIA{' '}
             </span>
             <span style={{ color: 'rgba(156, 133, 142, 0.45)' }}>
-              SUCH AS
+              COMO
             </span>
             <span style={{ color: 'rgba(156, 133, 142, 0.45)', display: 'block' }}>
-              KAPPING RUBBER GEL AND EXTENSIONS
+              KAPPING GEL Y EXTENSIONES ESCULPIDAS,
             </span>
             <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              RUSSIAN MANICURE, SOFT GEL WITH
+              MANICURÍA RUSA COMBINADA CON
             </span>
             <span style={{ color: 'var(--brand-espresso)', display: 'block' }}>
-              ACRYLIC AND BIOCOMPATIBLE POLISHES
+              PRODUCTOS HIPOALERGÉNICOS LIBRES DE HEMA
             </span>
           </div>
 
@@ -337,7 +337,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
               onClick={() => onOpenBooking()}
               className="btn-satin-pink"
             >
-              EXPLORAR DISPONIBILIDAD
+              VER TURNOS Y DISPONIBILIDAD
             </button>
           </div>
         </div>
@@ -348,13 +348,13 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
             <span className="badge-luxury badge-rose" style={{ marginBottom: '0.75rem' }}>
-              HAUTE COUTURE MENU
+              MENÚ DE ALTA MANICURÍA
             </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
               TÉCNICAS ESTRUCTURALES EXCLUSIVAS
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-              Precisión de 21 días sin desprendimientos, con productos biocompatibles HEMA-Free.
+              Duración garantizada de 21 días sin desprendimientos, con geles hipoalergénicos libres de HEMA.
             </p>
           </div>
 
@@ -430,7 +430,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
             <span className="badge-luxury badge-gold" style={{ marginBottom: '0.75rem' }}>
-              CREATIVE ATELIER BAR
+              BARRA DE NAIL ART & DISEÑO
             </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
               NIVELES DE NAIL ART & TIEMPO ADITIVO
@@ -500,7 +500,7 @@ export const PublicLanding: React.FC<Props> = ({ onOpenBooking, onOpenNailBot, o
           </div>
         </div>
         <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
-          © 2026 Atelier Nails & Co. • Haute Nail Architecture. All rights reserved.
+          © 2026 Atelier Nails & Co. • Estudio de Alta Manicuría. Todos los derechos reservados.
         </div>
       </footer>
     </div>

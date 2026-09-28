@@ -86,7 +86,7 @@ export function App() {
                 Atelier Nails
               </div>
               <div style={{ fontSize: '0.65rem', color: 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                by Haute Studio
+                Estudio de Uñas & Manicuría
               </div>
             </div>
           </div>
@@ -151,7 +151,7 @@ export function App() {
             </div>
 
             <button onClick={() => handleOpenBooking()} className="btn-outline-couture" style={{ padding: '0.55rem 1.15rem' }}>
-              APPOINTMENT
+              RESERVAR TURNO
             </button>
 
             <button
