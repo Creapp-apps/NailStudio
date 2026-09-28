@@ -127,36 +127,6 @@ export const PublicLanding: React.FC<Props> = ({
       {/* Living Ambient Stardust & Breathing Liquid Aurora Canvas */}
       {config.enableAmbientAurora && <InteractiveGlamBackground config={config} />}
 
-      {/* Editorial Mini-Header Sub-Navigation (Matching Reference) */}
-      <div
-        className="subnav-scroll"
-        style={{
-          background: theme.subnavBg,
-          backdropFilter: 'blur(12px)',
-          borderBottom: `1px solid ${theme.borderSubtle}`,
-          padding: '0.65rem 1.25rem',
-          fontSize: '0.75rem',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          fontFamily: 'var(--font-couture)',
-          color: 'var(--text-secondary)',
-          position: 'relative',
-          zIndex: 20
-        }}
-      >
-        <span>Inicio</span>
-        <span style={{ color: theme.primary }}>•</span>
-        <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
-        <span style={{ color: theme.primary }}>•</span>
-        <a href="#why-us" style={{ color: 'inherit', textDecoration: 'none' }}>¿Por Qué Elegirnos?</a>
-        <span style={{ color: theme.primary }}>•</span>
-        <a href="#nail-art" style={{ color: 'inherit', textDecoration: 'none' }}>Galería Nail Art</a>
-        <span style={{ color: theme.primary }}>•</span>
-        <span onClick={onOpenNailBot} style={{ cursor: 'pointer', color: theme.primary, fontWeight: 700 }}>Nail-Bot IA</span>
-        <span style={{ color: theme.primary }}>•</span>
-        <span onClick={onOpenPortal} style={{ cursor: 'pointer', color: theme.accent, fontWeight: 700 }}>Club Privilege</span>
-      </div>
-
       {/* HERO SECTION: Editorial High Glamour with 3D Specular Tilt */}
       <section style={{
         minHeight: '80vh',
