@@ -311,6 +311,13 @@ class StorageService {
     this.notify();
   }
 
+  public createClient(client: ClientProfile): void {
+    const clients = this.getClients();
+    const updated = [client, ...clients.filter(c => c.id !== client.id)];
+    localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(updated));
+    this.notify();
+  }
+
   public updateClient(updatedClient: ClientProfile): void {
     const clients = this.getClients();
     const idx = clients.findIndex((c) => c.id === updatedClient.id);

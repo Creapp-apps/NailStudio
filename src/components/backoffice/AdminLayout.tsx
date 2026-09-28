@@ -8,6 +8,7 @@ import { InventoryManager } from './InventoryManager';
 import { SupplierOrdersView } from './SupplierOrdersView';
 import { FinancialSummary } from './FinancialSummary';
 import { AutomationsHub } from './AutomationsHub';
+import { LoyaltyClubView } from './LoyaltyClubView';
 import { HealthDiagnosticsView } from './HealthDiagnosticsView';
 import { CommissionsView } from './CommissionsView';
 import { StaffManagementView } from './StaffManagementView';
@@ -105,8 +106,11 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
             )}
 
             {/* MARKETING & FIDELIZACIÓN */}
-            {(activeSection === 'automations' || activeSection === 'loyalty') && (
+            {activeSection === 'automations' && (
               <AutomationsHub clients={clients} />
+            )}
+            {activeSection === 'loyalty' && (
+              <LoyaltyClubView clients={clients} />
             )}
 
             {/* FINANZAS */}
