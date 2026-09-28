@@ -434,75 +434,75 @@ h1, h2, h3, .font-serif-glam {
 
 @layer base {
   .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-heading: var(--font-couture);
+    --font-sans: 'Geist Variable', 'Plus Jakarta Sans', sans-serif;
   }
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --background: #FFF7FA;
+    --foreground: #1E1216;
+    --card: #FFFFFF;
+    --card-foreground: #1E1216;
+    --popover: #FFFFFF;
+    --popover-foreground: #1E1216;
+    --primary: #DE738F;
+    --primary-foreground: #FFFFFF;
+    --secondary: #FDECF2;
+    --secondary-foreground: #C45774;
+    --muted: #FFF0F4;
+    --muted-foreground: #8C757E;
+    --accent: #FDF0F4;
+    --accent-foreground: #DE738F;
+    --destructive: #E11D48;
+    --border: #F0D3DD;
+    --input: #ECD0DA;
+    --ring: #DE738F;
+    --chart-1: #DE738F;
+    --chart-2: #C45774;
+    --chart-3: #C8AA82;
+    --chart-4: #D4AF37;
+    --chart-5: #1E1216;
+    --radius: 0.875rem;
+    --sidebar: #FFF4F8;
+    --sidebar-foreground: #1E1216;
+    --sidebar-primary: #DE738F;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #FDE8EF;
+    --sidebar-accent-foreground: #C45774;
+    --sidebar-border: #F2D8E2;
+    --sidebar-ring: #DE738F;
   }
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: #180F13;
+    --foreground: #FFF0F4;
+    --card: #201318;
+    --card-foreground: #FFF0F4;
+    --popover: #201318;
+    --popover-foreground: #FFF0F4;
+    --primary: #DE738F;
+    --primary-foreground: #FFFFFF;
+    --secondary: #2C1821;
+    --secondary-foreground: #F28DA7;
+    --muted: #2A1720;
+    --muted-foreground: #B59CA6;
+    --accent: #2C1821;
+    --accent-foreground: #DE738F;
+    --destructive: #F43F5E;
+    --border: #3D222E;
+    --input: #3D222E;
+    --ring: #DE738F;
+    --chart-1: #DE738F;
+    --chart-2: #F28DA7;
+    --chart-3: #E0C89E;
+    --chart-4: #D4AF37;
+    --chart-5: #FFF0F4;
+    --sidebar: #1E1117;
+    --sidebar-foreground: #FFF0F4;
+    --sidebar-primary: #DE738F;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #2C1821;
+    --sidebar-accent-foreground: #F28DA7;
+    --sidebar-border: #3D222E;
+    --sidebar-ring: #DE738F;
   }
   * {
     @apply border-border;
@@ -512,5 +512,61 @@ h1, h2, h3, .font-serif-glam {
   }
   html {
     @apply font-sans;
+  }
+
+  /* Haute Couture Global Input, Select & Textarea Styling */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  textarea {
+    border-radius: 0.75rem !important;
+    border: 1px solid #ECD0DA !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    color: #1E1216 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 1px 2px rgba(222, 115, 143, 0.04) !important;
+  }
+
+  input[type="text"]:hover,
+  input[type="email"]:hover,
+  input[type="password"]:hover,
+  input[type="number"]:hover,
+  input[type="tel"]:hover,
+  input[type="url"]:hover,
+  input[type="search"]:hover,
+  input[type="date"]:hover,
+  input[type="time"]:hover,
+  select:hover,
+  textarea:hover {
+    border-color: #E2B2C2 !important;
+    background-color: #FFFFFF !important;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  input[type="date"]:focus,
+  input[type="time"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #DE738F !important;
+    background-color: #FFFFFF !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(222, 115, 143, 0.16), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  label {
+    letter-spacing: 0.015em;
   }
 }
