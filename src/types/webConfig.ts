@@ -45,7 +45,7 @@ export interface WebCustomizationConfig {
   heroCardBadge: string;
   heroCardTitle: string;
   heroCardSubtitle: string;
-  heroCardRating: string;
+  heroCardRating?: string;
 
   // 6. Cinta de Lujo (Marquee)
   marqueePhrases: string[];
@@ -110,7 +110,7 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   heroCardBadge: 'Tendencia 2026',
   heroCardTitle: 'Arquitectura Soft Gel & Kapping',
   heroCardSubtitle: 'Nivelación Rubber con Manicura Rusa',
-  heroCardRating: '★ 5.0 (420+ Clientas Felices)',
+  heroCardRating: '',
 
   // Marquee
   marqueePhrases: [

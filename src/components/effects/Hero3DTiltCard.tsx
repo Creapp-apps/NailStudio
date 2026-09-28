@@ -143,7 +143,7 @@ export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
               {config.heroCardBadge || 'TENDENCIA 2026'}
             </div>
             <div style={{
-              fontSize: '0.92rem',
+              fontSize: '0.96rem',
               color: 'var(--brand-espresso)',
               fontWeight: 600,
               lineHeight: 1.25,
@@ -155,9 +155,9 @@ export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
             </div>
             {config.heroCardSubtitle && (
               <div style={{
-                fontSize: '0.7rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-secondary)',
-                marginTop: '0.15rem',
+                marginTop: '0.2rem',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -165,24 +165,6 @@ export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
                 {config.heroCardSubtitle}
               </div>
             )}
-          </div>
-
-          <div style={{
-            fontSize: '0.72rem',
-            background: `rgba(${theme.primaryRgb}, 0.12)`,
-            color: theme.secondary,
-            padding: '0.35rem 0.65rem',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            border: `1px solid ${theme.borderSubtle}`,
-            flexShrink: 0,
-            whiteSpace: 'nowrap'
-          }}>
-            <Sparkles size={12} color={theme.primary} />
-            <span>{config.heroCardRating || '★ 5.0 (420+ Clientas)'}</span>
           </div>
         </div>
       </div>

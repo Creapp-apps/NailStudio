@@ -1293,31 +1293,17 @@ export const WebStudioView: React.FC = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                          Insignia / Reseñas / Rating
-                        </label>
-                        <input
-                          type="text"
-                          value={draftConfig.heroCardRating}
-                          onChange={e => handleFieldChange('heroCardRating', e.target.value)}
-                          placeholder="Ej: ★ 5.0 (420+ Clientas Felices)"
-                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
-                          Detalle / Subtítulo (Opcional)
-                        </label>
-                        <input
-                          type="text"
-                          value={draftConfig.heroCardSubtitle || ''}
-                          onChange={e => handleFieldChange('heroCardSubtitle', e.target.value)}
-                          placeholder="Ej: Nivelación Rubber con Manicura Rusa"
-                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold tracking-wider uppercase text-foreground/80 block">
+                        Detalle / Subtítulo Técnico (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={draftConfig.heroCardSubtitle || ''}
+                        onChange={e => handleFieldChange('heroCardSubtitle', e.target.value)}
+                        placeholder="Ej: Nivelación Rubber con Manicura Rusa"
+                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                      />
                     </div>
                   </div>
 
