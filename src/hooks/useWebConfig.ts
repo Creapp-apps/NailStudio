@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import { WebCustomizationConfig } from '../types/webConfig';
 import { webConfigStorage } from '../services/webConfigStorage';
+import { syncDocumentBrand } from '../utils/brandSync';
 
 export const useWebConfig = () => {
   const [config, setConfig] = useState<WebCustomizationConfig>(webConfigStorage.getConfig());
 
   useEffect(() => {
+    // Initial sync
+    syncDocumentBrand(config);
+
     const unsubscribe = webConfigStorage.subscribe((newConfig) => {
       setConfig(newConfig);
+      syncDocumentBrand(newConfig);
     });
     return unsubscribe;
   }, []);

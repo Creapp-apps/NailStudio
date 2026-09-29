@@ -13,6 +13,7 @@ import {
 import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment } from '../../types/nailStudio';
 import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
 import { storage } from '../../services/storage';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const BookingModal: React.FC<Props> = ({
   preselectedServiceId,
   onBookingSuccess
 }) => {
+  const { config: webConfig } = useWebConfig();
   const [services, setServices] = useState<NailService[]>(() => {
     const s = storage.getServices();
     return s.length > 0 ? s : INITIAL_SERVICES;
@@ -46,6 +48,14 @@ export const BookingModal: React.FC<Props> = ({
   const [selectedService, setSelectedService] = useState<NailService | null>(
     services.find(s => s.id === preselectedServiceId) || services[0]
   );
+
+  // Synchronize preselected service when opening modal with a chosen design
+  useEffect(() => {
+    if (preselectedServiceId) {
+      const match = services.find(s => s.id === preselectedServiceId);
+      if (match) setSelectedService(match);
+    }
+  }, [preselectedServiceId, services, isOpen]);
   const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(REMOVAL_OPTIONS[0]);
   const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(NAIL_ART_TIERS[0]);
   const [selectedTech, setSelectedTech] = useState<NailTechnician | null>(availableTechs[0] || null);
@@ -165,6 +175,31 @@ export const BookingModal: React.FC<Props> = ({
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              {webConfig.customLogoUrl ? (
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(222, 115, 143, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <img
+                    src={webConfig.customLogoUrl}
+                    alt={webConfig.brandName}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      transform: `scale(${(webConfig.customLogoScale || 100) / 100})`
+                    }}
+                  />
+                </div>
+              ) : null}
               <span style={{
                 fontSize: '0.65rem',
                 fontFamily: 'var(--font-couture)',
@@ -173,7 +208,7 @@ export const BookingModal: React.FC<Props> = ({
                 color: 'var(--brand-pink-dark)',
                 fontWeight: 700
               }}>
-                Atelier Nails & Co.
+                {webConfig.brandName || 'Atelier Nails & Co.'}
               </span>
               <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>

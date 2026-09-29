@@ -26,6 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 export type BackofficeSection =
   | 'web_studio'
@@ -64,6 +65,7 @@ export const BackofficeSidebar: React.FC<Props> = ({
   isMobileOpen,
   onCloseMobile
 }) => {
+  const { config } = useWebConfig();
   const navigationGroups = [
     {
       rubro: 'DISEÑO & PERSONALIZACIÓN',
@@ -198,24 +200,38 @@ export const BackofficeSidebar: React.FC<Props> = ({
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Top Studio Switcher */}
+        {/* Top Studio Switcher / Brand Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#DE738F] to-[#4A1B28] text-lg font-bold text-white shadow-md shadow-pink-900/30">
-              💅
-            </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-base font-semibold tracking-wide text-white">
-                Atelier Nails
+          <div className="flex items-center gap-3 min-w-0">
+            {config.customLogoUrl ? (
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-white/95 p-0.5 shadow-md shadow-pink-900/30 border border-pink-500/30">
+                <img
+                  src={config.customLogoUrl}
+                  alt={config.brandName || 'Logo'}
+                  className="size-full object-contain rounded-lg"
+                  style={{
+                    transform: `scale(${(config.customLogoScale || 100) / 100})`,
+                    transition: 'transform 0.15s ease'
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#DE738F] to-[#4A1B28] text-lg font-bold text-white shadow-md shadow-pink-900/30">
+                {config.logoEmoji || '💅'}
+              </div>
+            )}
+            <div className="flex flex-col min-w-0">
+              <span className="font-serif text-base font-semibold tracking-wide text-white truncate" title={config.brandName}>
+                {config.brandName || 'Atelier Nails'}
               </span>
-              <span className="text-[11px] text-pink-300/80">
-                Recoleta Flagship
+              <span className="text-[11px] text-pink-300/80 truncate" title={config.brandTagline}>
+                {config.brandTagline || 'Recoleta Flagship'}
               </span>
             </div>
           </div>
           <Badge
             variant="outline"
-            className="border-pink-500/30 bg-pink-500/10 text-[10px] font-semibold tracking-wider text-pink-300 uppercase"
+            className="border-pink-500/30 bg-pink-500/10 text-[10px] font-semibold tracking-wider text-pink-300 uppercase shrink-0"
           >
             Haute SaaS
           </Badge>

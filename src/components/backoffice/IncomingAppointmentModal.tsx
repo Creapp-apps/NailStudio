@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Appointment, NailTechnician, NailService } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
+import { webConfigStorage } from '../../services/webConfigStorage';
 
 interface Props {
   appointment: Appointment | null;
@@ -78,8 +79,9 @@ export const IncomingAppointmentModal: React.FC<Props> = ({
   const matchedService = services.find(s => s.id === appointment.serviceId);
 
   const cleanPhone = appointment.clientPhone.replace(/[^\d+]/g, '');
+  const brandName = webConfigStorage.getConfig().brandName || 'Atelier Nails';
   const whatsappUrl = `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
-    `Hola ${appointment.clientName}! Te escribimos de Atelier Nails respecto a tu turno solicitado para el ${appointment.scheduledDate} a las ${appointment.scheduledTime} hs.`
+    `Hola ${appointment.clientName}! Te escribimos de ${brandName} respecto a tu turno solicitado para el ${appointment.scheduledDate} a las ${appointment.scheduledTime} hs.`
   )}`;
 
   return typeof document !== 'undefined' ? createPortal(

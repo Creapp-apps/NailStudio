@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Send, Sparkles, Calendar, MessageSquare, Bot } from 'lucide-react';
 import { BotMessage, generateBotResponse } from '../../services/nailBotEngine';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Props {
   isOpen: boolean;
@@ -9,11 +10,13 @@ interface Props {
 }
 
 export const NailBotModal: React.FC<Props> = ({ isOpen, onClose, onOpenBooking }) => {
+  const { config } = useWebConfig();
+  const brand = config.brandName || 'Atelier Nails & Co.';
   const [messages, setMessages] = useState<BotMessage[]>([
     {
       id: 'init-1',
       sender: 'bot',
-      text: '¡Hola! 💅 Soy **Nail-Bot**, la recepcionista inteligente de Atelier Nails & Co. ¿Tienes dudas sobre qué técnica elegir (Kapping, Soft Gel, Semipermanente) o quieres calcular tu turno con Nail Art?',
+      text: `¡Hola! 💅 Soy **Nail-Bot**, la recepcionista inteligente de ${brand}. ¿Tienes dudas sobre qué técnica elegir (Kapping, Soft Gel, Semipermanente) o quieres calcular tu turno con Nail Art?`,
       timestamp: 'Ahora'
     }
   ]);

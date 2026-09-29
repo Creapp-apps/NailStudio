@@ -13,10 +13,11 @@ import {
 import { WebCustomizationConfig, ShowcaseWorkItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { getThemeFromConfig } from '../../lib/themeStyles';
+import { DesignDetailModal } from './DesignDetailModal';
 
 interface Props {
   config?: WebCustomizationConfig;
-  onOpenBooking: () => void;
+  onOpenBooking: (serviceId?: string) => void;
 }
 
 export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOpenBooking }) => {
@@ -65,6 +66,20 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
   const handleNext = () => {
     setIsAutoPlay(false);
     setCurrentIndex(prev => (prev + 1) % filteredItems.length);
+  };
+
+  const mapWorkItemToServiceId = (item: ShowcaseWorkItem): string => {
+    if (item.category === 'soft_gel') return 'srv-softgel';
+    if (item.category === 'kapping' || item.category === 'rusa') return 'srv-kapping';
+    if (item.category === 'esculpidas') return 'srv-esculpidas';
+    if (item.category === 'nail_art') return 'srv-kapping';
+    return 'srv-kapping';
+  };
+
+  const handleBookDesign = (item: ShowcaseWorkItem) => {
+    const serviceId = mapWorkItemToServiceId(item);
+    setZoomItem(null);
+    onOpenBooking(serviceId);
   };
 
   return (
@@ -387,9 +402,12 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                         <span>Duración intacta {item.durationDays || 21}+ días • HEMA-Free</span>
                       </div>
 
-                      {/* Action Button: Book this look */}
+                      {/* Action Button: Preview & Agendar este diseño */}
                       <button
-                        onClick={onOpenBooking}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setZoomItem(item);
+                        }}
                         style={{
                           width: '100%',
                           padding: '0.65rem',
@@ -434,7 +452,7 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
               gap: '0.75rem'
             }}>
               <button
-                onClick={onOpenBooking}
+                onClick={() => onOpenBooking()}
                 className="btn-satin-pink"
                 style={{
                   background: theme.buttonGradient,
@@ -471,133 +489,16 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
         )}
       </div>
 
-      {/* Lightbox / Zoom Modal */}
-      {zoomItem && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(26, 17, 21, 0.85)',
-            backdropFilter: 'blur(12px)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.5rem',
-            animation: 'fadeIn 0.25s ease'
-          }}
-          onClick={() => setZoomItem(null)}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '560px',
-              width: '100%',
-              overflow: 'hidden',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setZoomItem(null)}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'rgba(0, 0, 0, 0.55)',
-                color: '#FFFFFF',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 10
-              }}
-            >
-              <X size={18} />
-            </button>
-
-            <img
-              src={zoomItem.imageUrl}
-              alt={zoomItem.title}
-              style={{
-                width: '100%',
-                maxHeight: '420px',
-                objectFit: 'cover',
-                display: 'block'
-              }}
-            />
-
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{
-                display: 'inline-block',
-                background: `rgba(${theme.primaryRgb}, 0.1)`,
-                color: theme.secondary,
-                padding: '0.25rem 0.65rem',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                marginBottom: '0.5rem'
-              }}>
-                {zoomItem.techniqueTag}
-              </div>
-              <h3 style={{ fontSize: '1.35rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.4rem' }}>
-                {zoomItem.title}
-              </h3>
-              {zoomItem.description && (
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-                  {zoomItem.description}
-                </p>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  onClick={() => {
-                    setZoomItem(null);
-                    onOpenBooking();
-                  }}
-                  className="btn-satin-pink"
-                  style={{
-                    flex: 1,
-                    background: theme.buttonGradient,
-                    boxShadow: theme.buttonShadow,
-                    padding: '0.75rem',
-                    fontSize: '0.82rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem'
-                  }}
-                >
-                  <Calendar size={15} />
-                  <span>Reservar Este Look</span>
-                </button>
-                <button
-                  onClick={() => setZoomItem(null)}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-strong)',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '0.82rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* High-Conversion Floating Toast Modal (createPortal to document.body) */}
+      <DesignDetailModal
+        isOpen={!!zoomItem}
+        onClose={() => setZoomItem(null)}
+        item={zoomItem}
+        onBookDesign={handleBookDesign}
+        brandName={config.brandName}
+        primaryColor={theme.primary}
+        secondaryColor={theme.secondary}
+      />
     </section>
   );
 };

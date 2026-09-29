@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem, ShowcaseWorkItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { syncDocumentBrand } from '../../utils/brandSync';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -192,8 +193,10 @@ export const WebStudioView: React.FC = () => {
     }
   };
 
-  // Broadcast real-time config updates to the preview iframes
+  // Broadcast real-time config updates to the preview iframes and document title/tab
   useEffect(() => {
+    syncDocumentBrand(draftConfig);
+
     const payload = {
       type: 'STUDIO_CONFIG_UPDATE',
       config: draftConfig

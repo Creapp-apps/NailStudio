@@ -3,8 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicWebView } from './views/PublicWebView';
 import { PwaClientView } from './views/PwaClientView';
 import { BackofficeView } from './views/BackofficeView';
+import { useWebConfig } from './hooks/useWebConfig';
 
 export function App() {
+  // Synchronize document.title, favicon and global branding on boot
+  useWebConfig();
+
   return (
     <BrowserRouter>
       {/* Isolated View Routing */}

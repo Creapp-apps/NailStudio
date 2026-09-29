@@ -279,7 +279,7 @@ export const PublicLanding: React.FC<Props> = ({
       </section>
 
       {/* GALERÍA DE TRABAJOS DESTACADOS / WORK CAROUSEL */}
-      <WorkShowcaseCarousel config={config} onOpenBooking={() => onOpenBooking()} />
+      <WorkShowcaseCarousel config={config} onOpenBooking={(serviceId) => onOpenBooking(serviceId)} />
 
       {/* SERVICES MENU: Luxury Cards */}
       <section id="servicios" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.82)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
