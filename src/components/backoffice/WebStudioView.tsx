@@ -376,16 +376,6 @@ export const WebStudioView: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleReset}
-            className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="size-3.5" />
-            <span className="hidden sm:inline">Restablecer</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => window.open('/', '_blank')}
             className="text-xs gap-1.5"
           >
@@ -1582,14 +1572,6 @@ export const WebStudioView: React.FC = () => {
                         <p className="text-[10px] text-muted-foreground">Podés subir fotos desde tu dispositivo o pegar URLs</p>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={resetShowcasePresets}
-                          className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground rounded-lg border border-border bg-background hover:bg-muted/50 cursor-pointer"
-                          title="Restablecer a las fotos originales"
-                        >
-                          Restablecer
-                        </button>
                         <button
                           type="button"
                           onClick={addWorkItem}

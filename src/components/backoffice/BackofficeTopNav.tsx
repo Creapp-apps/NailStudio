@@ -4,7 +4,6 @@ import {
   Search,
   Plus,
   Bell,
-  RotateCcw,
   Sparkles,
   CalendarDays,
   ShieldCheck
@@ -17,14 +16,13 @@ interface Props {
   activeSection: BackofficeSection;
   onToggleMobileMenu: () => void;
   onOpenNewBooking: () => void;
-  onResetData: () => void;
+  onResetData?: () => void;
 }
 
 export const BackofficeTopNav: React.FC<Props> = ({
   activeSection,
   onToggleMobileMenu,
-  onOpenNewBooking,
-  onResetData
+  onOpenNewBooking
 }) => {
   const getBreadcrumb = (section: BackofficeSection) => {
     switch (section) {
@@ -98,17 +96,6 @@ export const BackofficeTopNav: React.FC<Props> = ({
           <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>Supabase Sync</span>
         </div>
-
-        {/* Reset Demo Data Button */}
-        <Button
-          variant="outline"
-          size="icon-sm"
-          title="Reiniciar datos de prueba al seed original"
-          onClick={onResetData}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <RotateCcw className="size-3.5" />
-        </Button>
 
         {/* Primary CTA: Nuevo Turno */}
         <Button
