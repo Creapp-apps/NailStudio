@@ -21,12 +21,15 @@ import {
   TrendingUp,
   Percent,
   Palette,
-  Link2
+  Link2,
+  LogOut
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { useAuth } from '../../context/AuthContext';
+
 
 export type BackofficeSection =
   | 'web_studio'
@@ -66,7 +69,9 @@ export const BackofficeSidebar: React.FC<Props> = ({
   onCloseMobile
 }) => {
   const { config } = useWebConfig();
+  const { user, logout } = useAuth();
   const navigationGroups = [
+
     {
       rubro: 'DISEÑO & PERSONALIZACIÓN',
       items: [
@@ -321,24 +326,33 @@ export const BackofficeSidebar: React.FC<Props> = ({
             <div className="flex items-center gap-2.5">
               <Avatar className="size-8 border border-pink-400/40">
                 <AvatarFallback className="bg-gradient-to-br from-pink-900 to-zinc-900 text-xs font-bold text-pink-200">
-                  AA
+                  {user?.user_metadata?.full_name ? user.user_metadata.full_name.slice(0, 2).toUpperCase() : 'DB'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-zinc-200">
-                  Atelier Admin
+              <div className="flex flex-col overflow-hidden max-w-[125px]">
+                <span className="text-xs font-semibold text-zinc-200 truncate" title={user?.user_metadata?.full_name || user?.email || 'Directora Belcalis'}>
+                  {user?.user_metadata?.full_name || 'Directora Belcalis'}
                 </span>
-                <span className="text-[10px] text-zinc-400">
-                  Gestión de Salón
+                <span className="text-[10px] text-pink-400/90 truncate">
+                  {user?.email || 'admin@belcalisnails.com.ar'}
                 </span>
               </div>
             </div>
 
-            {/* Supabase Live Status Indicator */}
-            <div
-              className="flex size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981]"
-              title="Supabase PostgreSQL Live Sync Conectado"
-            />
+            <div className="flex items-center gap-1.5">
+              {/* Supabase Live Status Indicator */}
+              <div
+                className="flex size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981]"
+                title="Supabase PostgreSQL Live Sync Conectado"
+              />
+              <button
+                onClick={() => logout()}
+                title="Cerrar Sesión de Staff"
+                className="p-1 rounded text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors"
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

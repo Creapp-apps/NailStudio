@@ -1,27 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Sparkles, PlusCircle, Crown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, UserCheck, PlusCircle, Crown, LogOut, User } from 'lucide-react';
 import { storage } from '../services/storage';
 import { ClientProfile } from '../types/nailStudio';
 import { ClientPortal } from '../components/client/ClientPortal';
 import { BookingModal } from '../components/booking/BookingModal';
+import { useAuth } from '../context/AuthContext';
+import { useWebConfig } from '../hooks/useWebConfig';
 
 export const PwaClientView: React.FC = () => {
-  const navigate = useNavigate();
-  const [clients, setClients] = useState<ClientProfile[]>(storage.getClients());
-  const [currentClient, setCurrentClient] = useState<ClientProfile | null>(storage.getCurrentClient());
+  const { user, clientProfile, logout } = useAuth();
+  const { config } = useWebConfig();
+  const brandName = config.brandName || 'Belcalis Nails';
+
+  const [currentClient, setCurrentClient] = useState<ClientProfile | null>(
+    clientProfile || storage.getCurrentClient()
+  );
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = storage.subscribe(() => {
-      setClients(storage.getClients());
+    if (clientProfile) {
+      setCurrentClient(clientProfile);
+    } else {
       setCurrentClient(storage.getCurrentClient());
+    }
+
+    const unsubscribe = storage.subscribe(() => {
+      if (clientProfile) {
+        setCurrentClient(clientProfile);
+      } else {
+        setCurrentClient(storage.getCurrentClient());
+      }
     });
     return unsubscribe;
-  }, []);
+  }, [clientProfile]);
 
-  const handleChangeClient = (clientId: string) => {
-    storage.setCurrentClientId(clientId);
+  const handleLogout = async () => {
+    await logout();
+    storage.setCurrentClientId('');
+    setCurrentClient(null);
   };
 
   return (
@@ -74,46 +91,55 @@ export const PwaClientView: React.FC = () => {
                 Club Privilege
               </div>
               <div style={{ fontSize: '0.62rem', color: 'var(--brand-pink-dark)', fontFamily: 'var(--font-couture)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                Atelier Nails PWA Clienta
+                {brandName} • PWA Clienta VIP
               </div>
             </div>
           </div>
 
-          {/* Right Controls: Client Switcher or Status & Booking */}
+          {/* Right Controls: Real Authenticated Client Status or Login CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {clients.length > 0 ? (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.75rem',
-                background: '#FFFFFF',
-                padding: '0.35rem 0.75rem',
-                borderRadius: 'var(--radius-full)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-              }}>
-                <UserCheck size={13} color="var(--brand-pink-dark)" />
-                <select
-                  value={currentClient?.id || ''}
-                  onChange={(e) => handleChangeClient(e.target.value)}
+            {currentClient ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.75rem',
+                  background: '#FFFFFF',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: 'var(--radius-full)',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                }}>
+                  <UserCheck size={13} color="var(--brand-pink-dark)" />
+                  <span style={{ fontWeight: 700, color: 'var(--brand-espresso)' }}>
+                    {currentClient.name.split(' ')[0]}
+                  </span>
+                  <span className="badge-luxury badge-gold" style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem' }}>
+                    {currentClient.pointsBalance} pts
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  title="Cerrar Sesión"
                   style={{
-                    border: 'none',
-                    background: 'transparent',
-                    fontWeight: 700,
-                    color: 'var(--brand-espresso)',
-                    outline: 'none',
+                    background: 'rgba(222, 115, 143, 0.1)',
+                    border: '1px solid rgba(222, 115, 143, 0.25)',
+                    color: 'var(--brand-pink-dark)',
+                    padding: '0.35rem 0.6rem',
+                    borderRadius: 'var(--radius-full)',
                     cursor: 'pointer',
-                    fontSize: '0.75rem'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 600
                   }}
                 >
-                  <option value="">-- Sin Identificar (Invitada) --</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.pointsBalance} pts)
-                    </option>
-                  ))}
-                </select>
+                  <LogOut size={13} />
+                  <span className="hidden sm:inline">Salir</span>
+                </button>
               </div>
             ) : (
               <div style={{
@@ -129,7 +155,7 @@ export const PwaClientView: React.FC = () => {
                 fontWeight: 600
               }}>
                 <Crown size={13} color="#D4AF37" />
-                <span>Pase Digital</span>
+                <span>Pase Digital VIP</span>
               </div>
             )}
 

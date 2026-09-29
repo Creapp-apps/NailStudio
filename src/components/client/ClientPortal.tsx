@@ -17,10 +17,19 @@ import {
   Crown,
   LogOut,
   Coins,
-  ArrowRight
+  ArrowRight,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Phone,
+  User,
+  AlertCircle
 } from 'lucide-react';
 import { ClientProfile, PastSetRecord } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
+import { useAuth } from '../../context/AuthContext';
+import { useWebConfig } from '../../hooks/useWebConfig';
 
 interface Props {
   client: ClientProfile | null;
@@ -28,15 +37,33 @@ interface Props {
 }
 
 export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
+  const { login, signUpClient, logout } = useAuth();
+  const { config } = useWebConfig();
+  const brandName = config.brandName || 'Belcalis Nails';
+
   const [copiedCode, setCopiedCode] = useState(false);
   const [redeemedReward, setRedeemedReward] = useState<string | null>(null);
 
-  // Search & Register states for unauthenticated / new client
-  const [phoneSearch, setPhoneSearch] = useState('');
-  const [searchError, setSearchError] = useState('');
-  const [showRegister, setShowRegister] = useState(false);
+  // Authentication State for unauthenticated / new client
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Register Form
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+
+  // Status & errors
+  const [authError, setAuthError] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Quick WhatsApp lookup fallback
+  const [showPhoneLookup, setShowPhoneLookup] = useState(false);
+  const [phoneSearch, setPhoneSearch] = useState('');
+  const [searchError, setSearchError] = useState('');
 
   const rewards = [
     { id: 'rew-1', name: 'Nail Art Nivel 1 Gratis', cost: 400, desc: 'Francesitas o glitter sutil en tu próximo set' },
@@ -67,6 +94,51 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
     setTimeout(() => setRedeemedReward(null), 3000);
   };
 
+  const handleClientLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    if (!loginEmail || !loginPassword) {
+      setAuthError('Por favor completá correo y contraseña.');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    const res = await login(loginEmail, loginPassword);
+    setIsAuthLoading(false);
+
+    if (!res.success) {
+      setAuthError(res.error || 'Credenciales inválidas. Verificá tu correo y clave.');
+    }
+  };
+
+  const handleClientRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (!regName.trim() || !regPhone.trim() || !regEmail.trim() || !regPassword) {
+      setAuthError('Por favor completá todos los campos.');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setAuthError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    const res = await signUpClient({
+      email: regEmail.trim(),
+      password: regPassword,
+      name: regName.trim(),
+      phone: regPhone.trim()
+    });
+    setIsAuthLoading(false);
+
+    if (!res.success) {
+      setAuthError(res.error || 'No se pudo completar el registro.');
+    }
+  };
+
   const handlePhoneLookup = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError('');
@@ -77,43 +149,14 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
       storage.setCurrentClientId(found.id);
       setPhoneSearch('');
     } else {
-      setSearchError('No encontramos una billetera vinculada a este número. ¡Podés activarla ahora y sumar tus primeros 200 pts de bienvenida!');
+      setSearchError('No encontramos una billetera vinculada a este número. ¡Podés registrarte ahora con tu correo y sumar 200 pts!');
       setRegPhone(phoneSearch);
-      setShowRegister(true);
+      setAuthMode('register');
     }
   };
 
-  const handleSelfRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!regName.trim() || !regPhone.trim()) return;
-
-    const cleanName = regName.trim();
-    const initials = cleanName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 4);
-    const newClient: ClientProfile = {
-      id: `cli-${Date.now()}`,
-      name: cleanName,
-      phone: regPhone.trim(),
-      email: '',
-      tier: 'Silver',
-      pointsBalance: 200, // Welcome gift
-      referralCode: `${initials}-ATELIER`,
-      totalVisits: 0,
-      lastVisitDate: new Date().toISOString().split('T')[0],
-      nailPlateCondition: 'healthy',
-      allergiesHema: false,
-      lampHeatSensitivity: 'low',
-      favoriteColors: [],
-      technicianNotes: 'Alta desde PWA Clientas Club Privilege.',
-      setsHistory: []
-    };
-
-    storage.createClient(newClient);
-    setShowRegister(false);
-    setRegName('');
-    setRegPhone('');
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     storage.setCurrentClientId('');
   };
 
@@ -129,7 +172,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
   };
 
   // -------------------------------------------------------------
-  // STATE A: NO CLIENT LOGGED IN (WELCOME & ONBOARDING PORTAL)
+  // STATE A: NO CLIENT LOGGED IN (LUXURY LOGIN & ONBOARDING HUB)
   // -------------------------------------------------------------
   if (!client) {
     return (
@@ -145,26 +188,26 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           boxShadow: '0 4px 24px rgba(222, 115, 143, 0.05)'
         }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', color: '#997300', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            <Crown size={14} color="#D4AF37" /> Club Privilege • Atelier Nails & Co.
+            <Crown size={14} color="#D4AF37" /> Club Privilege • {brandName}
           </div>
           <h1 style={{ fontFamily: 'var(--font-serif-glam)', fontSize: '2.2rem', color: 'var(--brand-espresso)', marginBottom: '0.5rem', lineHeight: 1.15 }}>
             Tu Pase Digital de Clienta Exclusiva
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '580px', margin: '0 auto 1.75rem auto', lineHeight: 1.5 }}>
-            Acumulá el <strong>5% de cashback en Nail Points</strong> en cada visita, canjeá servicios de spa o nail art gratis, y compartí beneficios exclusivos con tus amigas.
+            Acumulá <strong>Nail Points en cada visita</strong> en {brandName}, canjeá servicios de spa o nail art gratis, y recibí invitaciones preferenciales a eventos del atelier.
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => {
-                setShowRegister(true);
-                const input = document.getElementById('pwa-phone-input');
-                if (input) input.focus();
+                setAuthMode('register');
+                const formElem = document.getElementById('pwa-auth-section');
+                if (formElem) formElem.scrollIntoView({ behavior: 'smooth' });
               }}
               className="btn-satin-pink"
               style={{ padding: '0.75rem 1.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              <Sparkles size={16} /> Activar Mi Pase (+200 pts de bienvenida)
+              <Sparkles size={16} /> Crear Cuenta VIP (+200 pts de bienvenida)
             </button>
             <button
               onClick={onOpenBooking}
@@ -176,140 +219,319 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           </div>
         </div>
 
-        {/* Identification & Registration Hub */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-          {/* Phone Lookup Box */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '2rem',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(222, 115, 143, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-pink-dark)' }}>
-                <Search size={18} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>¿Ya nos visitaste?</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Ingresá tu WhatsApp para ver tus puntos y código</p>
-              </div>
-            </div>
-
-            <form onSubmit={handlePhoneLookup} style={{ marginTop: '1.25rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Número de WhatsApp
-                </label>
-                <input
-                  id="pwa-phone-input"
-                  type="tel"
-                  placeholder="Ej: 11 4123 4567 o +54 9 11..."
-                  value={phoneSearch}
-                  onChange={(e) => setPhoneSearch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--bg-card)',
-                    color: 'var(--brand-espresso)',
-                    fontSize: '0.9rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              {searchError && (
-                <div style={{ padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', background: 'rgba(222, 115, 143, 0.1)', border: '1px solid rgba(222, 115, 143, 0.25)', color: 'var(--brand-espresso)', fontSize: '0.78rem', marginBottom: '1rem', lineHeight: 1.4 }}>
-                  {searchError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn-satin-pink"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-              >
-                <Search size={16} /> Consultar Mi Billetera
-              </button>
-            </form>
+        {/* Real Authentication Hub Card */}
+        <div id="pwa-auth-section" style={{
+          maxWidth: '520px',
+          margin: '0 auto 2.5rem auto',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(16px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(222, 115, 143, 0.28)',
+          boxShadow: '0 20px 40px -10px rgba(46, 30, 30, 0.1)',
+          overflow: 'hidden'
+        }}>
+          {/* Tabs: Ingresar / Registrarme */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('login'); setAuthError(''); }}
+              style={{
+                padding: '1rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                border: 'none',
+                background: authMode === 'login' ? '#FFFFFF' : 'rgba(240, 235, 236, 0.5)',
+                color: authMode === 'login' ? 'var(--brand-pink-dark)' : 'var(--text-muted)',
+                borderBottom: authMode === 'login' ? '2px solid var(--brand-pink-dark)' : '2px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Ingresar a mi Club
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('register'); setAuthError(''); }}
+              style={{
+                padding: '1rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                border: 'none',
+                background: authMode === 'register' ? '#FFFFFF' : 'rgba(240, 235, 236, 0.5)',
+                color: authMode === 'register' ? 'var(--brand-pink-dark)' : 'var(--text-muted)',
+                borderBottom: authMode === 'register' ? '2px solid var(--brand-pink-dark)' : '2px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Registrarme (+200 pts)
+            </button>
           </div>
 
-          {/* Quick Registration Form */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '2rem',
-            border: showRegister ? '2px solid var(--brand-pink-dark)' : '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-sm)',
-            transition: 'all 0.3s ease'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#997300' }}>
-                <UserPlus size={18} />
+          <div style={{ padding: '2rem' }}>
+            {/* Error Message */}
+            {authError && (
+              <div style={{
+                background: '#FFF5F5',
+                border: '1px solid #FEB2B2',
+                color: '#C53030',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                fontSize: '0.82rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <span>{authError}</span>
               </div>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>Activar Mi Pase de Puntos</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Te acreditamos 200 pts de bienvenida al instante</p>
-              </div>
+            )}
+
+            {/* TAB 1: LOGIN */}
+            {authMode === 'login' ? (
+              <form onSubmit={handleClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
+                    Correo Electrónico
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="email"
+                      required
+                      placeholder="tu-email@gmail.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 0.75rem 0.75rem 2.4rem',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-strong)',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        color: 'var(--brand-espresso)'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
+                    Contraseña
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 2.4rem 0.75rem 2.4rem',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-strong)',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        color: 'var(--brand-espresso)'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  className="btn-satin-pink"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  {isAuthLoading ? (
+                    <span>Ingresando a tu cuenta...</span>
+                  ) : (
+                    <>
+                      <Crown size={16} />
+                      <span>Ingresar al Club Privilege</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* TAB 2: REGISTER */
+              <form onSubmit={handleClientRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
+                    Nombre y Apellido *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Camila Rodríguez"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
+                    WhatsApp / Celular *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Phone size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+54 9 11 5566-7788"
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
+                    Correo Electrónico *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="email"
+                      required
+                      placeholder="camila@gmail.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
+                    Contraseña (mínimo 6 caracteres) *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••••••"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 2.4rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'rgba(212, 175, 55, 0.1)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
+                  fontSize: '0.74rem',
+                  color: '#997300',
+                  lineHeight: 1.4
+                }}>
+                  ✨ Al registrarte recibís tu <strong>email de bienvenida oficial de {brandName}</strong> con tus 200 puntos acreditados y tu código de referidos.
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  className="btn-satin-pink"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                    marginTop: '0.35rem'
+                  }}
+                >
+                  {isAuthLoading ? (
+                    <span>Registrando y acreditando puntos...</span>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      <span>Activar Mi Pase & Sumar 200 Pts</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Quick Phone Lookup Accordion */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              {!showPhoneLookup ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPhoneLookup(true)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--brand-terracotta)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  ¿Ya sos clienta del salón y no tenés contraseña? Consultá por WhatsApp
+                </button>
+              ) : (
+                <form onSubmit={handlePhoneLookup} style={{ marginTop: '0.5rem', textAlign: 'left' }}>
+                  <label style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 600 }}>
+                    Consultar por Número de WhatsApp
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="tel"
+                      placeholder="11 5566 7788"
+                      value={phoneSearch}
+                      onChange={(e) => setPhoneSearch(e.target.value)}
+                      style={{ flex: 1, padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '0.82rem' }}
+                    />
+                    <button type="submit" className="btn-satin-pink" style={{ padding: '0.55rem 0.85rem', fontSize: '0.78rem' }}>
+                      Buscar
+                    </button>
+                  </div>
+                  {searchError && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--brand-pink-dark)' }}>
+                      {searchError}
+                    </div>
+                  )}
+                </form>
+              )}
             </div>
 
-            <form onSubmit={handleSelfRegister} style={{ marginTop: '1.25rem' }}>
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Nombre y Apellido
-                </label>
-                <input
-                  type="text"
-                  placeholder="Tu nombre completo"
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--bg-card)',
-                    color: 'var(--brand-espresso)',
-                    fontSize: '0.9rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  WhatsApp de Contacto
-                </label>
-                <input
-                  type="tel"
-                  placeholder="Tu celular para asociar la billetera"
-                  value={regPhone}
-                  onChange={(e) => setRegPhone(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--bg-card)',
-                    color: 'var(--brand-espresso)',
-                    fontSize: '0.9rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn-satin-pink"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-              >
-                <Sparkles size={16} /> Crear Mi Pase & Sumar 200 PTS
-              </button>
-            </form>
           </div>
         </div>
 
@@ -317,7 +539,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.4rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
-              Catálogo de Canjes Disponibles
+              Catálogo de Canjes Disponibles en {brandName}
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Acumulás puntos automáticamente con cada servicio realizado en el estudio
@@ -432,7 +654,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
               alignItems: 'center',
               gap: '0.35rem'
             }}
-            title="Cambiar a otra clienta o salir"
+            title="Cerrar sesión"
           >
             <LogOut size={13} />
             <span>Salir</span>
@@ -449,7 +671,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
             <div>
               <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#D4AF37', fontWeight: 700 }}>
-                Atelier Privilege Pass
+                {brandName} Privilege Pass
               </span>
               <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', color: '#FFFFFF', marginTop: '0.2rem' }}>
                 Nail Points Wallet
@@ -501,7 +723,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
               </h3>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Comparte tu código con amigas que nunca hayan venido al estudio. Ellas reciben <strong>$3.000 de regalo</strong> en su primer set y tú sumas <strong>500 Nail Points</strong> automáticamente cuando asistan.
+              Comparte tu código con amigas que nunca hayan venido a {brandName}. Ellas reciben <strong>$3.000 de regalo</strong> en su primer set y tú sumas <strong>500 Nail Points</strong> automáticamente cuando asistan.
             </p>
 
             <div style={{
@@ -543,7 +765,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           </div>
 
           <a
-            href={`https://wa.me/?text=¡Hola!%20Te%20regalo%20$3.000%20de%20descuento%20para%20tu%20primer%20set%20de%20uñas%20en%20Atelier%20Nails%20con%20mi%20código%20${client.referralCode}.%20Reserva%20tu%20turno%20aquí:%20${window.location.origin}`}
+            href={`https://wa.me/?text=¡Hola!%20Te%20regalo%20$3.000%20de%20descuento%20para%20tu%20primer%20set%20de%20uñas%20en%20${encodeURIComponent(brandName)}%20con%20mi%20código%20${client.referralCode}.%20Reserva%20tu%20turno%20aquí:%20${window.location.origin}`}
             target="_blank"
             rel="noreferrer"
             className="btn-satin-pink"
@@ -578,17 +800,20 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
                   background: 'var(--bg-surface)',
                   borderRadius: 'var(--radius-md)',
                   padding: '1.25rem',
-                  border: '1px solid var(--border-subtle)',
+                  border: isRedeemed ? '2px solid var(--status-confirmed)' : '1px solid var(--border-subtle)',
                   boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  transition: 'var(--transition-smooth)'
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
                     <h4 style={{ fontSize: '0.95rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>{rew.name}</h4>
-                    <span className="badge-luxury badge-rose">{rew.cost} PTS</span>
+                    <span className={`badge-luxury ${canAfford ? 'badge-gold' : 'badge-rose'}`}>
+                      {rew.cost} PTS
+                    </span>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                     {rew.desc}
@@ -598,23 +823,30 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
                 <button
                   disabled={!canAfford || isRedeemed}
                   onClick={() => handleRedeem(rew.id, rew.cost)}
+                  className={canAfford ? 'btn-satin-pink' : 'btn-outline-gold'}
                   style={{
                     width: '100%',
-                    padding: '0.55rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    background: isRedeemed ? 'var(--status-confirmed)' : canAfford ? 'var(--brand-pink-dark)' : '#EAE3DC',
-                    color: canAfford ? '#FFFFFF' : 'var(--text-muted)',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
+                    padding: '0.5rem',
+                    fontSize: '0.78rem',
+                    opacity: canAfford ? 1 : 0.5,
                     cursor: canAfford && !isRedeemed ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem'
+                    gap: '0.35rem'
                   }}
                 >
-                  {isRedeemed ? '¡Cupón Aplicado a tu Ficha!' : canAfford ? 'Canjear Beneficio' : `Te faltan ${rew.cost - client.pointsBalance} pts`}
+                  {isRedeemed ? (
+                    <>
+                      <CheckCircle size={14} /> ¡Canje Acreditado!
+                    </>
+                  ) : canAfford ? (
+                    <>
+                      <Sparkles size={14} /> Canjear Beneficio
+                    </>
+                  ) : (
+                    <span>Faltan {rew.cost - client.pointsBalance} pts</span>
+                  )}
                 </button>
               </div>
             );
@@ -622,80 +854,87 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
         </div>
       </div>
 
-      {/* Client's Sets History & Photo Gallery */}
-      <div>
+      {/* Moodboard & Set History */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '1.75rem',
+        border: '1px solid var(--border-subtle)',
+        marginBottom: '2rem'
+      }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>Mi Galería de Sets & Evolución</h3>
-            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>Historial fotográfico de cada manicura realizada</p>
+            <h3 style={{ fontSize: '1.25rem', color: 'var(--brand-espresso)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Camera size={20} /> Mi Moodboard de Uñas & Sets Anteriores
+            </h3>
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+              Historial de diseños, técnicas y fotos tomadas en cabina
+            </p>
           </div>
-          <button
-            onClick={() => alert('¡Pronto podrás subir tus capturas de Pinterest directamente desde tu carrete!')}
-            className="btn-outline-gold"
-            style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <Camera size={15} /> Subir Foto de Inspiración
-          </button>
         </div>
 
         {client.setsHistory && client.setsHistory.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             {client.setsHistory.map((set) => (
               <div
                 key={set.id}
                 style={{
-                  background: 'var(--bg-surface)',
                   borderRadius: 'var(--radius-md)',
                   overflow: 'hidden',
                   border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--shadow-sm)'
+                  background: 'var(--bg-card)'
                 }}
               >
                 <img
                   src={set.photoUrl}
                   alt={set.serviceName}
-                  style={{ width: '100%', height: '190px', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                 />
-                <div style={{ padding: '1rem' }}>
+                <div style={{ padding: '0.85rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--brand-pink-dark)' }}>{set.date}</span>
-                    <div style={{ display: 'flex', gap: '2px', color: '#D4AF37' }}>
-                      {[...Array(set.rating || 5)].map((_, i) => (
-                        <Star key={i} size={13} fill="#D4AF37" />
-                      ))}
-                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>
+                      {set.serviceName}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--brand-terracotta)', fontWeight: 600 }}>
+                      {set.date}
+                    </span>
                   </div>
-                  <h4 style={{ fontSize: '0.95rem', color: 'var(--brand-espresso)', marginBottom: '0.2rem' }}>{set.serviceName}</h4>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    {set.nailArtTierName} • Tech: <strong>{set.techName}</strong>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {set.nailArtTierName} • Tech: {set.techName}
                   </div>
-                  {set.notes && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-card)', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)' }}>
-                      "{set.notes}"
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div style={{
-            background: 'var(--bg-card)',
-            borderRadius: 'var(--radius-md)',
-            padding: '2.5rem',
-            textAlign: 'center',
-            border: '1px dashed var(--border-strong)'
-          }}>
-            <Camera size={32} color="var(--text-muted)" style={{ margin: '0 auto 0.5rem auto' }} />
-            <h4 style={{ fontSize: '1rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>Aún no tienes fotos de sets registradas</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0.25rem auto 1rem auto' }}>
-              Al finalizar tu primer servicio en el estudio, tu manicurista tomará la foto de alta resolución y se sincronizará automáticamente aquí.
-            </p>
-            <button onClick={onOpenBooking} className="btn-satin-pink" style={{ fontSize: '0.85rem', padding: '0.65rem 1.25rem' }}>
-              Agendar Mi Primer Set
-            </button>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.85rem' }}>Aún no tienes registros de sets en cabina. ¡Tu manicurista subirá tus fotos al terminar tu cita!</p>
           </div>
         )}
+      </div>
+
+      {/* Clinical Nail Health Record summary */}
+      <div style={{
+        background: 'var(--bg-card)',
+        borderRadius: 'var(--radius-md)',
+        padding: '1.25rem',
+        border: '1px solid var(--border-subtle)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#997300', flexShrink: 0 }}>
+          <ShieldCheck size={20} />
+        </div>
+        <div style={{ flex: 1, minWidth: '240px' }}>
+          <h4 style={{ fontSize: '0.9rem', color: 'var(--brand-espresso)', fontWeight: 700 }}>
+            Ficha Clínica de Salud Ungueal en {brandName}
+          </h4>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+            Estado registrado: <strong>{client.nailPlateCondition === 'healthy' ? 'Lámina Saludable' : client.nailPlateCondition}</strong> • Alergias HEMA: {client.allergiesHema ? '⚠️ Sí (Requiere HEMA-Free)' : 'No detectada'} • Sensibilidad a cabina: {client.lampHeatSensitivity === 'high' ? 'Alta (Modo Low Heat)' : 'Normal'}
+          </p>
+        </div>
       </div>
     </div>
   );
