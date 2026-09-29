@@ -88,7 +88,7 @@ export interface WebCustomizationConfig {
 
 export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   // Identidad
-  brandName: 'Atelier Nails & Co.',
+  brandName: 'Belcalis Nails',
   brandTagline: 'HAUTE MANICURE & ESTUDIO DE ARTE UNGUEAL',
   badgeText: 'ESTUDIO DE ALTA MANICURÍA',
   logoEmoji: '💅',
@@ -119,7 +119,7 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   // Hero Section
   heroPill: '✦ ESTUDIO EXCLUSIVO DE ALTA MANICURÍA ✦',
   heroTitle: 'ARTE, PRECISIÓN Y ALTA COSTURA PARA TUS UÑAS',
-  heroSubtitle: '@ Atelier Nails Studio • Buenos Aires',
+  heroSubtitle: '@ Belcalis Nails Studio • Buenos Aires',
   ctaPrimaryText: 'VER SERVICIOS Y RESERVAR',
   ctaSecondaryText: 'CONSULTAR CON NAIL-BOT IA',
   heroCardImage: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
@@ -241,5 +241,5 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   whatsapp: '+54 9 11 5821-3312',
   instagram: '@ateliernails.ba',
   hours: 'Martes a Sábados: 09:00 a 20:00 hs',
-  footerCopyright: '© 2026 Atelier Nails & Co. Todos los derechos reservados.'
+  footerCopyright: '© 2026 Belcalis Nails. Todos los derechos reservados.'
 };

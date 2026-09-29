@@ -73,32 +73,41 @@ class WebConfigStorageService {
   private async fetchFromSupabase(): Promise<void> {
     try {
       const { data } = await supabase
-        .from('salon_settings')
-        .select('setting_value')
-        .eq('setting_key', 'web_customization')
+        .from('client_profiles')
+        .select('technician_notes')
+        .eq('id', 'tenant_branding_config')
         .maybeSingle();
 
-      if (data && data.setting_value) {
-        this.currentConfig = { ...DEFAULT_WEB_CONFIG, ...data.setting_value };
+      if (data && data.technician_notes) {
+        const parsed = JSON.parse(data.technician_notes);
+        this.currentConfig = {
+          ...DEFAULT_WEB_CONFIG,
+          ...parsed,
+          showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
+            ? parsed.showcaseItems
+            : DEFAULT_WEB_CONFIG.showcaseItems
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.currentConfig));
         this.notify();
       }
-    } catch {
-      // Supabase table or entry might not exist yet, fallback to local
+    } catch (e) {
+      console.warn('Could not fetch tenant branding from Supabase:', e);
     }
   }
 
   private async pushToSupabase(config: WebCustomizationConfig): Promise<void> {
     try {
       await supabase
-        .from('salon_settings')
+        .from('client_profiles')
         .upsert({
-          setting_key: 'web_customization',
-          setting_value: config,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'setting_key' });
-    } catch {
-      // Non-blocking fallback
+          id: 'tenant_branding_config',
+          name: config.brandName || 'Belcalis Nails',
+          phone: config.whatsapp || '+54 9 11 5820-9911',
+          referral_code: 'SYS_BRANDING_' + (config.brandName || 'BELCALIS').replace(/[^a-zA-Z0-9]/g, '_').toUpperCase(),
+          technician_notes: JSON.stringify(config)
+        }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Could not push tenant branding to Supabase:', e);
     }
   }
 }
