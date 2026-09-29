@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicWebView } from './views/PublicWebView';
 import { PwaClientView } from './views/PwaClientView';
 import { BackofficeView } from './views/BackofficeView';
-import { DevQuickSwitcher } from './components/navigation/DevQuickSwitcher';
 
 export function App() {
   return (
@@ -23,9 +22,6 @@ export function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
-      {/* Discreet floating switcher to effortlessly test and switch between views */}
-      <DevQuickSwitcher />
     </BrowserRouter>
   );
 }

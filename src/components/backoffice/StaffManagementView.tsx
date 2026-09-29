@@ -5,6 +5,7 @@ import { storage } from '../../services/storage';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileImageUploader } from '../common/ProfileImageUploader';
 
 interface Props {
   techs: NailTechnician[];
@@ -249,12 +250,10 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold block text-zinc-700">URL Foto / Avatar</label>
-                  <input
-                    placeholder="https://..."
+                  <ProfileImageUploader
                     value={avatar}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAvatar(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
+                    onChange={(croppedUrl) => setAvatar(croppedUrl)}
+                    label="Foto de Perfil (Drag & Drop + Calibrador)"
                   />
                 </div>
               </div>

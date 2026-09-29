@@ -43,30 +43,78 @@ class StorageService {
   }
 
   private initDefaults() {
-    // Purge legacy mock data if present
+    // 1. Appointments: safely clean only legacy mock
     const storedApts = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
-    if (!storedApts || storedApts.includes('apt-101') || storedApts.includes('Lucía Fernández')) {
+    if (storedApts) {
+      try {
+        const parsed = JSON.parse(storedApts);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter(a => a.id !== 'apt-101' && a.clientName !== 'Lucía Fernández');
+          localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(cleaned));
+        }
+      } catch {
+        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
+      }
+    } else {
       localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
     }
+
+    // 2. Clients: safely clean only legacy mock
     const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS);
-    if (!storedClients || storedClients.includes('cli-1') || storedClients.includes('Lucía Fernández') || storedClients.includes('Camila De La Torre') || storedClients.includes('Valentina Albarracín') || storedClients.includes('Lucía Santillán') || storedClients.includes('Valentina Rossi')) {
+    if (storedClients) {
+      try {
+        const parsed = JSON.parse(storedClients);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter(c =>
+            !['cli-1', 'cli-2', 'cli-3'].includes(c.id) &&
+            !['Lucía Fernández', 'Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Valentina Rossi'].includes(c.name)
+          );
+          localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(cleaned));
+        }
+      } catch {
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
+      }
+    } else {
       localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify([]));
-      localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, '');
     }
+
+    // 3. Supplies: safely clean only legacy mock
     const storedSupplies = localStorage.getItem(STORAGE_KEYS.SUPPLIES);
-    if (!storedSupplies || storedSupplies.includes('sup-1')) {
+    if (storedSupplies) {
+      try {
+        const parsed = JSON.parse(storedSupplies);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter(s => !['sup-1', 'sup-2', 'sup-3'].includes(s.id));
+          localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify(cleaned));
+        }
+      } catch {
+        localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify([]));
+      }
+    } else {
       localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify([]));
     }
+
+    // 4. Technicians: safely clean only legacy mock
     const storedTechs = localStorage.getItem(STORAGE_KEYS.TECHS);
-    if (!storedTechs || storedTechs.includes('tech-1') || storedTechs.includes('Sofía Valenzuela') || storedTechs.includes('Valentina Rossi') || storedTechs.includes('Camila Méndez')) {
+    if (storedTechs) {
+      try {
+        const parsed = JSON.parse(storedTechs);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter(t =>
+            !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
+            !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
+          );
+          localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(cleaned));
+        }
+      } catch {
+        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
+      }
+    } else {
       localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(INITIAL_SERVICES));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.TECHS)) {
-      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT_ID)) {
       localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT_ID, '');
@@ -85,6 +133,9 @@ class StorageService {
           this.fetchFromSupabase();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'supplies' }, () => {
+          this.fetchFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'nail_technicians' }, () => {
           this.fetchFromSupabase();
         })
         .subscribe();
@@ -116,9 +167,9 @@ class StorageService {
         localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
       }
 
-      // 2. Technicians (Filter out mock data)
-      const { data: techData } = await supabase.from('nail_technicians').select('*');
-      if (techData && techData.length > 0) {
+      // 2. Technicians (Filter out mock data, bidirectional sync)
+      const { data: techData, error: techErr } = await supabase.from('nail_technicians').select('*');
+      if (!techErr && techData) {
         const filtered = techData.filter(t =>
           !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
           !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
@@ -133,7 +184,21 @@ class StorageService {
           reviewsCount: Number(t.reviews_count || 0),
           commissionRate: Number(t.commission_rate || 0.50)
         }));
-        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(mappedTechs));
+
+        // Merge with local techs to guarantee no created tech is overwritten
+        const localTechs = this.getTechs();
+        const techMap = new Map<string, NailTechnician>();
+        localTechs.forEach(t => techMap.set(t.id, t));
+        mappedTechs.forEach(t => techMap.set(t.id, t));
+        const mergedTechs = Array.from(techMap.values());
+        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(mergedTechs));
+
+        // Push any local techs that aren't yet in Supabase
+        localTechs.forEach(t => {
+          if (!mappedTechs.some(mt => mt.id === t.id)) {
+            this.pushTechToSupabase(t);
+          }
+        });
       }
 
       // 3. Appointments

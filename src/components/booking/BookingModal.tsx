@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Check,
@@ -27,8 +27,20 @@ export const BookingModal: React.FC<Props> = ({
   preselectedServiceId,
   onBookingSuccess
 }) => {
-  const services = storage.getServices().length > 0 ? storage.getServices() : INITIAL_SERVICES;
-  const availableTechs = storage.getTechs();
+  const [services, setServices] = useState<NailService[]>(() => {
+    const s = storage.getServices();
+    return s.length > 0 ? s : INITIAL_SERVICES;
+  });
+  const [availableTechs, setAvailableTechs] = useState<NailTechnician[]>(() => storage.getTechs());
+
+  useEffect(() => {
+    const unsub = storage.subscribe(() => {
+      const s = storage.getServices();
+      if (s.length > 0) setServices(s);
+      setAvailableTechs(storage.getTechs());
+    });
+    return unsub;
+  }, []);
 
   const [step, setStep] = useState<number>(1);
   const [selectedService, setSelectedService] = useState<NailService | null>(
@@ -572,23 +584,53 @@ export const BookingModal: React.FC<Props> = ({
                         <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
                           Mesa & Especialista
                         </label>
-                        <div style={{
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(222, 115, 143, 0.25)',
-                          background: 'rgba(222, 115, 143, 0.05)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          color: 'var(--brand-espresso)',
-                          boxSizing: 'border-box',
-                          width: '100%'
-                        }}>
-                          <Sparkles size={14} color="var(--brand-pink-dark)" />
-                          <span>Mesa de Alta Precisión (Asignada)</span>
-                        </div>
+                        {availableTechs.length > 0 ? (
+                          <select
+                            value={selectedTech?.id || ''}
+                            onChange={(e) => {
+                              const found = availableTechs.find(t => t.id === e.target.value);
+                              setSelectedTech(found || null);
+                            }}
+                            style={{
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              padding: '0.55rem 0.75rem',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(222, 115, 143, 0.35)',
+                              background: '#FFFFFF',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              color: 'var(--brand-espresso)',
+                              outline: 'none',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="">✨ Primera Especialista Disponible</option>
+                            {availableTechs.map(tech => (
+                              <option key={tech.id} value={tech.id}>
+                                {tech.name} — {tech.role}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div style={{
+                            padding: '0.55rem 0.75rem',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(222, 115, 143, 0.25)',
+                            background: 'rgba(222, 115, 143, 0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            color: 'var(--brand-espresso)',
+                            boxSizing: 'border-box',
+                            width: '100%'
+                          }}>
+                            <Sparkles size={14} color="var(--brand-pink-dark)" />
+                            <span>Mesa de Alta Precisión (Asignada automáticamente)</span>
+                          </div>
+                        )}
                       </div>
 
                       <div>
