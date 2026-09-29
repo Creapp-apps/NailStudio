@@ -131,7 +131,7 @@ export const DesignDetailModal: React.FC<Props> = ({
               <span>Acabado de Autor & Durabilidad Superior</span>
             </div>
             <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase backdrop-blur-sm">
-              {item.durationDays || 21}+ días intactas
+              {item.badgeInfo || `${item.durationDays || 21}+ días intactas`}
             </span>
           </div>
         </div>

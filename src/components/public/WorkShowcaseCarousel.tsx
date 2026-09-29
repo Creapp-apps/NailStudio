@@ -398,8 +398,8 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                         color: 'var(--text-muted)',
                         marginBottom: '1rem'
                       }}>
-                        <ShieldCheck size={14} color={theme.primary} />
-                        <span>Duración intacta {item.durationDays || 21}+ días • HEMA-Free</span>
+                        <ShieldCheck size={14} color={theme.primary} style={{ flexShrink: 0 }} />
+                        <span>{item.badgeInfo || `Duración intacta ${item.durationDays || 21}+ días • HEMA-Free`}</span>
                       </div>
 
                       {/* Action Button: Preview & Agendar este diseño */}

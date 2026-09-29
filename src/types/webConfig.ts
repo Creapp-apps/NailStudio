@@ -13,6 +13,7 @@ export interface ShowcaseWorkItem {
   techniqueTag: string;
   description?: string;
   durationDays?: number;
+  badgeInfo?: string;
 }
 
 export interface WebCustomizationConfig {
@@ -140,7 +141,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Cromado Espejo',
       description: 'Esmaltado semipermanente blanco translúcido con efecto perlado Aurora y manicuría rusa de corte limpio.',
-      durationDays: 21
+      durationDays: 21,
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
     },
     {
       id: 'work-2',
@@ -149,7 +151,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Nivelación Rubber',
       description: 'Refuerzo de uña natural con rubber base biocompatible HEMA-free. Resistencia y flexibilidad extrema.',
-      durationDays: 28
+      durationDays: 28,
+      badgeInfo: 'Duración intacta 28+ días • HEMA-Free'
     },
     {
       id: 'work-3',
@@ -158,7 +161,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Soft Gel Tips',
       description: 'Extensiones anatómicas completas adheridas con gel constructivo sin daño a la uña natural.',
-      durationDays: 24
+      durationDays: 24,
+      badgeInfo: 'Duración intacta 24+ días • HEMA-Free'
     },
     {
       id: 'work-4',
@@ -167,7 +171,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Cristales & 3D',
       description: 'Diseño de autor con micro-pedrería de corte diamante sellada con gel blindado de alto impacto.',
-      durationDays: 21
+      durationDays: 21,
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
     },
     {
       id: 'work-5',
@@ -176,7 +181,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Limpieza de Cutícula',
       description: 'Bolsillo de cutícula pulido a torno con fresas diamantadas y esmaltado bajo cutícula impecable.',
-      durationDays: 21
+      durationDays: 21,
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
     },
     {
       id: 'work-6',
@@ -185,7 +191,8 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Cat Eye 5D',
       description: 'Partículas magnéticas orientadas en multidimensión creando un efecto seda aterciopelada y brillante.',
-      durationDays: 21
+      durationDays: 21,
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
     }
   ],
 

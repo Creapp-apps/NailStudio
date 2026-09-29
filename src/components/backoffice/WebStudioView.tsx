@@ -322,6 +322,7 @@ export const WebStudioView: React.FC = () => {
       imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Kapping Rubber',
       description: 'Nivelación con gel hipoalergénico y acabado brillante de 21 días.',
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
       durationDays: 21
     };
     handleFieldChange('showcaseItems', [...current, newItem]);
@@ -1664,7 +1665,7 @@ export const WebStudioView: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Description & Image URL input */}
+                          {/* Description, Badge & Image URL input */}
                           <div className="space-y-1.5 pt-1">
                             <input
                               type="text"
@@ -1673,6 +1674,23 @@ export const WebStudioView: React.FC = () => {
                               placeholder="Breve descripción o detalle técnico del set..."
                               className="w-full text-[11px] rounded-lg border border-border bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/40"
                             />
+
+                            {/* Texto Informativo / Durabilidad (Badge con escudo) */}
+                            <div className="flex items-center gap-1.5 bg-background/60 p-1.5 rounded-lg border border-border/60">
+                              <ShieldCheck className="size-3.5 text-rose-500 shrink-0 ml-1" />
+                              <div className="flex-1 min-w-0">
+                                <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block leading-none mb-1">
+                                  Texto Informativo / Garantía
+                                </label>
+                                <input
+                                  type="text"
+                                  value={work.badgeInfo ?? (work.durationDays ? `Duración intacta ${work.durationDays}+ días • HEMA-Free` : 'Duración intacta 21+ días • HEMA-Free')}
+                                  onChange={(e) => updateWorkItem(work.id, { badgeInfo: e.target.value })}
+                                  placeholder="Ej: Duración intacta 28+ días • HEMA-Free"
+                                  className="w-full text-[11px] font-medium text-foreground bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/40"
+                                />
+                              </div>
+                            </div>
 
                             <div className="flex items-center gap-1.5">
                               <LinkIcon className="size-3 text-muted-foreground shrink-0" />
