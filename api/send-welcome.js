@@ -339,7 +339,48 @@ export default async function handler(req, res) {
 
     const subject = `✨ ¡Bienvenida al Club Privilege de ${brandName}!`;
 
-    // 3. SMTP Configuration
+    // 3. Option A: Resend API (Recommended for modern Vercel setups)
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey) {
+      const fromEmail = process.env.RESEND_FROM || `"${brandName}" <privilege@belcalisnails.com.ar>`;
+      
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [clientEmail],
+          subject: subject,
+          html: emailHtml
+        })
+      });
+
+      const resendData = await resendRes.json();
+
+      if (!resendRes.ok) {
+        console.error('[send-welcome] Resend delivery error:', resendData);
+        return res.status(500).json({
+          error: 'Error al despachar email mediante Resend',
+          details: resendData
+        });
+      }
+
+      console.log(`[send-welcome] Email successfully sent to ${clientEmail} via Resend:`, resendData.id);
+
+      return res.status(200).json({
+        success: true,
+        delivered: true,
+        provider: 'resend',
+        id: resendData.id,
+        recipient: clientEmail,
+        brand: brandName
+      });
+    }
+
+    // 4. Option B: Traditional SMTP Configuration (e.g. DonWeb cPanel)
     const smtpHost = process.env.SMTP_HOST || process.env.MAIL_HOST;
     const smtpPort = parseInt(process.env.SMTP_PORT || process.env.MAIL_PORT || '465', 10);
     const smtpUser = process.env.SMTP_USER || process.env.MAIL_USER;
@@ -374,6 +415,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         delivered: true,
+        provider: 'smtp',
         messageId: info.messageId,
         recipient: clientEmail,
         brand: brandName
