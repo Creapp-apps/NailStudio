@@ -49,18 +49,18 @@ export default async function handler(req, res) {
     const initials = cleanName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 4);
     const referralCode = `${initials}-BELCALIS`;
 
-    // 2. Ensure profile exists in client_profiles
+    // 2. Ensure profile exists in client_profiles with clinical data
     const newProfile = {
       id: userId,
       name: cleanName,
       phone: cleanPhone,
       email: cleanEmail,
       avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
-      nail_plate_condition: 'healthy',
-      allergies_hema: false,
-      lamp_heat_sensitivity: 'low',
+      nail_plate_condition: req.body.nail_plate_condition || 'healthy',
+      allergies_hema: !!req.body.allergies_hema,
+      lamp_heat_sensitivity: req.body.lamp_heat_sensitivity || 'low',
       favorite_colors: [],
-      technician_notes: 'Alta desde Portal PWA Clientas Belcalis Nails.',
+      technician_notes: req.body.technician_notes || 'Alta autorizada por personal de Belcalis Nails.',
       points_balance: 200,
       tier: 'Silver',
       referral_code: referralCode,
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       const baseUrl = `${protocol}://${host}`;
 
-      // Call our send-welcome endpoint
+      // Call our send-welcome endpoint with clientPassword so the client receives her login key
       fetch(`${baseUrl}/api/send-welcome`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,6 +90,7 @@ export default async function handler(req, res) {
           clientName: cleanName,
           clientEmail: cleanEmail,
           clientPhone: cleanPhone,
+          clientPassword: password,
           pointsBalance: 200,
           referralCode: referralCode
         })

@@ -50,7 +50,7 @@ async function getTenantBranding() {
 }
 
 // Generate luxury responsive HTML template for Belcalis Nails
-function generateWelcomeEmailHtml({ clientName, clientEmail, pointsBalance, referralCode, branding, portalUrl }) {
+function generateWelcomeEmailHtml({ clientName, clientEmail, clientPassword, pointsBalance, referralCode, branding, portalUrl }) {
   const brandName = branding.brandName || 'Belcalis Nails';
   const tagline = branding.brandTagline || 'Haute Manicure & Arte Ungueal';
   const points = pointsBalance || 200;
@@ -240,6 +240,22 @@ function generateWelcomeEmailHtml({ clientName, clientEmail, pointsBalance, refe
             </tr>
           </table>
 
+          <!-- ACCESS CREDENTIALS (SET BY SALON AUTHORITY) -->
+          ${clientPassword ? `
+          <div style="background: #FFF7F9; border: 1px dashed #DE738F; border-radius: 10px; padding: 16px 20px; margin: 20px 0;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #DE738F; font-weight: 700; margin-bottom: 6px;">
+              🔑 Tus Credenciales de Acceso al Portal PWA
+            </div>
+            <div style="font-size: 13px; color: #332729; line-height: 1.6;">
+              <strong>Usuario:</strong> ${clientEmail}<br>
+              <strong>Contraseña de Ingreso:</strong> <span style="font-family: monospace; font-size: 14px; background: #FFFFFF; padding: 2px 8px; border-radius: 6px; border: 1px solid #E5D5D8; color: #DE738F; font-weight: 700;">${clientPassword}</span>
+            </div>
+            <div style="font-size: 11px; color: #7D6B6E; margin-top: 6px;">
+              Tu cuenta fue activada exclusivamente por la encargada de ${brandName}.
+            </div>
+          </div>
+          ` : ''}
+
           <p class="lead-text" style="font-size: 14px; margin-bottom: 15px;">
             <strong>Tus Beneficios Exclusivos en ${brandName}:</strong><br>
             • 💅 <strong>Canje de Puntos:</strong> Sumás puntos en cada visita para canjear por tratamientos de nutrición, nail art de autor o descuentos.<br>
@@ -292,6 +308,7 @@ export default async function handler(req, res) {
     const {
       clientName = 'Estimada Clienta',
       clientEmail,
+      clientPassword = '',
       clientPhone = '',
       pointsBalance = 200,
       referralCode = '',
@@ -313,6 +330,7 @@ export default async function handler(req, res) {
     const emailHtml = generateWelcomeEmailHtml({
       clientName,
       clientEmail,
+      clientPassword,
       pointsBalance,
       referralCode,
       branding,

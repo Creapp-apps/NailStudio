@@ -37,30 +37,23 @@ interface Props {
 }
 
 export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
-  const { login, signUpClient, logout } = useAuth();
+  const { login, logout } = useAuth();
   const { config } = useWebConfig();
   const brandName = config.brandName || 'Belcalis Nails';
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [redeemedReward, setRedeemedReward] = useState<string | null>(null);
 
-  // Authentication State for unauthenticated / new client
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  // Authentication State: Login Only (Registration is 100% staff-controlled in Backoffice)
   const [showPassword, setShowPassword] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-
-  // Register Form
-  const [regName, setRegName] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
 
   // Status & errors
   const [authError, setAuthError] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  // Quick WhatsApp lookup fallback
+  // Quick WhatsApp lookup fallback for already onboarded clients
   const [showPhoneLookup, setShowPhoneLookup] = useState(false);
   const [phoneSearch, setPhoneSearch] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -111,34 +104,6 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
     }
   };
 
-  const handleClientRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError('');
-
-    if (!regName.trim() || !regPhone.trim() || !regEmail.trim() || !regPassword) {
-      setAuthError('Por favor completá todos los campos.');
-      return;
-    }
-
-    if (regPassword.length < 6) {
-      setAuthError('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    setIsAuthLoading(true);
-    const res = await signUpClient({
-      email: regEmail.trim(),
-      password: regPassword,
-      name: regName.trim(),
-      phone: regPhone.trim()
-    });
-    setIsAuthLoading(false);
-
-    if (!res.success) {
-      setAuthError(res.error || 'No se pudo completar el registro.');
-    }
-  };
-
   const handlePhoneLookup = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError('');
@@ -149,9 +114,7 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
       storage.setCurrentClientId(found.id);
       setPhoneSearch('');
     } else {
-      setSearchError('No encontramos una billetera vinculada a este número. ¡Podés registrarte ahora con tu correo y sumar 200 pts!');
-      setRegPhone(phoneSearch);
-      setAuthMode('register');
+      setSearchError('No encontramos una billetera vinculada a este número. Por favor, solicitale a la encargada del atelier tu alta VIP en tu próxima cita.');
     }
   };
 
@@ -200,14 +163,13 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => {
-                setAuthMode('register');
                 const formElem = document.getElementById('pwa-auth-section');
                 if (formElem) formElem.scrollIntoView({ behavior: 'smooth' });
               }}
               className="btn-satin-pink"
               style={{ padding: '0.75rem 1.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              <Sparkles size={16} /> Crear Cuenta VIP (+200 pts de bienvenida)
+              <Crown size={16} /> Ingresar a mi Billetera Digital
             </button>
             <button
               onClick={onOpenBooking}
@@ -219,9 +181,9 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           </div>
         </div>
 
-        {/* Real Authentication Hub Card */}
+        {/* Real Authentication Hub Card (Client Login Only) */}
         <div id="pwa-auth-section" style={{
-          maxWidth: '520px',
+          maxWidth: '480px',
           margin: '0 auto 2.5rem auto',
           background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(16px)',
@@ -230,45 +192,42 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
           boxShadow: '0 20px 40px -10px rgba(46, 30, 30, 0.1)',
           overflow: 'hidden'
         }}>
-          {/* Tabs: Ingresar / Registrarme */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--border-subtle)' }}>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('login'); setAuthError(''); }}
-              style={{
-                padding: '1rem',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                border: 'none',
-                background: authMode === 'login' ? '#FFFFFF' : 'rgba(240, 235, 236, 0.5)',
-                color: authMode === 'login' ? 'var(--brand-pink-dark)' : 'var(--text-muted)',
-                borderBottom: authMode === 'login' ? '2px solid var(--brand-pink-dark)' : '2px solid transparent',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Ingresar a mi Club
-            </button>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('register'); setAuthError(''); }}
-              style={{
-                padding: '1rem',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                border: 'none',
-                background: authMode === 'register' ? '#FFFFFF' : 'rgba(240, 235, 236, 0.5)',
-                color: authMode === 'register' ? 'var(--brand-pink-dark)' : 'var(--text-muted)',
-                borderBottom: authMode === 'register' ? '2px solid var(--brand-pink-dark)' : '2px solid transparent',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Registrarme (+200 pts)
-            </button>
+          {/* Header */}
+          <div style={{
+            padding: '1.25rem 1.5rem',
+            background: 'linear-gradient(135deg, rgba(222, 115, 143, 0.08) 0%, rgba(200, 150, 136, 0.12) 100%)',
+            borderBottom: '1px solid var(--border-subtle)',
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#997300', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <Crown size={13} color="#D4AF37" /> Acceso Socias VIP
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-serif-glam)', fontSize: '1.4rem', color: 'var(--brand-espresso)', margin: '0.25rem 0 0 0', fontWeight: 700 }}>
+              Ingresar a mi Billetera
+            </h3>
           </div>
 
-          <div style={{ padding: '2rem' }}>
+          <div style={{ padding: '1.75rem' }}>
+            {/* Salon Authority Protection Notice */}
+            <div style={{
+              background: 'rgba(222, 115, 143, 0.08)',
+              border: '1px solid rgba(222, 115, 143, 0.22)',
+              borderRadius: '12px',
+              padding: '0.8rem 1rem',
+              fontSize: '0.76rem',
+              color: 'var(--brand-espresso)',
+              lineHeight: 1.5,
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem'
+            }}>
+              <ShieldCheck size={18} color="var(--brand-pink-dark)" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong>Alta Exclusiva en Atelier:</strong> El registro en el Club Privilege es realizado <strong>únicamente por la encargada de {brandName}</strong> en el local para resguardar la exclusividad de puntos y promociones. Si ya fuiste dada de alta, ingresá con tu correo y contraseña asignada.
+              </div>
+            </div>
+
             {/* Error Message */}
             {authError && (
               <div style={{
@@ -288,213 +247,93 @@ export const ClientPortal: React.FC<Props> = ({ client, onOpenBooking }) => {
               </div>
             )}
 
-            {/* TAB 1: LOGIN */}
-            {authMode === 'login' ? (
-              <form onSubmit={handleClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
-                    Correo Electrónico
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type="email"
-                      required
-                      placeholder="tu-email@gmail.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 0.75rem 0.75rem 2.4rem',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border-strong)',
-                        fontSize: '0.88rem',
-                        outline: 'none',
-                        color: 'var(--brand-espresso)'
-                      }}
-                    />
-                  </div>
+            {/* LOGIN FORM */}
+            <form onSubmit={handleClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
+                  Correo Electrónico
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="email"
+                    required
+                    placeholder="tu-email@gmail.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 0.75rem 0.75rem 2.4rem',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-strong)',
+                      fontSize: '0.88rem',
+                      outline: 'none',
+                      color: 'var(--brand-espresso)'
+                    }}
+                  />
                 </div>
+              </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
-                    Contraseña
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      placeholder="••••••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 2.4rem 0.75rem 2.4rem',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border-strong)',
-                        fontSize: '0.88rem',
-                        outline: 'none',
-                        color: 'var(--brand-espresso)'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.4rem' }}>
+                  Contraseña de Acceso
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="••••••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 2.4rem 0.75rem 2.4rem',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-strong)',
+                      fontSize: '0.88rem',
+                      outline: 'none',
+                      color: 'var(--brand-espresso)'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={isAuthLoading}
-                  className="btn-satin-pink"
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    borderRadius: '12px',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
-                    marginTop: '0.5rem'
-                  }}
-                >
-                  {isAuthLoading ? (
-                    <span>Ingresando a tu cuenta...</span>
-                  ) : (
-                    <>
-                      <Crown size={16} />
-                      <span>Ingresar al Club Privilege</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
-              /* TAB 2: REGISTER */
-              <form onSubmit={handleClientRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
-                    Nombre y Apellido *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type="text"
-                      required
-                      placeholder="Camila Rodríguez"
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
-                    WhatsApp / Celular *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+54 9 11 5566-7788"
-                      value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
-                    Correo Electrónico *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type="email"
-                      required
-                      placeholder="camila@gmail.com"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem 0.75rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
-                    Contraseña (mínimo 6 caracteres) *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      placeholder="••••••••••••"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem 2.4rem 0.7rem 2.4rem', borderRadius: '12px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{
-                  background: 'rgba(212, 175, 55, 0.1)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '10px',
-                  fontSize: '0.74rem',
-                  color: '#997300',
-                  lineHeight: 1.4
-                }}>
-                  ✨ Al registrarte recibís tu <strong>email de bienvenida oficial de {brandName}</strong> con tus 200 puntos acreditados y tu código de referidos.
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isAuthLoading}
-                  className="btn-satin-pink"
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    borderRadius: '12px',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
-                    marginTop: '0.35rem'
-                  }}
-                >
-                  {isAuthLoading ? (
-                    <span>Registrando y acreditando puntos...</span>
-                  ) : (
-                    <>
-                      <Sparkles size={16} />
-                      <span>Activar Mi Pase & Sumar 200 Pts</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                disabled={isAuthLoading}
+                className="btn-satin-pink"
+                style={{
+                  width: '100%',
+                  padding: '0.85rem',
+                  borderRadius: '12px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                  marginTop: '0.5rem'
+                }}
+              >
+                {isAuthLoading ? (
+                  <span>Verificando membresía...</span>
+                ) : (
+                  <>
+                    <Crown size={16} />
+                    <span>Ingresar a mi Billetera Digital</span>
+                  </>
+                )}
+              </button>
+            </form>
 
             {/* Quick Phone Lookup Accordion */}
             <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>

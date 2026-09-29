@@ -15,7 +15,13 @@ import {
   Sparkles,
   CheckCircle2,
   X,
-  Send
+  Send,
+  Key,
+  RefreshCw,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldAlert
 } from 'lucide-react';
 import { ClientProfile, NailPlateCondition } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -34,17 +40,38 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(clients.length > 0 ? (clients[0].technicianNotes || '') : '');
 
-  // New Client Modal State
+  // New Client Modal State (Controlled by Salon Authority)
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [newHemaAllergy, setNewHemaAllergy] = useState(false);
   const [newHeatSensitivity, setNewHeatSensitivity] = useState<'low' | 'medium' | 'high'>('low');
   const [newNailCondition, setNewNailCondition] = useState<NailPlateCondition>('healthy');
   const [newNotes, setNewNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const generateInitialPassword = () => {
+    const cleanBrand = (brandName || 'Belcalis').replace(/[^a-zA-Z]/g, '') || 'Belcalis';
+    const num = Math.floor(1000 + Math.random() * 9000);
+    return `${cleanBrand}${num}!`;
+  };
+
+  const handleOpenNewModal = () => {
+    setNewPassword(generateInitialPassword());
+    setShowNewPassword(false);
+    setAuthError('');
+    setIsNewModalOpen(true);
+  };
+
+  const handleRegeneratePassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setNewPassword(generateInitialPassword());
+  };
 
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -74,22 +101,66 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     if (!newName.trim() || !newPhone.trim()) return;
 
     setIsSaving(true);
+    setAuthError('');
+
     const cleanName = newName.trim();
+    const cleanPhone = newPhone.trim();
+    const cleanEmail = newEmail.trim().toLowerCase();
+    const assignedPassword = newPassword.trim() || generateInitialPassword();
+
     const initials = cleanName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 4);
     const brandSuffix = (brandName || 'BELCALIS').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
     const referralCode = `${initials}-${brandSuffix}`;
 
+    let authUserId = `cli-${Date.now()}`;
+    let emailSent = false;
+
+    // 1. If email is provided, create real Supabase Auth user & send credentials email
+    if (cleanEmail && cleanEmail.includes('@')) {
+      try {
+        const signupRes = await fetch('/api/auth-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+            password: assignedPassword,
+            phone: cleanPhone,
+            role: 'client',
+            nail_plate_condition: newNailCondition,
+            allergies_hema: newHemaAllergy,
+            lamp_heat_sensitivity: newHeatSensitivity,
+            technician_notes: newNotes.trim() || `Alta autorizada por personal de ${brandName}.`
+          })
+        });
+
+        const signupData = await signupRes.json();
+        if (!signupRes.ok) {
+          setAuthError(signupData.error || 'Error al crear la cuenta en Supabase Auth.');
+          setIsSaving(false);
+          return;
+        }
+
+        if (signupData.user?.id) {
+          authUserId = signupData.user.id;
+        }
+        emailSent = true;
+      } catch (err: any) {
+        console.warn('[ClientCRM] Error registering client auth:', err);
+      }
+    }
+
     const newClient: ClientProfile = {
-      id: `cli-${Date.now()}`,
+      id: authUserId,
       name: cleanName,
-      phone: newPhone.trim(),
-      email: newEmail.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       nailPlateCondition: newNailCondition,
       allergiesHema: newHemaAllergy,
       lampHeatSensitivity: newHeatSensitivity,
       favoriteColors: [],
-      technicianNotes: newNotes.trim() || `Alta registrada en Atelier ${brandName}.`,
+      technicianNotes: newNotes.trim() || `Alta autorizada por encargada de ${brandName}.`,
       pointsBalance: 200,
       tier: 'Silver',
       referralCode: referralCode,
@@ -98,33 +169,9 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
       setsHistory: []
     };
 
-    // 1. Save in local storage & sync to Supabase
+    // Save in local storage & sync to Supabase
     storage.createClient(newClient);
     setSelectedClient(newClient);
-
-    // 2. Dispatch automated welcome email if email provided
-    let emailSent = false;
-    if (newEmail.trim() && newEmail.includes('@')) {
-      try {
-        const emailRes = await fetch('/api/send-welcome', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clientName: newClient.name,
-            clientEmail: newClient.email,
-            clientPhone: newClient.phone,
-            pointsBalance: 200,
-            referralCode: referralCode,
-            tenantConfig: config
-          })
-        });
-        if (emailRes.ok) {
-          emailSent = true;
-        }
-      } catch (err) {
-        console.warn('Error triggering welcome email:', err);
-      }
-    }
 
     setIsSaving(false);
     setIsNewModalOpen(false);
@@ -132,7 +179,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     // Success feedback
     setToastMessage(
       emailSent
-        ? `✨ ¡Clienta ${cleanName} dada de alta! Se envió el email de bienvenida con la identidad de ${brandName} a ${newEmail}.`
+        ? `✨ ¡Clienta ${cleanName} dada de alta! Se generaron sus credenciales de acceso y se le envió el email oficial con la marca ${brandName}.`
         : `✨ Clienta ${cleanName} registrada con 200 pts de bienvenida.`
     );
 
@@ -140,6 +187,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     setNewName('');
     setNewPhone('');
     setNewEmail('');
+    setNewPassword('');
     setNewHemaAllergy(false);
     setNewHeatSensitivity('low');
     setNewNailCondition('healthy');
@@ -207,7 +255,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
           {/* Top Actions: Search + CTA */}
           <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <button
-              onClick={() => setIsNewModalOpen(true)}
+              onClick={handleOpenNewModal}
               className="btn-satin-pink"
               style={{
                 width: '100%',
@@ -485,7 +533,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
               Podés registrar una nueva clienta para emitir su ficha clínica y enviarle su correo de bienvenida oficial con branding {brandName}.
             </p>
             <button
-              onClick={() => setIsNewModalOpen(true)}
+              onClick={handleOpenNewModal}
               className="btn-satin-pink"
               style={{ padding: '0.65rem 1.25rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
@@ -496,7 +544,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
         )}
       </div>
 
-      {/* MODAL: ALTA DE CLIENTA VIP */}
+      {/* MODAL: ALTA DE CLIENTA VIP (SALON AUTHORITY CONTROLLED) */}
       {isNewModalOpen && (
         <div style={{
           position: 'fixed',
@@ -514,7 +562,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
         }}>
           <div style={{
             width: '100%',
-            maxWidth: '520px',
+            maxWidth: '540px',
             background: '#FFFFFF',
             borderRadius: '20px',
             border: '1px solid rgba(222, 115, 143, 0.3)',
@@ -551,7 +599,44 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleCreateClient} style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleCreateClient} style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Salon Authority & Anti-Fraud Security Notice */}
+              <div style={{
+                background: 'rgba(212, 175, 55, 0.08)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                borderRadius: '12px',
+                padding: '0.8rem 1rem',
+                fontSize: '0.76rem',
+                color: '#6B4E00',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.6rem',
+                lineHeight: 1.45
+              }}>
+                <ShieldCheck size={18} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong>Control de Autoridad Activo:</strong> Solo el personal de {brandName} puede dar de alta cuentas para evitar fraudes con promociones de bienvenida y múltiples registros falsos.
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {authError && (
+                <div style={{
+                  background: '#FFF5F5',
+                  border: '1px solid #FEB2B2',
+                  color: '#C53030',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <ShieldAlert size={16} style={{ flexShrink: 0 }} />
+                  <span>{authError}</span>
+                </div>
+              )}
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
                   Nombre y Apellido *
@@ -583,7 +668,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)', marginBottom: '0.35rem' }}>
-                    Correo Electrónico
+                    Correo Electrónico (Para envío de accesos)
                   </label>
                   <input
                     type="email"
@@ -593,6 +678,62 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                     style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid var(--border-strong)', fontSize: '0.88rem', outline: 'none' }}
                   />
                 </div>
+              </div>
+
+              {/* Password Assignment (Generated by Salon Authority) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--brand-espresso)' }}>
+                    Contraseña Asignada para Portal PWA / Billetera
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRegeneratePassword}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--brand-pink-dark)',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                  >
+                    <RefreshCw size={12} /> Generar otra
+                  </button>
+                </div>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Lock size={15} color="var(--brand-pink-dark)" style={{ position: 'absolute', left: '12px' }} />
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Contraseña inicial"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 2.5rem 0.65rem 2.2rem',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-strong)',
+                      fontSize: '0.88rem',
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      outline: 'none',
+                      background: '#FFFDFD'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{ position: 'absolute', right: '12px', background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: 0 }}
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.3rem 0 0 0' }}>
+                  Esta contraseña se incluirá en el correo de bienvenida oficial de {brandName} para que la clienta inicie sesión sin auto-registros.
+                </p>
               </div>
 
               {/* Email dispatch notice */}
@@ -609,7 +750,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
               }}>
                 <Send size={15} color="var(--brand-pink-dark)" style={{ flexShrink: 0 }} />
                 <span>
-                  Al registrar el correo, se emitirá automáticamente el <strong>email de bienvenida oficial de {brandName}</strong> con 200 puntos acreditados y su código de referidos.
+                  Se emitirá automáticamente el <strong>email de bienvenida oficial de {brandName}</strong> con sus credenciales, 200 puntos acreditados y código de referidos.
                 </span>
               </div>
 
