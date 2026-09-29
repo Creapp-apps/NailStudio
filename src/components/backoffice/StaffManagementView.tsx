@@ -197,15 +197,41 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
       {/* Modal Agregar Especialista (Central Floating Toast via Portal) */}
       {isModalOpen && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-sm animate-fade-in"
-          style={{ position: 'fixed', inset: 0, zIndex: 99999, overflowY: 'auto' }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 99999,
+            background: 'rgba(26, 17, 21, 0.55)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            overflowY: 'auto',
+            animation: 'modalBackdropFade 0.25s ease-out'
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
           }}
         >
           <div
-            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-rose-100/90 flex flex-col my-auto max-h-[calc(100vh-2.5rem)] overflow-hidden"
-            style={{ boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.35)' }}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '540px',
+              boxShadow: '0 30px 80px -15px rgba(26, 17, 21, 0.35), 0 0 0 1px rgba(222, 115, 143, 0.2)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: 'min(92vh, 720px)',
+              margin: 'auto',
+              animation: 'modalCardPop 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
           >
             {/* Modal Header (Fixed) */}
             <div className="p-4 sm:p-5 border-b border-rose-100 bg-rose-50/50 flex items-center justify-between shrink-0">
