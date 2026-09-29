@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, Star, Calendar, Clock, Plus, Trash2, UserPlus, X, Check, DollarSign } from 'lucide-react';
 import { NailTechnician } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -193,96 +194,126 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
         </div>
       )}
 
-      {/* Modal Agregar Especialista */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-rose-100 overflow-hidden">
-            <div className="p-5 border-b border-rose-100 bg-rose-50/40 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-foreground text-base">Nueva Especialista</h3>
-                <p className="text-xs text-muted-foreground">Alta de manicurista en el staff del salón</p>
+      {/* Modal Agregar Especialista (Central Floating Toast via Portal) */}
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-sm animate-fade-in"
+          style={{ position: 'fixed', inset: 0, zIndex: 99999, overflowY: 'auto' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-rose-100/90 flex flex-col my-auto max-h-[calc(100vh-2.5rem)] overflow-hidden"
+            style={{ boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.35)' }}
+          >
+            {/* Modal Header (Fixed) */}
+            <div className="p-4 sm:p-5 border-b border-rose-100 bg-rose-50/50 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-xl bg-rose-100/80 flex items-center justify-center text-rose-600 shadow-xs">
+                  <UserPlus className="size-4.5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-sm sm:text-base leading-tight">Nueva Especialista</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Alta de manicurista en el staff del salón</p>
+                </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-rose-100/50 transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-rose-100/60 transition-colors"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold block text-zinc-700">Nombre y Apellido *</label>
-                <input
-                  required
-                  placeholder="ej. Lucía Morales"
-                  value={name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold block text-zinc-700">Rol o Cargo *</label>
-                <input
-                  required
-                  placeholder="ej. Master Nail Artist & Rusa"
-                  value={role}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRole(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold block text-zinc-700">% Comisión Manicurista</label>
-                  <div className="relative">
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleCreate} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+                {/* Row 1: Nombre & Cargo (2 Cols) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold block text-zinc-700">Nombre y Apellido *</label>
                     <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={commissionRate}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCommissionRate(Number(e.target.value))}
-                      className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white pr-7"
+                      required
+                      placeholder="ej. Lucía Morales"
+                      value={name}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
                     />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold block text-zinc-700">Rol o Cargo *</label>
+                    <input
+                      required
+                      placeholder="ej. Master Nail Artist & Rusa"
+                      value={role}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRole(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
+                    />
                   </div>
                 </div>
 
+                {/* Row 2: Comisión & Helper (2 Cols) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold block text-zinc-700">% Comisión Manicurista</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={commissionRate}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCommissionRate(Number(e.target.value))}
+                        className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white pr-7"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100 text-[11px] text-emerald-800 flex items-center gap-1.5 h-[34px]">
+                    <DollarSign className="size-3.5 text-emerald-600 shrink-0" />
+                    <span>Calculado en liquidaciones</span>
+                  </div>
+                </div>
+
+                {/* Row 3: Foto de Perfil (FULL WIDTH - Spaciously rendered with Drag & Drop + Calibrador) */}
                 <div className="space-y-1.5">
                   <ProfileImageUploader
                     value={avatar}
                     onChange={(croppedUrl) => setAvatar(croppedUrl)}
-                    label="Foto de Perfil (Drag & Drop + Calibrador)"
+                    label="Foto de Perfil (Drag & Drop + Calibrador Instagram)"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold block text-zinc-700">Técnicas & Especialidades</label>
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 border rounded-lg bg-zinc-50/50">
-                  {AVAILABLE_SPECIALTIES.map(spec => {
-                    const isSelected = selectedSpecialties.includes(spec);
-                    return (
-                      <button
-                        type="button"
-                        key={spec}
-                        onClick={() => toggleSpecialty(spec)}
-                        className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
-                          isSelected
-                            ? 'bg-rose-600 text-white border-rose-600 font-semibold shadow-xs'
-                            : 'bg-white text-zinc-700 border-zinc-200 hover:border-rose-300'
-                        }`}
-                      >
-                        {isSelected && <Check className="size-3 inline mr-1" />}
-                        {spec}
-                      </button>
-                    );
-                  })}
+                {/* Row 4: Técnicas & Especialidades */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold block text-zinc-700">Técnicas & Especialidades</label>
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1.5 border border-zinc-200/80 rounded-xl bg-zinc-50/50">
+                    {AVAILABLE_SPECIALTIES.map(spec => {
+                      const isSelected = selectedSpecialties.includes(spec);
+                      return (
+                        <button
+                          type="button"
+                          key={spec}
+                          onClick={() => toggleSpecialty(spec)}
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                            isSelected
+                              ? 'bg-rose-600 text-white border-rose-600 font-semibold shadow-xs'
+                              : 'bg-white text-zinc-700 border-zinc-200 hover:border-rose-300'
+                          }`}
+                        >
+                          {isSelected && <Check className="size-3 inline mr-1" />}
+                          {spec}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-rose-100 flex items-center justify-end gap-2">
+              {/* Modal Footer (Fixed) */}
+              <div className="p-3.5 sm:p-4 border-t border-rose-100/80 bg-zinc-50/70 flex items-center justify-end gap-2 shrink-0">
                 <Button
                   type="button"
                   variant="outline"
@@ -303,7 +334,8 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

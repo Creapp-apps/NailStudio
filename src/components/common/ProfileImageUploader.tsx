@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { UploadCloud, Camera, ZoomIn, ZoomOut, Check, X, RotateCcw } from 'lucide-react';
 
 interface ProfileImageUploaderProps {
@@ -158,88 +159,162 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
       />
 
       {/* Dropzone & Preview Box */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => fileInputRef.current?.click()}
-        style={{
-          border: isDragging
-            ? '2px dashed var(--brand-pink-dark)'
-            : '1.5px dashed rgba(222, 115, 143, 0.45)',
-          borderRadius: '14px',
-          padding: '0.85rem 1rem',
-          background: isDragging
-            ? 'rgba(222, 115, 143, 0.08)'
-            : value
-              ? 'rgba(255, 255, 255, 0.8)'
-              : '#FAF6F8',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          transition: 'all 0.2s ease'
-        }}
-      >
-        {value ? (
-          <div style={{ position: 'relative', width: '54px', height: '54px', flexShrink: 0 }}>
-            <img
-              src={value}
-              alt="Avatar"
-              style={{
-                width: '54px',
-                height: '54px',
+      {value ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '14px',
+            border: '1.5px solid rgba(222, 115, 143, 0.35)',
+            background: '#FFFFFF',
+            boxShadow: '0 2px 8px rgba(222, 115, 143, 0.08)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+            <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+              <img
+                src={value}
+                alt="Avatar"
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--brand-pink-dark)'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                bottom: '-2px',
+                right: '-2px',
+                width: '16px',
+                height: '16px',
                 borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid var(--brand-pink-dark)',
-                boxShadow: '0 2px 8px rgba(222, 115, 143, 0.25)'
+                background: 'var(--brand-pink-dark)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Camera size={9} />
+              </div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>Foto calibrada</span>
+                <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: 'rgba(66, 122, 91, 0.1)', color: '#2F5740', fontWeight: 700 }}>1:1 Lista</span>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                Encuadre circular aplicado correctamente
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '8px',
+                background: 'rgba(222, 115, 143, 0.12)',
+                border: 'none',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: 'var(--brand-pink-dark)',
+                cursor: 'pointer'
               }}
-            />
+            >
+              Cambiar
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange('');
+              }}
+              style={{
+                padding: '0.35rem 0.6rem',
+                borderRadius: '8px',
+                background: 'transparent',
+                border: '1px solid rgba(0,0,0,0.12)',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                cursor: 'pointer'
+              }}
+            >
+              Quitar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            border: isDragging
+              ? '2px dashed var(--brand-pink-dark)'
+              : '1.5px dashed rgba(222, 115, 143, 0.4)',
+            borderRadius: '14px',
+            padding: '0.85rem 1.15rem',
+            background: isDragging
+              ? 'rgba(222, 115, 143, 0.08)'
+              : '#FAF6F8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
             <div style={{
-              position: 'absolute',
-              bottom: '-2px',
-              right: '-2px',
-              width: '18px',
-              height: '18px',
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
-              background: 'var(--brand-pink-dark)',
-              color: '#FFFFFF',
+              background: 'rgba(222, 115, 143, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+              color: 'var(--brand-pink-dark)',
+              flexShrink: 0
             }}>
-              <Camera size={10} />
+              <UploadCloud size={22} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>
+                Arrastra una foto o haz clic para subir
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                Abre el calibrador de encuadre estilo Instagram (PNG, JPG o WebP)
+              </div>
             </div>
           </div>
-        ) : (
-          <div style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '50%',
-            background: 'rgba(222, 115, 143, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+
+          <span style={{
+            padding: '0.4rem 0.8rem',
+            borderRadius: '8px',
+            background: '#FFFFFF',
+            border: '1px solid rgba(222, 115, 143, 0.25)',
+            fontSize: '0.72rem',
+            fontWeight: 600,
             color: 'var(--brand-pink-dark)',
+            whiteSpace: 'nowrap',
             flexShrink: 0
           }}>
-            <UploadCloud size={24} />
-          </div>
-        )}
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>
-            {value ? 'Cambiar o recortar foto' : 'Arrastra una foto o haz clic'}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-            {value ? 'Haz clic para abrir el calibrador de encuadre' : 'PNG, JPG o WebP (Abre calibrador estilo Instagram)'}
-          </div>
+            Explorar
+          </span>
         </div>
-      </div>
+      )}
 
       {/* Instagram-Style Image Calibrator Modal */}
-      {calibratingImage && (
+      {calibratingImage && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
@@ -457,7 +532,8 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
