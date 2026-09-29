@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Appointment, NailTechnician, ClientProfile, SupplyItem } from '../../types/nailStudio';
 import { BackofficeSidebar, BackofficeSection } from './BackofficeSidebar';
 import { BackofficeTopNav } from './BackofficeTopNav';
@@ -17,6 +17,7 @@ import { WebStudioView } from './WebStudioView';
 import { SalonSettingsView } from './SalonSettingsView';
 import { IntegrationsApiView } from './IntegrationsApiView';
 import { BookingModal } from '../booking/BookingModal';
+import { IncomingAppointmentModal } from './IncomingAppointmentModal';
 import { storage } from '../../services/storage';
 
 interface Props {
@@ -30,6 +31,49 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
   const [activeSection, setActiveSection] = useState<BackofficeSection>('web_studio');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [incomingAppointment, setIncomingAppointment] = useState<Appointment | null>(null);
+
+  useEffect(() => {
+    // 1. Listen for window custom event
+    const handleNewApt = (e: any) => {
+      if (e.detail) {
+        setIncomingAppointment(e.detail);
+      }
+    };
+    window.addEventListener('atelier-new-appointment', handleNewApt);
+
+    // 2. Listen for multi-tab BroadcastChannel
+    let channel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel('atelier_realtime_channel');
+        channel.onmessage = (event) => {
+          if (event.data?.type === 'NEW_APPOINTMENT_RECEIVED' && event.data?.appointment) {
+            setIncomingAppointment(event.data.appointment);
+          }
+        };
+      } catch {}
+    }
+
+    // 3. Storage event for cross-tab localStorage fallback
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'atelier_latest_incoming_apt' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.apt) {
+            setIncomingAppointment(parsed.apt);
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('atelier-new-appointment', handleNewApt);
+      window.removeEventListener('storage', handleStorageChange);
+      if (channel) channel.close();
+    };
+  }, []);
 
   // Computed metrics for badges
   const todayAppointments = appointments.filter(a => a.scheduledDate === '2026-09-28');
@@ -141,6 +185,16 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
+      />
+
+      {/* Real-time Central Floating Toast: Turno Recibido */}
+      <IncomingAppointmentModal
+        appointment={incomingAppointment}
+        onClose={() => setIncomingAppointment(null)}
+        onGoToCalendar={() => {
+          setActiveSection('calendar');
+        }}
+        techs={techs}
       />
     </div>
   );

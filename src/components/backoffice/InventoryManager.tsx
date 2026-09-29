@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Package, AlertCircle, Plus, Minus, Check, Trash2, Sparkles } from 'lucide-react';
 import { SupplyItem } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -208,14 +209,49 @@ export const InventoryManager: React.FC<Props> = ({ supplies }) => {
       </div>
 
       {/* Modal: Crear Insumo */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-card border border-border p-6 shadow-2xl space-y-4">
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 99999,
+            background: 'rgba(26, 17, 21, 0.55)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            overflowY: 'auto',
+            animation: 'modalBackdropFade 0.25s ease-out'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '460px',
+              boxShadow: '0 30px 80px -15px rgba(26, 17, 21, 0.35), 0 0 0 1px rgba(222, 115, 143, 0.2)',
+              overflowY: 'auto',
+              maxHeight: 'min(92vh, 680px)',
+              margin: 'auto',
+              animation: 'modalCardPop 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            className="p-6 space-y-4"
+          >
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="text-base font-bold font-serif-glam text-foreground">
                 Registrar Nuevo Insumo / Producto
               </h3>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-muted-foreground hover:text-foreground text-sm font-semibold cursor-pointer"
               >
@@ -322,7 +358,8 @@ export const InventoryManager: React.FC<Props> = ({ supplies }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -251,63 +251,83 @@ export const BookingModal: React.FC<Props> = ({
         }}>
           {confirmedApt ? (
             /* Confirmation View */
-            <div style={{ textAlign: 'center', padding: '0.5rem 0' }} className="animate-fade-in">
+            <div style={{ textAlign: 'center', padding: '0.4rem 0' }} className="animate-fade-in">
               <div style={{
-                width: '50px',
-                height: '50px',
+                width: '46px',
+                height: '46px',
                 borderRadius: '50%',
                 background: 'rgba(66, 122, 91, 0.12)',
                 color: '#2F5740',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 0.75rem auto'
+                margin: '0 auto 0.5rem auto'
               }}>
-                <Check size={28} strokeWidth={2.5} />
+                <Check size={24} strokeWidth={2.5} />
               </div>
-              <h3 style={{ fontSize: '1.35rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.2rem' }}>
-                Te esperamos, {confirmedApt.clientName}
+
+              <div style={{ marginBottom: '0.35rem' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  color: '#2F5740',
+                  background: 'rgba(66, 122, 91, 0.08)',
+                  border: '1px solid rgba(66, 122, 91, 0.2)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '20px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em'
+                }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#427A5B' }} />
+                  Transmitido a Recepción en Tiempo Real
+                </span>
+              </div>
+
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.2rem' }}>
+                ¡Turno recibido, {confirmedApt.clientName}!
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', maxWidth: '440px', margin: '0 auto 0.85rem auto', lineHeight: 1.4 }}>
-                Turno agendado para el <strong>{confirmedApt.scheduledDate}</strong> a las <strong>{confirmedApt.scheduledTime} hs</strong> ({confirmedApt.totalDurationMin} min de sesión).
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', maxWidth: '440px', margin: '0 auto 0.65rem auto', lineHeight: 1.35 }}>
+                Tu reserva para el <strong>{confirmedApt.scheduledDate}</strong> a las <strong>{confirmedApt.scheduledTime} hs</strong> ha ingresado a la terminal del atelier.
               </p>
 
               <div style={{
                 background: '#FAF6F7',
                 borderRadius: '12px',
-                padding: '0.75rem 1rem',
-                maxWidth: '420px',
-                margin: '0 auto 1rem auto',
+                padding: '0.65rem 0.95rem',
+                maxWidth: '430px',
+                margin: '0 auto 0.85rem auto',
                 border: '1px solid rgba(222, 115, 143, 0.2)',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 textAlign: 'left'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Especialista:</span>
+                  <strong style={{ color: 'var(--brand-espresso)' }}>
+                    {selectedTech ? `${selectedTech.name} (${selectedTech.role})` : 'Mesa de Alta Precisión (Asignada)'}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Técnica & Deco:</span>
                   <strong style={{ color: 'var(--brand-espresso)' }}>{selectedService?.title} ({selectedNailArt.name.split(':')[0]})</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Retiro:</span>
-                  <strong style={{ color: 'var(--brand-espresso)' }}>{selectedRemoval.label.split('(')[0]}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.35rem', borderTop: '1px dashed rgba(0,0,0,0.1)', fontWeight: 700 }}>
-                  <span>Total en salón:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.3rem', borderTop: '1px dashed rgba(0,0,0,0.1)', fontWeight: 700 }}>
+                  <span>Total en mesa:</span>
                   <span style={{ color: 'var(--brand-pink-dark)' }}>${(confirmedApt.totalPrice - 5000).toLocaleString('es-AR')} (Seña de $5.000 bonificada)</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-                <a
-                  href={`https://wa.me/?text=Hola%20tengo%20mi%20turno%20reservado%20en%20Atelier%20Nails%20para%20el%20${confirmedApt.scheduledDate}%20a%20las%20${confirmedApt.scheduledTime}`}
-                  target="_blank"
-                  rel="noreferrer"
+              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleResetAndClose}
                   className="btn-satin-pink"
-                  style={{ textDecoration: 'none', padding: '0.55rem 1.25rem', fontSize: '0.78rem' }}
+                  style={{ padding: '0.55rem 1.6rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  Recordatorio a mi WhatsApp
-                </a>
-                <button onClick={handleResetAndClose} className="btn-outline-couture" style={{ padding: '0.55rem 1rem', fontSize: '0.78rem' }}>
-                  Cerrar
+                  <Check size={14} strokeWidth={2.5} />
+                  <span>Entendido y Finalizar</span>
                 </button>
               </div>
             </div>

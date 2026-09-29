@@ -126,8 +126,36 @@ class StorageService {
     try {
       supabase
         .channel('public-atelier-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, (payload: any) => {
           this.fetchFromSupabase();
+          if (payload?.eventType === 'INSERT' && payload?.new) {
+            try {
+              const apt: Appointment = {
+                id: payload.new.id,
+                clientName: payload.new.client_name,
+                clientPhone: payload.new.client_phone,
+                clientEmail: payload.new.client_email || '',
+                techId: payload.new.tech_id,
+                serviceId: payload.new.service_id,
+                removalId: payload.new.removal_id,
+                nailArtTierId: payload.new.nail_art_tier_id,
+                totalDurationMin: payload.new.total_duration_min,
+                totalPrice: payload.new.total_price,
+                depositAmount: payload.new.deposit_amount || 5000,
+                depositPaid: payload.new.deposit_paid ?? true,
+                scheduledDate: payload.new.scheduled_date,
+                scheduledTime: payload.new.scheduled_time,
+                status: payload.new.status || 'confirmed',
+                notes: payload.new.notes || '',
+                createdAt: payload.new.created_at || new Date().toISOString()
+              };
+              window.dispatchEvent(new CustomEvent('atelier-new-appointment', { detail: apt }));
+              if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel('atelier_realtime_channel');
+                channel.postMessage({ type: 'NEW_APPOINTMENT_RECEIVED', appointment: apt });
+              }
+            } catch {}
+          }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'client_profiles' }, () => {
           this.fetchFromSupabase();
@@ -397,6 +425,21 @@ class StorageService {
     this.pushAppointmentToSupabase(created);
 
     this.notify();
+
+    // Realtime notification broadcast across tabs and windows
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atelier-new-appointment', { detail: created }));
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('atelier_realtime_channel');
+          channel.postMessage({ type: 'NEW_APPOINTMENT_RECEIVED', appointment: created });
+        }
+        localStorage.setItem('atelier_latest_incoming_apt', JSON.stringify({ apt: created, time: Date.now() }));
+      }
+    } catch (e) {
+      console.warn('Realtime broadcast error:', e);
+    }
+
     return created;
   }
 
