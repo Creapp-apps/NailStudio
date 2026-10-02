@@ -51,6 +51,7 @@ interface Props {
   activeSection: BackofficeSection;
   onSelectSection: (section: BackofficeSection) => void;
   todayAppointmentsCount: number;
+  pendingAppointmentsCount?: number;
   lowStockCount: number;
   hemaAlertCount: number;
   retentionPendingCount: number;
@@ -62,6 +63,7 @@ export const BackofficeSidebar: React.FC<Props> = ({
   activeSection,
   onSelectSection,
   todayAppointmentsCount,
+  pendingAppointmentsCount = 0,
   lowStockCount,
   hemaAlertCount,
   retentionPendingCount,
@@ -279,17 +281,33 @@ export const BackofficeSidebar: React.FC<Props> = ({
                         <span>{item.label}</span>
                       </div>
 
-                      {item.badge && (
-                        <Badge
-                          variant={item.badgeVariant}
-                          className={`px-1.5 py-0.2 text-[10px] ${
-                            isActive
-                              ? 'bg-pink-500 text-white'
-                              : 'bg-white/10 text-zinc-300'
-                          }`}
+                      {item.id === 'calendar' && pendingAppointmentsCount > 0 ? (
+                        <div
+                          className="flex items-center gap-1.5 shrink-0"
+                          title="TENES UN TURNO PENDIENTE PARA REVISAR"
                         >
-                          {item.badge}
-                        </Badge>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white shadow-lg shadow-[#DE738F]/50 animate-pulse border border-white/20 tracking-wider">
+                            <Sparkles size={10} className="text-amber-200 shrink-0" />
+                            <span>{pendingAppointmentsCount} PENDIENTE{pendingAppointmentsCount > 1 ? 'S' : ''}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        item.badge && (
+                          <Badge
+                            variant={item.badgeVariant}
+                            className={`px-1.5 py-0.2 text-[10px] ${
+                              isActive
+                                ? 'bg-pink-500 text-white'
+                                : 'bg-white/10 text-zinc-300'
+                            }`}
+                          >
+                            {item.badge}
+                          </Badge>
+                        )
                       )}
                     </button>
                   );

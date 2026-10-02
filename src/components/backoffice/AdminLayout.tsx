@@ -19,6 +19,7 @@ import { IntegrationsApiView } from './IntegrationsApiView';
 import { BookingModal } from '../booking/BookingModal';
 import { IncomingAppointmentModal } from './IncomingAppointmentModal';
 import { storage } from '../../services/storage';
+import { format } from 'date-fns';
 
 interface Props {
   appointments: Appointment[];
@@ -76,7 +77,10 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
   }, []);
 
   // Computed metrics for badges
-  const todayAppointments = appointments.filter(a => a.scheduledDate === '2026-09-28');
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayAppointments = appointments.filter(a => a.scheduledDate === todayStr || a.scheduledDate === '2026-09-28');
+  const pendingAppointments = appointments.filter(a => a.status === 'pending');
+  const pendingAppointmentsCount = pendingAppointments.length;
   const lowStockSupplies = supplies.filter(s => s.currentStock <= s.minStockAlert);
   const hemaAllergies = clients.filter(c => c.allergiesHema);
   const retentionPending = clients.filter(c => {
@@ -85,7 +89,7 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
       .filter(a => a.clientPhone === c.phone || a.clientName.toLowerCase() === c.name.toLowerCase())
       .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())[0];
     if (!lastApp) return true;
-    const diffDays = Math.floor((new Date('2026-09-28').getTime() - new Date(lastApp.scheduledDate).getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((new Date().getTime() - new Date(lastApp.scheduledDate).getTime()) / (1000 * 60 * 60 * 24));
     return diffDays >= 18;
   });
 
@@ -102,6 +106,7 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
         activeSection={activeSection}
         onSelectSection={setActiveSection}
         todayAppointmentsCount={todayAppointments.length}
+        pendingAppointmentsCount={pendingAppointmentsCount}
         lowStockCount={lowStockSupplies.length}
         hemaAlertCount={hemaAllergies.length}
         retentionPendingCount={retentionPending.length}
@@ -119,26 +124,28 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
           onResetData={handleResetData}
         />
 
-        {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <div className="mx-auto max-w-7xl">
-            {/* PERSONALIZACIÓN & WEB STUDIO */}
-            {activeSection === 'web_studio' && (
-              <WebStudioView />
-            )}
+        {/* Content Viewport: Fullscreen Section for Calendar, Contained for Settings/CRM */}
+        {activeSection === 'calendar' ? (
+          <main className="flex-1 w-full h-[calc(100vh-60px)] flex flex-col p-0 m-0 overflow-hidden bg-background">
+            <MultiTechCalendar appointments={appointments} techs={techs} />
+          </main>
+        ) : (
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <div className="mx-auto max-w-7xl">
+              {/* PERSONALIZACIÓN & WEB STUDIO */}
+              {activeSection === 'web_studio' && (
+                <WebStudioView />
+              )}
 
-            {/* OPERACIONES */}
-            {activeSection === 'calendar' && (
-              <MultiTechCalendar appointments={appointments} techs={techs} />
-            )}
-            {activeSection === 'waitlist' && (
-              <LiveDeskView appointments={appointments} techs={techs} />
-            )}
+              {/* OPERACIONES */}
+              {activeSection === 'waitlist' && (
+                <LiveDeskView appointments={appointments} techs={techs} />
+              )}
 
-            {/* CLIENTELA & SALUD UNGUEAL */}
-            {activeSection === 'crm' && (
-              <ClientCRM clients={clients} />
-            )}
+              {/* CLIENTELA & SALUD UNGUEAL */}
+              {activeSection === 'crm' && (
+                <ClientCRM clients={clients} />
+              )}
             {activeSection === 'health' && (
               <HealthDiagnosticsView clients={clients} />
             )}
@@ -179,7 +186,8 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
             )}
           </div>
         </main>
-      </div>
+      )}
+    </div>
 
       {/* Manual Booking Modal Triggered from SaaS Header */}
       <BookingModal

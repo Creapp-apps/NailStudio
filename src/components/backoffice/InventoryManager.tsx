@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Package, AlertCircle, Plus, Minus, Check, Trash2, Sparkles } from 'lucide-react';
 import { SupplyItem } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
+import { LuxurySelect } from '../common/LuxurySelect';
 
 interface Props {
   supplies: SupplyItem[];
@@ -275,17 +276,17 @@ export const InventoryManager: React.FC<Props> = ({ supplies }) => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-semibold text-foreground">Categoría</label>
-                  <select
+                  <LuxurySelect
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs"
-                  >
-                    <option value="geles_bases">Geles & Bases</option>
-                    <option value="quimicos">Químicos & Soluciones</option>
-                    <option value="acrilicos">Acrílicos</option>
-                    <option value="descartables">Descartables</option>
-                    <option value="herramientas">Herramientas</option>
-                  </select>
+                    onChange={(val) => setCategory(val as any)}
+                    options={[
+                      { value: 'geles_bases', label: 'Geles & Bases' },
+                      { value: 'quimicos', label: 'Químicos & Soluciones' },
+                      { value: 'acrilicos', label: 'Acrílicos' },
+                      { value: 'descartables', label: 'Descartables' },
+                      { value: 'herramientas', label: 'Herramientas' }
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -327,17 +328,17 @@ export const InventoryManager: React.FC<Props> = ({ supplies }) => {
 
                 <div className="space-y-1">
                   <label className="font-semibold text-foreground">Unidad</label>
-                  <select
+                  <LuxurySelect
                     value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="w-full px-2 py-2 rounded-xl bg-background border border-border text-xs"
-                  >
-                    <option value="unidades">unidades</option>
-                    <option value="frascos">frascos</option>
-                    <option value="litros">litros</option>
-                    <option value="potes">potes</option>
-                    <option value="paquetes">paquetes</option>
-                  </select>
+                    onChange={(val) => setUnit(String(val))}
+                    options={[
+                      { value: 'unidades', label: 'unidades' },
+                      { value: 'frascos', label: 'frascos' },
+                      { value: 'litros', label: 'litros' },
+                      { value: 'potes', label: 'potes' },
+                      { value: 'paquetes', label: 'paquetes' }
+                    ]}
+                  />
                 </div>
               </div>
 

@@ -175,7 +175,7 @@ export const DesignDetailModal: React.FC<Props> = ({
               </span>
               <div className="flex items-center justify-center gap-1 text-xs font-bold text-neutral-800">
                 <Clock className="size-3 text-pink-500" />
-                <span>~60 - 80m</span>
+                <span>{item.estimatedTime || '~60 - 80m'}</span>
               </div>
             </div>
 
@@ -185,7 +185,7 @@ export const DesignDetailModal: React.FC<Props> = ({
               </span>
               <div className="flex items-center justify-center gap-1 text-xs font-bold text-emerald-700">
                 <ShieldCheck className="size-3 text-emerald-600" />
-                <span>100% Segura</span>
+                <span>{item.formula || '100% Segura'}</span>
               </div>
             </div>
 
@@ -195,7 +195,7 @@ export const DesignDetailModal: React.FC<Props> = ({
               </span>
               <div className="flex items-center justify-center gap-1 text-xs font-bold text-neutral-800">
                 <CheckCircle2 className="size-3 text-pink-500" />
-                <span>21 a 28 días</span>
+                <span>{item.maintenance || (item.durationDays ? `${item.durationDays} días` : '21 a 28 días')}</span>
               </div>
             </div>
           </div>

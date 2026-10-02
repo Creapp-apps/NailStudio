@@ -14,6 +14,9 @@ export interface ShowcaseWorkItem {
   description?: string;
   durationDays?: number;
   badgeInfo?: string;
+  estimatedTime?: string;
+  formula?: string;
+  maintenance?: string;
 }
 
 export interface WebCustomizationConfig {
@@ -142,7 +145,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Cromado Espejo',
       description: 'Esmaltado semipermanente blanco translúcido con efecto perlado Aurora y manicuría rusa de corte limpio.',
       durationDays: 21,
-      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
+      estimatedTime: '~60 - 80m',
+      formula: '100% Segura',
+      maintenance: '21 a 28 días'
     },
     {
       id: 'work-2',
@@ -152,7 +158,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Nivelación Rubber',
       description: 'Refuerzo de uña natural con rubber base biocompatible HEMA-free. Resistencia y flexibilidad extrema.',
       durationDays: 28,
-      badgeInfo: 'Duración intacta 28+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 28+ días • HEMA-Free',
+      estimatedTime: '~75 - 90m',
+      formula: 'HEMA-Free',
+      maintenance: '28 a 35 días'
     },
     {
       id: 'work-3',
@@ -162,7 +171,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Soft Gel Tips',
       description: 'Extensiones anatómicas completas adheridas con gel constructivo sin daño a la uña natural.',
       durationDays: 24,
-      badgeInfo: 'Duración intacta 24+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 24+ días • HEMA-Free',
+      estimatedTime: '~90 - 110m',
+      formula: 'Bio-Gel Pure',
+      maintenance: '21 a 28 días'
     },
     {
       id: 'work-4',
@@ -172,7 +184,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Cristales & 3D',
       description: 'Diseño de autor con micro-pedrería de corte diamante sellada con gel blindado de alto impacto.',
       durationDays: 21,
-      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
+      estimatedTime: '~80 - 100m',
+      formula: '100% Segura',
+      maintenance: '21 a 28 días'
     },
     {
       id: 'work-5',
@@ -182,7 +197,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Limpieza de Cutícula',
       description: 'Bolsillo de cutícula pulido a torno con fresas diamantadas y esmaltado bajo cutícula impecable.',
       durationDays: 21,
-      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
+      estimatedTime: '~60 - 75m',
+      formula: 'Hipoalergénico',
+      maintenance: '21 a 28 días'
     },
     {
       id: 'work-6',
@@ -192,7 +210,10 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       techniqueTag: 'Cat Eye 5D',
       description: 'Partículas magnéticas orientadas en multidimensión creando un efecto seda aterciopelada y brillante.',
       durationDays: 21,
-      badgeInfo: 'Duración intacta 21+ días • HEMA-Free'
+      badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
+      estimatedTime: '~70 - 85m',
+      formula: '100% Segura',
+      maintenance: '21 a 28 días'
     }
   ],
 

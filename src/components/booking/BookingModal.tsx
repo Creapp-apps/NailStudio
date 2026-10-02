@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Check,
@@ -10,10 +10,12 @@ import {
   Sparkles,
   ShieldCheck
 } from 'lucide-react';
-import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment } from '../../types/nailStudio';
+import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment, DayOfWeekKey, TimeRangeBlock } from '../../types/nailStudio';
 import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
-import { storage } from '../../services/storage';
+import { storage, DEFAULT_SCHEDULE_BY_DAY } from '../../services/storage';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { LuxuryDatePicker } from '../common/LuxuryDatePicker';
+import { format } from 'date-fns';
 
 interface Props {
   isOpen: boolean;
@@ -21,6 +23,8 @@ interface Props {
   preselectedServiceId?: string;
   onBookingSuccess?: (appointment: Appointment) => void;
 }
+
+const DAY_KEYS: DayOfWeekKey[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export const BookingModal: React.FC<Props> = ({
   isOpen,
@@ -34,12 +38,16 @@ export const BookingModal: React.FC<Props> = ({
     return s.length > 0 ? s : INITIAL_SERVICES;
   });
   const [availableTechs, setAvailableTechs] = useState<NailTechnician[]>(() => storage.getTechs());
+  const [salonSettings, setSalonSettings] = useState(() => storage.getSalonSettings());
+  const [appointments, setAppointments] = useState(() => storage.getAppointments());
 
   useEffect(() => {
     const unsub = storage.subscribe(() => {
       const s = storage.getServices();
       if (s.length > 0) setServices(s);
       setAvailableTechs(storage.getTechs());
+      setSalonSettings(storage.getSalonSettings());
+      setAppointments(storage.getAppointments());
     });
     return unsub;
   }, []);
@@ -56,11 +64,36 @@ export const BookingModal: React.FC<Props> = ({
       if (match) setSelectedService(match);
     }
   }, [preselectedServiceId, services, isOpen]);
+
   const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(REMOVAL_OPTIONS[0]);
   const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(NAIL_ART_TIERS[0]);
   const [selectedTech, setSelectedTech] = useState<NailTechnician | null>(availableTechs[0] || null);
-  const [selectedDate, setSelectedDate] = useState<string>('2026-09-29');
+
+  // Helper to find next open date
+  const findNextOpenDate = (fromStr: string) => {
+    const sched = salonSettings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
+    const curr = new Date(fromStr + 'T12:00:00');
+    for (let i = 0; i < 14; i++) {
+      const key = DAY_KEYS[curr.getDay()];
+      if (sched[key]?.enabled && sched[key]?.ranges.length > 0) {
+        return format(curr, 'yyyy-MM-dd');
+      }
+      curr.setDate(curr.getDate() + 1);
+    }
+    return fromStr;
+  };
+
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    return findNextOpenDate(format(new Date(), 'yyyy-MM-dd'));
+  });
   const [selectedTime, setSelectedTime] = useState<string>('14:00');
+
+  // Keep selected tech synced when availableTechs loads or updates
+  useEffect(() => {
+    if (!selectedTech && availableTechs.length > 0) {
+      setSelectedTech(availableTechs[0]);
+    }
+  }, [availableTechs, selectedTech]);
 
   // Client Details
   const [clientName, setClientName] = useState<string>('');
@@ -84,7 +117,80 @@ export const BookingModal: React.FC<Props> = ({
   const minutes = totalDuration % 60;
   const timeFormatted = `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m` : ''}` || '0m';
 
-  const availableHours = ['10:00', '11:45', '14:00', '15:30', '17:15', '19:00'];
+  // Dynamic schedule calculation for the selected date
+  const currentDaySchedule = useMemo(() => {
+    try {
+      const d = new Date(selectedDate + 'T12:00:00');
+      const dayKey = DAY_KEYS[d.getDay()];
+      const sched = salonSettings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
+      return sched[dayKey] || { enabled: false, ranges: [] };
+    } catch {
+      return { enabled: false, ranges: [] };
+    }
+  }, [selectedDate, salonSettings]);
+
+  const isDayClosed = !currentDaySchedule.enabled || currentDaySchedule.ranges.length === 0;
+
+  // Generate available slots based on the day's time blocks and active bookings
+  const availableHours = useMemo(() => {
+    if (isDayClosed) return [];
+
+    const effectiveSlotDuration = totalDuration > 0 ? totalDuration : 60;
+    const stepMin = 30; // Offer slots every 30 mins
+    const generated: string[] = [];
+
+    const activeApts = appointments.filter(a =>
+      a.scheduledDate === selectedDate &&
+      a.status !== 'cancelled' &&
+      (!selectedTech || a.techId === selectedTech.id)
+    );
+
+    const toMinutes = (timeStr: string) => {
+      const [h, m] = (timeStr || '00:00').split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+
+    const toTimeString = (totalMin: number) => {
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
+    currentDaySchedule.ranges.forEach((range: TimeRangeBlock) => {
+      const startM = toMinutes(range.startTime);
+      const endM = toMinutes(range.endTime);
+
+      for (let curr = startM; curr + effectiveSlotDuration <= endM; curr += stepMin) {
+        const slotEnd = curr + effectiveSlotDuration;
+
+        const hasCollision = activeApts.some(apt => {
+          const aptStart = toMinutes(apt.scheduledTime);
+          const aptEnd = aptStart + (apt.totalDurationMin || 60);
+          return Math.max(curr, aptStart) < Math.min(slotEnd, aptEnd);
+        });
+
+        if (!hasCollision) {
+          const timeStr = toTimeString(curr);
+          if (!generated.includes(timeStr)) {
+            generated.push(timeStr);
+          }
+        }
+      }
+    });
+
+    return generated;
+  }, [isDayClosed, currentDaySchedule, totalDuration, appointments, selectedDate, selectedTech]);
+
+  // Keep selectedTime synced with available slots
+  useEffect(() => {
+    if (availableHours.length > 0) {
+      if (!selectedTime || !availableHours.includes(selectedTime)) {
+        setSelectedTime(availableHours[0]);
+      }
+    } else {
+      setSelectedTime('');
+    }
+  }, [availableHours, selectedTime]);
 
   const stepTitles = [
     'Técnica Estructural Base',
@@ -102,11 +208,14 @@ export const BookingModal: React.FC<Props> = ({
 
     setIsSubmitting(true);
     setTimeout(() => {
+      const targetTech = selectedTech || availableTechs[0] || null;
+      const targetTechId = targetTech?.id || 'tech-1';
+
       const created = storage.createAppointment({
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
         clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
-        techId: selectedTech?.id || 'auto-assigned',
+        techId: targetTechId,
         serviceId: selectedService!.id,
         removalId: selectedRemoval.id,
         nailArtTierId: selectedNailArt.id,
@@ -116,7 +225,7 @@ export const BookingModal: React.FC<Props> = ({
         depositPaid: true,
         scheduledDate: selectedDate,
         scheduledTime: selectedTime,
-        status: 'confirmed',
+        status: 'pending',
         notes: bookingNotes
       });
 
@@ -130,356 +239,204 @@ export const BookingModal: React.FC<Props> = ({
     setConfirmedApt(null);
     setStep(1);
     onClose();
-  };
-
-  return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(26, 17, 21, 0.7)',
-      backdropFilter: 'blur(8px)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0.75rem',
-      overflow: 'hidden'
-    }}>
-      {/* SINGLE PAGE FLOATING MODAL TOAST (ZERO SCROLL DESIGN) */}
-      <div style={{
-        background: '#FFFFFF',
-        borderRadius: '20px',
-        width: '100%',
-        maxWidth: '740px',
-        boxShadow: '0 25px 70px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        animation: 'fadeIn 0.2s ease-out'
-      }}>
+  };  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto"
+      style={{
+        background: 'rgba(26, 17, 21, 0.72)',
+        backdropFilter: 'blur(10px)'
+      }}
+    >
+      {/* FLOATING MODAL CARD (Luxury Editorial Haute Glam) */}
+      <div
+        className="w-full max-w-[760px] max-h-[94vh] sm:max-h-[88vh] flex flex-col relative rounded-2xl sm:rounded-3xl bg-white shadow-2xl overflow-hidden my-auto animate-fade-in"
+        style={{
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(222, 115, 143, 0.22)'
+        }}
+      >
         {/* Top Accent Luxury Ribbon */}
-        <div style={{
-          height: '3px',
-          background: 'linear-gradient(90deg, #DE738F 0%, #E0C89E 50%, #C45774 100%)'
-        }} />
+        <div
+          className="h-1 w-full shrink-0"
+          style={{
+            background: 'linear-gradient(90deg, #DE738F 0%, #E0C89E 50%, #C45774 100%)'
+          }}
+        />
 
-        {/* Compact Header Bar */}
-        <div style={{
-          padding: '0.85rem 1.25rem',
-          borderBottom: '1px solid rgba(222, 115, 143, 0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'linear-gradient(180deg, #FFF9FA 0%, #FFFFFF 100%)'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              {webConfig.customLogoUrl ? (
-                <div style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(222, 115, 143, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <img
-                    src={webConfig.customLogoUrl}
-                    alt={webConfig.brandName}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      transform: `scale(${(webConfig.customLogoScale || 100) / 100})`
-                    }}
-                  />
-                </div>
-              ) : null}
-              <span style={{
-                fontSize: '0.65rem',
-                fontFamily: 'var(--font-couture)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: 'var(--brand-pink-dark)',
-                fontWeight: 700
-              }}>
-                {webConfig.brandName || 'Atelier Nails & Co.'}
-              </span>
-              <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {!confirmedApt ? `Paso ${step} de 5: ${stepTitles[step - 1]}` : 'Turno Confirmado'}
-              </span>
-            </div>
-            <h2 style={{
-              fontSize: '1.15rem',
-              color: 'var(--brand-espresso)',
-              fontFamily: 'var(--font-serif-glam)',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              margin: '0.15rem 0 0 0'
-            }}>
-              {!confirmedApt ? 'Reserva tu Turno Exclusivo' : '¡Tu Cita ha sido Agendada!'}
-            </h2>
-          </div>
+        {/* Compact Header Bar - Centered Luxury Editorial */}
+        <div
+          className="relative px-4 py-3.5 sm:px-6 sm:py-4 border-b shrink-0 text-center flex flex-col items-center justify-center"
+          style={{
+            borderColor: 'rgba(222, 115, 143, 0.16)',
+            background: 'linear-gradient(180deg, #FFF9FA 0%, #FFFFFF 100%)'
+          }}
+        >
+          {/* Close button positioned top-right with accessible touch area */}
+          <button
+            onClick={handleResetAndClose}
+            type="button"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 rounded-full border border-black/10 bg-black/[0.03] text-stone-500 hover:text-stone-800 hover:bg-black/[0.06] flex items-center justify-center transition-all cursor-pointer z-10"
+            title="Cerrar"
+          >
+            <X size={16} />
+          </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Minimal Progress Step Indicators */}
-            {!confirmedApt && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {[1, 2, 3, 4, 5].map(s => (
-                  <div
-                    key={s}
-                    style={{
-                      width: step === s ? '18px' : '6px',
-                      height: '6px',
-                      borderRadius: '3px',
-                      background: step === s
-                        ? 'var(--brand-pink-dark)'
-                        : step > s
-                          ? '#C45774'
-                          : 'rgba(222, 115, 143, 0.25)',
-                      transition: 'all 0.25s ease'
-                    }}
-                  />
-                ))}
+          {/* Eyebrow: Brand & Step Indicator */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mb-1 pr-6 pl-6 sm:px-0">
+            {webConfig.customLogoUrl ? (
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-white border border-[#DE738F]/30 flex items-center justify-center shrink-0">
+                <img
+                  src={webConfig.customLogoUrl}
+                  alt={webConfig.brandName}
+                  className="w-full h-full object-contain"
+                  style={{ transform: `scale(${(webConfig.customLogoScale || 100) / 100})` }}
+                />
               </div>
-            )}
-
-            <button
-              onClick={handleResetAndClose}
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                border: '1px solid rgba(0,0,0,0.08)',
-                background: 'rgba(0,0,0,0.02)',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease'
-              }}
-              title="Cerrar"
+            ) : null}
+            <span
+              className="text-[0.66rem] uppercase tracking-[0.14em] font-bold text-[#C45774]"
+              style={{ fontFamily: 'var(--font-couture)' }}
             >
-              <X size={16} />
-            </button>
+              {webConfig.brandName || 'Belcalis Nails'}
+            </span>
+            <span className="text-stone-300">•</span>
+            <span className="text-[0.72rem] text-stone-500 font-semibold">
+              {!confirmedApt ? `Paso ${step} de 5: ${stepTitles[step - 1]}` : 'Turno Confirmado'}
+            </span>
           </div>
+
+          {/* Centered Serif Glam Headline */}
+          <h2
+            className="text-lg sm:text-2xl font-bold tracking-tight text-[#2B181C] m-0 leading-tight uppercase font-serif-glam"
+            style={{ letterSpacing: '0.02em' }}
+          >
+            {!confirmedApt ? 'Reserva tu Turno Exclusivo' : '¡Tu Cita ha sido Agendada!'}
+          </h2>
+
+          {/* Step Progress Dots */}
+          {!confirmedApt && (
+            <div className="flex items-center justify-center gap-1.5 mt-2">
+              {[1, 2, 3, 4, 5].map(s => (
+                <div
+                  key={s}
+                  style={{
+                    width: step === s ? '22px' : '7px',
+                    height: '6px',
+                    borderRadius: '3px',
+                    background: step === s
+                      ? 'var(--brand-pink-dark, #C45774)'
+                      : step > s
+                        ? '#C45774'
+                        : 'rgba(222, 115, 143, 0.25)',
+                    transition: 'all 0.25s ease'
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Modal Body Content (Single-Page Fixed Height - No Scroll) */}
-        <div style={{
-          padding: '1rem 1.25rem',
-          minHeight: '275px',
-          maxHeight: '310px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
+        {/* Modal Body Content (Fluid, Responsive, Centered & Zero Clip) */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 sm:px-6 sm:py-5 max-h-[64vh] sm:max-h-[460px] flex flex-col justify-start sm:justify-center w-full box-border">
           {confirmedApt ? (
             /* Confirmation View */
-            <div style={{ textAlign: 'center', padding: '0.4rem 0' }} className="animate-fade-in">
-              <div style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '50%',
-                background: 'rgba(66, 122, 91, 0.12)',
-                color: '#2F5740',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 0.5rem auto'
-              }}>
-                <Check size={24} strokeWidth={2.5} />
+            <div className="animate-fade-in text-center py-2 sm:py-4 max-w-lg mx-auto w-full">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/15 text-emerald-800 flex items-center justify-center mx-auto mb-2.5">
+                <Check size={26} strokeWidth={2.5} />
               </div>
 
-              <div style={{ marginBottom: '0.35rem' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  color: '#2F5740',
-                  background: 'rgba(66, 122, 91, 0.08)',
-                  border: '1px solid rgba(66, 122, 91, 0.2)',
-                  padding: '0.2rem 0.65rem',
-                  borderRadius: '20px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#427A5B' }} />
+              <div className="mb-2">
+                <span className="inline-flex items-center gap-1.5 text-[0.68rem] font-bold text-emerald-800 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                   Transmitido a Recepción en Tiempo Real
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.2rem' }}>
+              <h3 className="text-xl sm:text-2xl text-[#2B181C] font-serif-glam font-bold mb-1">
                 ¡Turno recibido, {confirmedApt.clientName}!
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', maxWidth: '440px', margin: '0 auto 0.65rem auto', lineHeight: 1.35 }}>
+              <p className="text-stone-500 text-xs sm:text-sm max-w-md mx-auto mb-3.5 leading-relaxed">
                 Tu reserva para el <strong>{confirmedApt.scheduledDate}</strong> a las <strong>{confirmedApt.scheduledTime} hs</strong> ha ingresado a la terminal del atelier.
               </p>
 
-              <div style={{
-                background: '#FAF6F7',
-                borderRadius: '12px',
-                padding: '0.65rem 0.95rem',
-                maxWidth: '430px',
-                margin: '0 auto 0.85rem auto',
-                border: '1px solid rgba(222, 115, 143, 0.2)',
-                fontSize: '0.76rem',
-                textAlign: 'left'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Especialista:</span>
-                  <strong style={{ color: 'var(--brand-espresso)' }}>
+              <div className="bg-[#FAF6F7] rounded-xl p-3.5 sm:p-4 max-w-md mx-auto mb-4 border border-[#DE738F]/20 text-xs sm:text-sm text-left">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-stone-500">Especialista:</span>
+                  <strong className="text-[#2B181C]">
                     {selectedTech ? `${selectedTech.name} (${selectedTech.role})` : 'Mesa de Alta Precisión (Asignada)'}
                   </strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Técnica & Deco:</span>
-                  <strong style={{ color: 'var(--brand-espresso)' }}>{selectedService?.title} ({selectedNailArt.name.split(':')[0]})</strong>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-stone-500">Técnica & Deco:</span>
+                  <strong className="text-[#2B181C]">{selectedService?.title} ({selectedNailArt.name.split(':')[0]})</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.3rem', borderTop: '1px dashed rgba(0,0,0,0.1)', fontWeight: 700 }}>
+                <div className="flex justify-between items-center pt-2 border-t border-dashed border-stone-200 font-bold">
                   <span>Total en mesa:</span>
-                  <span style={{ color: 'var(--brand-pink-dark)' }}>${(confirmedApt.totalPrice - 5000).toLocaleString('es-AR')} (Seña de $5.000 bonificada)</span>
+                  <span className="text-[#C45774]">${(confirmedApt.totalPrice - 5000).toLocaleString('es-AR')} (Seña de $5.000 bonificada)</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center' }}>
+              <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="btn-satin-pink"
-                  style={{ padding: '0.55rem 1.6rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  className="btn-satin-pink px-6 py-2.5 text-xs sm:text-sm flex items-center gap-2 rounded-full cursor-pointer shadow-md"
                 >
-                  <Check size={14} strokeWidth={2.5} />
+                  <Check size={16} strokeWidth={2.5} />
                   <span>Entendido y Finalizar</span>
                 </button>
               </div>
             </div>
           ) : (
             <>
-              {/* STEP 1: SERVICE (2x2 Compact Grid - Badges Never Overlap) */}
+              {/* STEP 1: SERVICE (Responsive Grid - Zero Truncation, High-End Luxury Cards) */}
               {step === 1 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                    gap: '0.65rem',
-                    width: '100%',
-                    boxSizing: 'border-box'
-                  }}>
+                <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
                     {services.slice(0, 4).map(srv => {
                       const isSelected = selectedService?.id === srv.id;
                       return (
                         <div
                           key={srv.id}
                           onClick={() => setSelectedService(srv)}
-                          style={{
-                            border: isSelected
-                              ? '2px solid var(--brand-pink-dark)'
-                              : '1px solid rgba(222, 115, 143, 0.25)',
-                            borderRadius: '12px',
-                            padding: '0.65rem 0.85rem',
-                            cursor: 'pointer',
-                            background: isSelected ? 'rgba(222, 115, 143, 0.06)' : '#FFFFFF',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            height: '110px',
-                            minWidth: 0,
-                            maxWidth: '100%',
-                            boxSizing: 'border-box',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
-                            overflow: 'hidden'
-                          }}
+                          className={`relative rounded-xl p-3 sm:p-3.5 cursor-pointer transition-all duration-200 flex flex-col justify-between border ${
+                            isSelected
+                              ? 'border-[#C45774] ring-2 ring-[#C45774]/30 bg-[#DE738F]/[0.06] shadow-md shadow-[#DE738F]/15'
+                              : 'border-[#DE738F]/25 bg-white hover:border-[#DE738F]/50 hover:shadow-xs'
+                          }`}
+                          style={{ minHeight: '105px' }}
                         >
                           <div>
-                            {/* Header row: category + badge without collision */}
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '0.4rem',
-                              marginBottom: '0.2rem'
-                            }}>
-                              <span style={{
-                                fontSize: '0.62rem',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                color: 'var(--brand-pink-dark)',
-                                letterSpacing: '0.06em'
-                              }}>
+                            {/* Category & Badge Header Row */}
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-[0.66rem] sm:text-[0.68rem] font-bold uppercase tracking-wider text-[#C45774]">
                                 {srv.category}
                               </span>
                               {srv.badge && (
-                                <span style={{
-                                  fontSize: '0.58rem',
-                                  fontWeight: 800,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  padding: '0.15rem 0.45rem',
-                                  borderRadius: '999px',
-                                  background: 'rgba(222, 115, 143, 0.15)',
-                                  color: '#B83256',
-                                  border: '1px solid rgba(222, 115, 143, 0.3)'
-                                }}>
+                                <span className="text-[0.58rem] sm:text-[0.62rem] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#DE738F]/15 text-[#B83256] border border-[#DE738F]/30 shrink-0">
                                   {srv.badge}
                                 </span>
                               )}
                             </div>
 
-                            {/* Service Title */}
-                            <h4 style={{
-                              fontSize: '0.82rem',
-                              fontWeight: 700,
-                              color: 'var(--brand-espresso)',
-                              lineHeight: 1.2,
-                              margin: '0 0 0.15rem 0',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
+                            {/* Service Title - Full Title, Never Cut Off */}
+                            <h4 className="text-[0.88rem] sm:text-[0.92rem] font-bold text-[#2B181C] leading-snug mb-1">
                               {srv.title}
                             </h4>
 
-                            <p style={{
-                              fontSize: '0.68rem',
-                              color: 'var(--text-secondary)',
-                              margin: 0,
-                              lineHeight: 1.25,
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden'
-                            }}>
+                            {/* Legible Description */}
+                            <p className="text-[0.72rem] sm:text-[0.75rem] text-stone-500 leading-relaxed mb-2.5">
                               {srv.description}
                             </p>
                           </div>
 
-                          {/* Price & Duration Strip */}
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            paddingTop: '0.25rem',
-                            borderTop: '1px dashed rgba(0,0,0,0.06)'
-                          }}>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--brand-pink-dark)' }}>
+                          {/* Price & Duration Strip - Always Clear and Fully Visible */}
+                          <div className="flex items-center justify-between pt-2 border-t border-dashed border-stone-200/80">
+                            <span className="text-[0.95rem] sm:text-base font-extrabold text-[#C45774]">
                               ${srv.basePrice.toLocaleString('es-AR')}
                             </span>
-                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                              ⏱ {srv.baseDurationMin} min
+                            <span className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-stone-500 bg-stone-50 px-2 py-0.5 rounded-md border border-stone-200/60">
+                              <Clock size={11} className="text-[#C45774]" />
+                              <span>{srv.baseDurationMin} min</span>
                             </span>
                           </div>
                         </div>
@@ -489,47 +446,35 @@ export const BookingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* STEP 2: REMOVAL (3 Compact Row Cards) */}
+              {/* STEP 2: REMOVAL (Responsive Row Cards) */}
               {step === 2 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%', boxSizing: 'border-box' }}>
+                <div className="animate-fade-in w-full max-w-xl mx-auto flex flex-col justify-center">
+                  <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
                     {REMOVAL_OPTIONS.map(rem => {
                       const isSelected = selectedRemoval.id === rem.id;
                       return (
                         <div
                           key={rem.id}
                           onClick={() => setSelectedRemoval(rem)}
-                          style={{
-                            border: isSelected
-                              ? '2px solid var(--brand-pink-dark)'
-                              : '1px solid rgba(222, 115, 143, 0.25)',
-                            borderRadius: '12px',
-                            padding: '0.75rem 1rem',
-                            cursor: 'pointer',
-                            background: isSelected ? 'rgba(222, 115, 143, 0.06)' : '#FFFFFF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.12)' : 'none',
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            minWidth: 0
-                          }}
+                          className={`rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 border ${
+                            isSelected
+                              ? 'border-[#C45774] ring-2 ring-[#C45774]/30 bg-[#DE738F]/[0.06] shadow-md shadow-[#DE738F]/15'
+                              : 'border-[#DE738F]/25 bg-white hover:border-[#DE738F]/50 hover:shadow-xs'
+                          }`}
                         >
-                          <div style={{ minWidth: 0, paddingRight: '0.5rem' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-espresso)', margin: '0 0 0.15rem 0' }}>
+                          <div className="min-w-0 pr-2">
+                            <h4 className="text-[0.88rem] sm:text-[0.92rem] font-bold text-[#2B181C] leading-snug mb-0.5">
                               {rem.label}
                             </h4>
-                            <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0 }}>
+                            <p className="text-[0.72rem] sm:text-[0.75rem] text-stone-500 leading-relaxed m-0">
                               {rem.description}
                             </p>
                           </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--brand-pink-dark)' }}>
+                          <div className="text-right shrink-0">
+                            <div className="text-[0.92rem] sm:text-base font-extrabold text-[#C45774]">
                               {rem.additionalPrice > 0 ? `+$${rem.additionalPrice.toLocaleString('es-AR')}` : 'Sin costo'}
                             </div>
-                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            <span className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-stone-400">
                               {rem.additionalDurationMin > 0 ? `+${rem.additionalDurationMin} min` : '0 min'}
                             </span>
                           </div>
@@ -540,83 +485,42 @@ export const BookingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* STEP 3: NAIL ART (2x2 Compact Cards - Guaranteed Zero Clip) */}
+              {/* STEP 3: NAIL ART (Responsive Cards - Zero Text Truncation) */}
               {step === 3 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                    gap: '0.65rem',
-                    width: '100%',
-                    boxSizing: 'border-box'
-                  }}>
+                <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
                     {NAIL_ART_TIERS.map(tier => {
                       const isSelected = selectedNailArt.id === tier.id;
                       return (
                         <div
                           key={tier.id}
                           onClick={() => setSelectedNailArt(tier)}
-                          style={{
-                            border: isSelected
-                              ? '2px solid var(--brand-pink-dark)'
-                              : '1px solid rgba(222, 115, 143, 0.25)',
-                            borderRadius: '12px',
-                            padding: '0.65rem 0.8rem',
-                            cursor: 'pointer',
-                            background: isSelected ? 'rgba(222, 115, 143, 0.06)' : '#FFFFFF',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            height: '110px',
-                            minWidth: 0,
-                            maxWidth: '100%',
-                            boxSizing: 'border-box',
-                            boxShadow: isSelected ? '0 4px 14px rgba(222, 115, 143, 0.15)' : 'none',
-                            overflow: 'hidden'
-                          }}
+                          className={`rounded-xl p-3 sm:p-3.5 cursor-pointer transition-all duration-200 flex flex-col justify-between border ${
+                            isSelected
+                              ? 'border-[#C45774] ring-2 ring-[#C45774]/30 bg-[#DE738F]/[0.06] shadow-md shadow-[#DE738F]/15'
+                              : 'border-[#DE738F]/25 bg-white hover:border-[#DE738F]/50 hover:shadow-xs'
+                          }`}
+                          style={{ minHeight: '105px' }}
                         >
-                          <div style={{ minWidth: 0, width: '100%' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem', gap: '0.4rem', minWidth: 0 }}>
-                              <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--brand-espresso)', margin: 0, whiteSpace: 'nowrap' }}>
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <h4 className="text-[0.88rem] sm:text-[0.92rem] font-bold text-[#2B181C] leading-snug">
                                 {tier.name.split(':')[0]}
                               </h4>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--brand-pink-dark)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              <span className="text-[0.88rem] sm:text-[0.92rem] font-extrabold text-[#C45774] shrink-0">
                                 {tier.price > 0 ? `+$${tier.price.toLocaleString('es-AR')}` : 'Incluido'}
                               </span>
                             </div>
-                            <p style={{
-                              fontSize: '0.68rem',
-                              color: 'var(--text-secondary)',
-                              margin: '0 0 0.35rem 0',
-                              lineHeight: 1.25,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              minWidth: 0,
-                              width: '100%'
-                            }}>
+                            <p className="text-[0.72rem] sm:text-[0.75rem] text-stone-500 leading-relaxed mb-2">
                               {tier.description}
                             </p>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '0.25rem', width: '100%', minWidth: 0, overflow: 'hidden' }}>
-                            {tier.examples.slice(0, 2).map(ex => (
+                          <div className="flex flex-wrap gap-1 pt-1.5 border-t border-dashed border-stone-200/80">
+                            {tier.examples.map(ex => (
                               <span
                                 key={ex}
-                                style={{
-                                  fontSize: '0.62rem',
-                                  background: 'rgba(222, 115, 143, 0.1)',
-                                  color: 'var(--brand-espresso)',
-                                  padding: '0.12rem 0.4rem',
-                                  borderRadius: '4px',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: '100%',
-                                  flexShrink: 1,
-                                  minWidth: 0
-                                }}
+                                className="text-[0.62rem] sm:text-[0.65rem] font-medium bg-[#DE738F]/10 text-[#2B181C] px-2 py-0.5 rounded-md"
                               >
                                 {ex}
                               </span>
@@ -629,134 +533,163 @@ export const BookingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* STEP 4: TECH, DATE & TIME (2 Columns Compact) */}
+              {/* STEP 4: TECH, DATE & TIME (Responsive Centered Layout) */}
               {step === 4 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
-                    {/* Left: Professional & Date */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+                <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
+                    {/* Specialist & Date */}
+                    <div className="flex flex-col gap-3.5 w-full">
                       <div>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                          Mesa & Especialista
+                        <label className="text-[0.72rem] font-bold uppercase tracking-wider text-stone-500 block mb-1.5">
+                          Especialista & Mesa
                         </label>
                         {availableTechs.length > 0 ? (
-                          <select
-                            value={selectedTech?.id || ''}
-                            onChange={(e) => {
-                              const found = availableTechs.find(t => t.id === e.target.value);
-                              setSelectedTech(found || null);
-                            }}
-                            style={{
-                              width: '100%',
-                              boxSizing: 'border-box',
-                              padding: '0.55rem 0.75rem',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(222, 115, 143, 0.35)',
-                              background: '#FFFFFF',
-                              fontSize: '0.78rem',
-                              fontWeight: 600,
-                              color: 'var(--brand-espresso)',
-                              outline: 'none',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <option value="">✨ Primera Especialista Disponible</option>
-                            {availableTechs.map(tech => (
-                              <option key={tech.id} value={tech.id}>
-                                {tech.name} — {tech.role}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="space-y-2">
+                            {availableTechs.map(tech => {
+                              const isSelected = selectedTech?.id === tech.id;
+                              return (
+                                <button
+                                  key={tech.id}
+                                  type="button"
+                                  onClick={() => setSelectedTech(tech)}
+                                  className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'border-[#C45774] bg-gradient-to-r from-[#FFF5F7] to-[#FFF0F4] shadow-sm ring-1 ring-[#DE738F]/30'
+                                      : 'border-stone-200 bg-white hover:border-[#DE738F]/40 hover:bg-stone-50/50'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-[#DE738F]/30 shrink-0 bg-stone-100">
+                                      {tech.avatar ? (
+                                        <img src={tech.avatar} alt={tech.name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#C45774]">
+                                          {tech.name.charAt(0)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="truncate">
+                                      <div className="text-xs sm:text-sm font-bold text-[#2B181C] flex items-center gap-1.5">
+                                        <span>{tech.name}</span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#DE738F]/15 text-[#C45774] font-medium">
+                                          {tech.role}
+                                        </span>
+                                      </div>
+                                      <div className="text-[11px] text-stone-500 flex items-center gap-2 mt-0.5">
+                                        <span>Mesa Técnica</span>
+                                        <span>•</span>
+                                        <span className="text-amber-500 font-semibold flex items-center gap-0.5">
+                                          ⭐ {tech.rating || 5.0}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                                    isSelected
+                                      ? 'bg-[#C45774] border-[#C45774] text-white'
+                                      : 'border-stone-300 bg-white'
+                                  }`}>
+                                    {isSelected && <Check size={12} strokeWidth={3} />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         ) : (
-                          <div style={{
-                            padding: '0.55rem 0.75rem',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(222, 115, 143, 0.25)',
-                            background: 'rgba(222, 115, 143, 0.05)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            color: 'var(--brand-espresso)',
-                            boxSizing: 'border-box',
-                            width: '100%'
-                          }}>
-                            <Sparkles size={14} color="var(--brand-pink-dark)" />
+                          <div className="p-2.5 rounded-xl border border-[#DE738F]/25 bg-[#DE738F]/5 flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#2B181C]">
+                            <Sparkles size={14} className="text-[#C45774] shrink-0" />
                             <span>Mesa de Alta Precisión (Asignada automáticamente)</span>
                           </div>
                         )}
                       </div>
 
-                      <div>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                          Fecha de Atención
-                        </label>
-                        <input
-                          type="date"
+                      <div className="w-full">
+                        <LuxuryDatePicker
+                          label="Fecha de Atención"
                           value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                          style={{
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            padding: '0.55rem 0.75rem',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(0,0,0,0.12)',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            color: 'var(--brand-espresso)',
-                            background: '#FFFFFF',
-                            outline: 'none'
+                          onChange={setSelectedDate}
+                          minDate={format(new Date(), 'yyyy-MM-dd')}
+                          isDateDisabled={(date) => {
+                            const dayKey = DAY_KEYS[date.getDay()];
+                            const sched = salonSettings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
+                            const config = sched[dayKey];
+                            return !config || !config.enabled || config.ranges.length === 0;
                           }}
                         />
                       </div>
                     </div>
 
-                    {/* Right: Available Hours Grid */}
-                    <div style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                        Horarios Disponibles (Sesión {totalDuration} min)
-                      </label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.4rem', width: '100%', boxSizing: 'border-box' }}>
-                        {availableHours.map(hour => {
-                          const isSelected = selectedTime === hour;
-                          return (
-                            <button
-                              key={hour}
-                              type="button"
-                              onClick={() => setSelectedTime(hour)}
-                              style={{
-                                padding: '0.55rem 0.25rem',
-                                borderRadius: '8px',
-                                border: isSelected
-                                  ? '2px solid var(--brand-pink-dark)'
-                                  : '1px solid rgba(0,0,0,0.1)',
-                                background: isSelected ? 'var(--brand-pink-dark)' : '#FFFFFF',
-                                color: isSelected ? '#FFFFFF' : 'var(--brand-espresso)',
-                                fontWeight: 700,
-                                fontSize: '0.78rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease',
-                                boxSizing: 'border-box',
-                                minWidth: 0
-                              }}
-                            >
-                              {hour}
-                            </button>
-                          );
-                        })}
+                    {/* Available Hours */}
+                    <div className="w-full flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[0.72rem] font-bold uppercase tracking-wider text-stone-500 block">
+                            Horarios Disponibles (Sesión {totalDuration} min)
+                          </label>
+                          {!isDayClosed && (
+                            <span className="text-[10px] font-bold text-[#C45774] bg-[#DE738F]/10 px-2 py-0.5 rounded-full">
+                              {availableHours.length} turno(s) libre(s)
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Franjas del día info banner */}
+                        {!isDayClosed && currentDaySchedule.ranges.length > 0 && (
+                          <div className="text-[10px] text-stone-500 bg-[#FAF6F7] border border-[#DE738F]/20 rounded-lg p-2 mb-2 flex items-center gap-1.5">
+                            <Clock size={11} className="text-[#C45774] shrink-0" />
+                            <span className="truncate">
+                              Franjas habilitadas: {currentDaySchedule.ranges.map((r: TimeRangeBlock) => `${r.startTime} a ${r.endTime}`).join(' • ')}
+                            </span>
+                          </div>
+                        )}
+
+                        {isDayClosed ? (
+                          <div className="p-4 rounded-xl border border-rose-200/80 bg-rose-50/50 text-center space-y-1.5 my-2">
+                            <div className="text-xs font-bold text-[#C45774]">Atelier cerrado en este día</div>
+                            <p className="text-[11px] text-stone-500">
+                              No hay atención ni turnos habilitados para esta fecha. Por favor seleccioná un día habilitado en el calendario.
+                            </p>
+                          </div>
+                        ) : availableHours.length === 0 ? (
+                          <div className="p-4 rounded-xl border border-rose-200/80 bg-rose-50/50 text-center space-y-1.5 my-2">
+                            <div className="text-xs font-bold text-stone-700">Sin turnos disponibles</div>
+                            <p className="text-[11px] text-stone-500">
+                              No quedan horarios libres para una sesión de {totalDuration} min dentro de las franjas de este día.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-2 w-full max-h-52 overflow-y-auto pr-0.5">
+                            {availableHours.map((hour: string) => {
+                              const isSelected = selectedTime === hour;
+                              return (
+                                <button
+                                  key={hour}
+                                  type="button"
+                                  onClick={() => setSelectedTime(hour)}
+                                  className={`py-2 px-1 text-center rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-[#C45774] text-white border-[#C45774] shadow-sm shadow-[#C45774]/30'
+                                      : 'bg-white text-[#2B181C] border-stone-200 hover:border-[#DE738F]/40 hover:bg-[#DE738F]/5'
+                                  }`}
+                                >
+                                  {hour}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* STEP 5: CONTACT FORM (Compact 2x2 Grid) */}
+              {/* STEP 5: CONTACT FORM (Responsive Aligned Layout) */}
               {step === 5 && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '0.65rem', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
+                <div className="animate-fade-in w-full max-w-xl mx-auto flex flex-col justify-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 w-full">
+                    <div>
+                      <label className="text-[0.72rem] font-bold text-[#2B181C] block mb-1">
                         Nombre y Apellido *
                       </label>
                       <input
@@ -764,19 +697,11 @@ export const BookingModal: React.FC<Props> = ({
                         placeholder="Ej. Sofía Rossi"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        style={{
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(0,0,0,0.15)',
-                          fontSize: '0.82rem',
-                          outline: 'none'
-                        }}
+                        className="w-full px-3 py-2 sm:py-2.5 rounded-xl border border-stone-200 text-xs sm:text-sm outline-none focus:border-[#C45774] focus:ring-2 focus:ring-[#DE738F]/20"
                       />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
+                    <div>
+                      <label className="text-[0.72rem] font-bold text-[#2B181C] block mb-1">
                         WhatsApp de Contacto *
                       </label>
                       <input
@@ -784,22 +709,14 @@ export const BookingModal: React.FC<Props> = ({
                         placeholder="+54 9 11 4455-6677"
                         value={clientPhone}
                         onChange={(e) => setClientPhone(e.target.value)}
-                        style={{
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(0,0,0,0.15)',
-                          fontSize: '0.82rem',
-                          outline: 'none'
-                        }}
+                        className="w-full px-3 py-2 sm:py-2.5 rounded-xl border border-stone-200 text-xs sm:text-sm outline-none focus:border-[#C45774] focus:ring-2 focus:ring-[#DE738F]/20"
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                    <div>
+                      <label className="text-[0.72rem] font-bold text-[#2B181C] block mb-1">
                         Email (opcional)
                       </label>
                       <input
@@ -807,55 +724,26 @@ export const BookingModal: React.FC<Props> = ({
                         placeholder="tuemail@gmail.com"
                         value={clientEmail}
                         onChange={(e) => setClientEmail(e.target.value)}
-                        style={{
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(0,0,0,0.15)',
-                          fontSize: '0.82rem',
-                          outline: 'none'
-                        }}
+                        className="w-full px-3 py-2 sm:py-2.5 rounded-xl border border-stone-200 text-xs sm:text-sm outline-none focus:border-[#C45774] focus:ring-2 focus:ring-[#DE738F]/20"
                       />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--brand-espresso)', display: 'block', marginBottom: '0.2rem' }}>
+                    <div>
+                      <label className="text-[0.72rem] font-bold text-[#2B181C] block mb-1">
                         Notas o alergias al HEMA
                       </label>
                       <input
                         type="text"
-                        placeholder="Ej. Uñas cortas / Alergia a primers"
+                        placeholder="Ej. Uñas cortas / Alergias"
                         value={bookingNotes}
                         onChange={(e) => setBookingNotes(e.target.value)}
-                        style={{
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(0,0,0,0.15)',
-                          fontSize: '0.82rem',
-                          outline: 'none'
-                        }}
+                        className="w-full px-3 py-2 sm:py-2.5 rounded-xl border border-stone-200 text-xs sm:text-sm outline-none focus:border-[#C45774] focus:ring-2 focus:ring-[#DE738F]/20"
                       />
                     </div>
                   </div>
 
                   {/* Trust Banner */}
-                  <div style={{
-                    marginTop: '0.65rem',
-                    padding: '0.45rem 0.75rem',
-                    borderRadius: '8px',
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    fontSize: '0.7rem',
-                    color: '#8A6D1C',
-                    width: '100%',
-                    boxSizing: 'border-box'
-                  }}>
-                    <ShieldCheck size={14} />
+                  <div className="mt-3.5 p-2.5 sm:p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2 text-[0.7rem] sm:text-xs text-amber-900 w-full">
+                    <ShieldCheck size={16} className="text-amber-700 shrink-0" />
                     <span>Seña protegida de $5.000 ARS deducible al presentarte en el salón. Cancelación gratuita con 24h de aviso.</span>
                   </div>
                 </div>
@@ -864,82 +752,61 @@ export const BookingModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Integrated Micro-Summary Footer Bar (Zero Scroll Navigation) */}
+        {/* Integrated Micro-Summary Footer Bar (Responsive Centered & High-End) */}
         {!confirmedApt && (
-          <div style={{
-            padding: '0.75rem 1.25rem',
-            borderTop: '1px solid rgba(222, 115, 143, 0.15)',
-            background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF9FA 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem'
-          }}>
+          <div
+            className="px-4 py-3 sm:px-6 sm:py-3.5 border-t shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
+            style={{
+              borderColor: 'rgba(222, 115, 143, 0.16)',
+              background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF9FA 100%)'
+            }}
+          >
             {/* Live Pricing & Duration Breakdown Pill */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{
-                background: 'rgba(222, 115, 143, 0.1)',
-                padding: '0.35rem 0.65rem',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--brand-espresso)'
-              }}>
-                <Clock size={13} color="var(--brand-pink-dark)" />
+            <div className="flex items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+              <div className="bg-[#DE738F]/10 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold text-[#2B181C]">
+                <Clock size={13} className="text-[#C45774]" />
                 <span>{timeFormatted}</span>
               </div>
-              <div style={{
-                fontSize: '0.9rem',
-                fontWeight: 800,
-                color: 'var(--brand-pink-dark)',
-                fontFamily: 'var(--font-editorial)'
-              }}>
+              <div className="text-sm sm:text-base font-extrabold text-[#C45774]">
                 ${totalPrice.toLocaleString('es-AR')}
-                <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginLeft: '0.3rem' }}>
+                <span className="text-[0.68rem] font-semibold text-stone-400 ml-1.5 font-sans">
                   (Seña $5.000)
                 </span>
               </div>
             </div>
 
             {/* Stepper Navigation Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
               {step > 1 && (
                 <button
                   type="button"
                   onClick={() => setStep(s => s - 1)}
-                  style={{
-                    padding: '0.55rem 0.9rem',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid rgba(0,0,0,0.12)',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem'
-                  }}
+                  className="flex-1 sm:flex-initial px-4 py-2 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 font-semibold text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-2xs"
                 >
-                  <ArrowLeft size={14} /> Volver
+                  <ArrowLeft size={14} />
+                  <span>Volver</span>
                 </button>
               )}
 
               {step < 5 ? (
                 <button
                   type="button"
-                  onClick={() => setStep(s => s + 1)}
-                  className="btn-satin-pink"
-                  style={{
-                    padding: '0.55rem 1.25rem',
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
+                  onClick={() => {
+                    if (step === 4) {
+                      if (isDayClosed) {
+                        alert('El atelier se encuentra cerrado en la fecha seleccionada. Por favor elegí otro día en el calendario.');
+                        return;
+                      }
+                      if (!selectedTime) {
+                        alert('Por favor seleccioná un horario disponible para tu turno.');
+                        return;
+                      }
+                    }
+                    setStep(s => s + 1);
                   }}
+                  className={`btn-satin-pink px-5 py-2 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-md ${
+                    step === 1 ? 'w-full sm:w-auto' : 'flex-1 sm:flex-initial'
+                  }`}
                 >
                   <span>Continuar</span>
                   <ArrowRight size={14} />
@@ -949,15 +816,9 @@ export const BookingModal: React.FC<Props> = ({
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleConfirmBooking}
-                  className="btn-satin-pink"
-                  style={{
-                    padding: '0.55rem 1.35rem',
-                    fontSize: '0.78rem',
-                    background: 'linear-gradient(135deg, #427A5B 0%, #2F5740 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}
+                  className={`btn-satin-pink px-6 py-2 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-md bg-gradient-to-r from-[#427A5B] to-[#2F5740] ${
+                    step === 1 ? 'w-full sm:w-auto' : 'flex-1 sm:flex-initial'
+                  }`}
                 >
                   <span>{isSubmitting ? 'Confirmando...' : 'Confirmar Reserva'}</span>
                   <Check size={14} />

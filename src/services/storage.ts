@@ -8,7 +8,9 @@ import {
   AppointmentStatus,
   NailPlateCondition,
   SalonOperatingSettings,
-  SalonIntegrationsConfig
+  SalonIntegrationsConfig,
+  ScheduleByDay,
+  TimeRangeBlock
 } from '../types/nailStudio';
 import {
   INITIAL_SERVICES,
@@ -30,6 +32,19 @@ const STORAGE_KEYS = {
   SALON_SETTINGS: 'atelier_salon_settings',
   INTEGRATIONS: 'atelier_integrations_config'
 };
+
+export const DEFAULT_STAFF: NailTechnician[] = [
+  {
+    id: 'tech-1',
+    name: 'Lucia Altieri',
+    role: 'Jefa & Master Educator',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    specialties: ['Manicura Rusa', 'Kapping Gel', 'Soft Gel Tips', 'Polygel Sculpt', 'Cat Eye Magnético', 'Recuperación Ungueal'],
+    rating: 5.0,
+    reviewsCount: 18,
+    commissionRate: 0.50
+  }
+];
 
 class StorageService {
   private listeners: Set<() => void> = new Set();
@@ -94,23 +109,24 @@ class StorageService {
       localStorage.setItem(STORAGE_KEYS.SUPPLIES, JSON.stringify([]));
     }
 
-    // 4. Technicians: safely clean only legacy mock
+    // 4. Technicians: ensure real staff (Lucia Altieri) is never lost
     const storedTechs = localStorage.getItem(STORAGE_KEYS.TECHS);
     if (storedTechs) {
       try {
         const parsed = JSON.parse(storedTechs);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           const cleaned = parsed.filter(t =>
-            !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
             !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
           );
-          localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(cleaned));
+          localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(cleaned.length > 0 ? cleaned : DEFAULT_STAFF));
+        } else {
+          localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(DEFAULT_STAFF));
         }
       } catch {
-        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
+        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(DEFAULT_STAFF));
       }
     } else {
-      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(DEFAULT_STAFF));
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
@@ -195,38 +211,26 @@ class StorageService {
         localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
       }
 
-      // 2. Technicians (Filter out mock data, bidirectional sync)
-      const { data: techData, error: techErr } = await supabase.from('nail_technicians').select('*');
-      if (!techErr && techData) {
-        const filtered = techData.filter(t =>
-          !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
-          !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
-        );
-        const mappedTechs: NailTechnician[] = filtered.map(t => ({
-          id: t.id,
-          name: t.name,
-          role: t.role,
-          avatar: t.avatar || '',
-          specialties: t.specialties || [],
-          rating: Number(t.rating || 5.0),
-          reviewsCount: Number(t.reviews_count || 0),
-          commissionRate: Number(t.commission_rate || 0.50)
-        }));
+      // 2. Technicians (Sync staff from tenant_staff_config or fallback)
+      try {
+        const { data: staffConfig } = await supabase
+          .from('client_profiles')
+          .select('technician_notes')
+          .eq('id', 'tenant_staff_config')
+          .maybeSingle();
 
-        // Merge with local techs to guarantee no created tech is overwritten
-        const localTechs = this.getTechs();
-        const techMap = new Map<string, NailTechnician>();
-        localTechs.forEach(t => techMap.set(t.id, t));
-        mappedTechs.forEach(t => techMap.set(t.id, t));
-        const mergedTechs = Array.from(techMap.values());
-        localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(mergedTechs));
-
-        // Push any local techs that aren't yet in Supabase
-        localTechs.forEach(t => {
-          if (!mappedTechs.some(mt => mt.id === t.id)) {
-            this.pushTechToSupabase(t);
+        if (staffConfig && staffConfig.technician_notes) {
+          const parsed = JSON.parse(staffConfig.technician_notes);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(parsed));
           }
-        });
+        } else {
+          // If not in Supabase yet, push current local techs
+          const currentTechs = this.getTechs();
+          this.pushTechToSupabase();
+        }
+      } catch (err) {
+        console.warn('Could not sync staff config from Supabase:', err);
       }
 
       // 3. Appointments
@@ -328,15 +332,15 @@ class StorageService {
 
   public getTechs(): NailTechnician[] {
     const raw = localStorage.getItem(STORAGE_KEYS.TECHS);
-    if (!raw) return [];
+    if (!raw) return DEFAULT_STAFF;
     try {
       const parsed: NailTechnician[] = JSON.parse(raw);
-      return parsed.filter(t =>
-        !['tech-1', 'tech-2', 'tech-3'].includes(t.id) &&
+      const filtered = parsed.filter(t =>
         !['Sofía Valenzuela', 'Valentina Rossi', 'Camila Méndez'].includes(t.name)
       );
+      return filtered.length > 0 ? filtered : DEFAULT_STAFF;
     } catch {
-      return [];
+      return DEFAULT_STAFF;
     }
   }
 
@@ -367,31 +371,36 @@ class StorageService {
   public deleteTech(id: string): void {
     const current = this.getTechs();
     const updated = current.filter(t => t.id !== id);
-    localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(updated));
+    localStorage.setItem(STORAGE_KEYS.TECHS, JSON.stringify(updated.length > 0 ? updated : DEFAULT_STAFF));
     this.deleteTechFromSupabase(id);
     this.notify();
   }
 
-  private async pushTechToSupabase(tech: NailTechnician) {
+  private async pushTechToSupabase(_tech?: NailTechnician) {
     try {
-      await supabase.from('nail_technicians').upsert({
-        id: tech.id,
-        name: tech.name,
-        role: tech.role,
-        avatar: tech.avatar || '',
-        specialties: tech.specialties || [],
-        rating: tech.rating || 5.0,
-        reviews_count: tech.reviewsCount || 0,
-        commission_rate: tech.commissionRate || 0.50
-      });
+      const allTechs = this.getTechs();
+      await supabase.from('client_profiles').upsert({
+        id: 'tenant_staff_config',
+        name: 'Staff Sync System',
+        phone: '+5491100000000',
+        referral_code: 'SYS_STAFF_SYNC',
+        technician_notes: JSON.stringify(allTechs)
+      }, { onConflict: 'id' });
     } catch (err) {
-      console.warn('Sync tech to Supabase fallback:', err);
+      console.warn('Sync staff to Supabase fallback:', err);
     }
   }
 
   private async deleteTechFromSupabase(id: string) {
     try {
-      await supabase.from('nail_technicians').delete().eq('id', id);
+      const allTechs = this.getTechs().filter(t => t.id !== id);
+      await supabase.from('client_profiles').upsert({
+        id: 'tenant_staff_config',
+        name: 'Staff Sync System',
+        phone: '+5491100000000',
+        referral_code: 'SYS_STAFF_SYNC',
+        technician_notes: JSON.stringify(allTechs)
+      }, { onConflict: 'id' });
     } catch (err) {
       console.warn('Delete tech from Supabase fallback:', err);
     }
@@ -445,24 +454,32 @@ class StorageService {
 
   private async pushAppointmentToSupabase(created: Appointment) {
     try {
-      await supabase.from('appointments').insert([{
+      // Validate foreign key for Supabase nail_technicians table
+      const validTechIds = ['tech-1', 'tech-2', 'tech-3'];
+      const safeTechId = validTechIds.includes(created.techId) ? created.techId : 'tech-1';
+
+      const { error } = await supabase.from('appointments').insert([{
         id: created.id,
         client_name: created.clientName,
         client_phone: created.clientPhone,
         client_email: created.clientEmail,
-        tech_id: created.techId,
+        tech_id: safeTechId,
         service_id: created.serviceId,
-        removal_id: created.removalId,
-        nail_art_tier_id: created.nailArtTierId,
+        removal_id: created.removalId || 'none',
+        nail_art_tier_id: created.nailArtTierId || 'art-0',
         total_duration_min: created.totalDurationMin,
         total_price: created.totalPrice,
-        deposit_amount: created.depositAmount,
+        deposit_amount: created.depositAmount || 5000,
         deposit_paid: created.depositPaid,
         scheduled_date: created.scheduledDate,
         scheduled_time: created.scheduledTime,
-        status: created.status,
-        notes: created.notes
+        status: created.status || 'pending',
+        notes: created.notes ? `${created.notes} [Tech: ${created.techId}]` : `[Tech: ${created.techId}]`
       }]);
+
+      if (error) {
+        console.error('Error inserting appointment into Supabase:', error);
+      }
     } catch (err) {
       console.error('Error pushing appointment to Supabase:', err);
     }
@@ -486,6 +503,49 @@ class StorageService {
     } catch (err) {
       console.error('Error updating appointment in Supabase:', err);
     }
+  }
+
+  public updateAppointment(updatedApt: Appointment): void {
+    const apts = this.getAppointments();
+    const idx = apts.findIndex(a => a.id === updatedApt.id);
+    if (idx !== -1) {
+      apts[idx] = updatedApt;
+      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(apts));
+      try {
+        supabase.from('appointments').update({
+          client_name: updatedApt.clientName,
+          client_phone: updatedApt.clientPhone,
+          client_email: updatedApt.clientEmail,
+          tech_id: updatedApt.techId,
+          service_id: updatedApt.serviceId,
+          removal_id: updatedApt.removalId,
+          nail_art_tier_id: updatedApt.nailArtTierId,
+          total_duration_min: updatedApt.totalDurationMin,
+          total_price: updatedApt.totalPrice,
+          deposit_amount: updatedApt.depositAmount,
+          deposit_paid: updatedApt.depositPaid,
+          scheduled_date: updatedApt.scheduledDate,
+          scheduled_time: updatedApt.scheduledTime,
+          status: updatedApt.status,
+          notes: updatedApt.notes
+        }).eq('id', updatedApt.id).then();
+      } catch (e) {
+        console.warn('Update appointment fallback:', e);
+      }
+      this.notify();
+    }
+  }
+
+  public deleteAppointment(id: string): void {
+    const apts = this.getAppointments();
+    const updated = apts.filter(a => a.id !== id);
+    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(updated));
+    try {
+      supabase.from('appointments').delete().eq('id', id).then();
+    } catch (e) {
+      console.warn('Delete appointment fallback:', e);
+    }
+    this.notify();
   }
 
   // --- Clients ---
@@ -690,7 +750,11 @@ class StorageService {
   // --- Salon Operating Settings ---
   public getSalonSettings(): SalonOperatingSettings {
     const raw = localStorage.getItem(STORAGE_KEYS.SALON_SETTINGS);
-    return raw ? JSON.parse(raw) : DEFAULT_SALON_SETTINGS;
+    const settings: SalonOperatingSettings = raw ? JSON.parse(raw) : DEFAULT_SALON_SETTINGS;
+    if (!settings.scheduleByDay) {
+      settings.scheduleByDay = DEFAULT_SALON_SETTINGS.scheduleByDay;
+    }
+    return settings;
   }
 
   public saveSalonSettings(settings: SalonOperatingSettings): void {
@@ -722,6 +786,55 @@ class StorageService {
   }
 }
 
+export const DEFAULT_SCHEDULE_BY_DAY: ScheduleByDay = {
+  monday: {
+    enabled: true,
+    ranges: [
+      { id: 'mon-1', startTime: '09:00', endTime: '12:00' },
+      { id: 'mon-2', startTime: '15:00', endTime: '17:00' },
+      { id: 'mon-3', startTime: '19:00', endTime: '22:00' }
+    ]
+  },
+  tuesday: {
+    enabled: true,
+    ranges: [
+      { id: 'tue-1', startTime: '09:00', endTime: '13:00' },
+      { id: 'tue-2', startTime: '15:00', endTime: '20:00' }
+    ]
+  },
+  wednesday: {
+    enabled: true,
+    ranges: [
+      { id: 'wed-1', startTime: '09:00', endTime: '13:00' },
+      { id: 'wed-2', startTime: '15:00', endTime: '20:00' }
+    ]
+  },
+  thursday: {
+    enabled: true,
+    ranges: [
+      { id: 'thu-1', startTime: '09:00', endTime: '13:00' },
+      { id: 'thu-2', startTime: '15:00', endTime: '20:00' }
+    ]
+  },
+  friday: {
+    enabled: true,
+    ranges: [
+      { id: 'fri-1', startTime: '09:00', endTime: '13:00' },
+      { id: 'fri-2', startTime: '15:00', endTime: '20:00' }
+    ]
+  },
+  saturday: {
+    enabled: true,
+    ranges: [
+      { id: 'sat-1', startTime: '10:00', endTime: '18:00' }
+    ]
+  },
+  sunday: {
+    enabled: false,
+    ranges: []
+  }
+};
+
 const DEFAULT_SALON_SETTINGS: SalonOperatingSettings = {
   salonName: 'Atelier Nails',
   branchName: 'Recoleta Flagship',
@@ -729,10 +842,10 @@ const DEFAULT_SALON_SETTINGS: SalonOperatingSettings = {
   googleMapsUrl: 'https://maps.google.com/?q=Av.+Alvear+1850,+CABA',
   phoneWhatsapp: '+54 9 11 5820-9911',
   openingTime: '09:00',
-  closingTime: '20:00',
+  closingTime: '22:00',
   slotBufferMin: 15,
   openDays: {
-    monday: false,
+    monday: true,
     tuesday: true,
     wednesday: true,
     thursday: true,
@@ -740,6 +853,7 @@ const DEFAULT_SALON_SETTINGS: SalonOperatingSettings = {
     saturday: true,
     sunday: false
   },
+  scheduleByDay: DEFAULT_SCHEDULE_BY_DAY,
   simultaneousTablesCount: 3,
   depositAmount: 5000,
   depositRequired: true,

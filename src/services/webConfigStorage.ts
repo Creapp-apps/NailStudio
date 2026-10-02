@@ -23,7 +23,10 @@ class WebConfigStorageService {
           ...parsed,
           showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
             ? parsed.showcaseItems
-            : DEFAULT_WEB_CONFIG.showcaseItems
+            : DEFAULT_WEB_CONFIG.showcaseItems,
+          whyUsFeatures: parsed.whyUsFeatures && Array.isArray(parsed.whyUsFeatures) && parsed.whyUsFeatures.length > 0
+            ? parsed.whyUsFeatures
+            : DEFAULT_WEB_CONFIG.whyUsFeatures
         };
       }
     } catch (e) {
@@ -85,7 +88,10 @@ class WebConfigStorageService {
           ...parsed,
           showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
             ? parsed.showcaseItems
-            : DEFAULT_WEB_CONFIG.showcaseItems
+            : DEFAULT_WEB_CONFIG.showcaseItems,
+          whyUsFeatures: parsed.whyUsFeatures && Array.isArray(parsed.whyUsFeatures) && parsed.whyUsFeatures.length > 0
+            ? parsed.whyUsFeatures
+            : DEFAULT_WEB_CONFIG.whyUsFeatures
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.currentConfig));
         this.notify();

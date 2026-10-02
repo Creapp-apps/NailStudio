@@ -26,6 +26,7 @@ import {
 import { ClientProfile, NailPlateCondition } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
 import { useWebConfig } from '../../hooks/useWebConfig';
+import { LuxurySelect } from '../common/LuxurySelect';
 
 interface Props {
   clients: ClientProfile[];
@@ -778,31 +779,31 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                       <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                         Lámina Ungueal
                       </label>
-                      <select
+                      <LuxurySelect
                         value={newNailCondition}
-                        onChange={(e) => setNewNailCondition(e.target.value as NailPlateCondition)}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '0.8rem', background: '#FFFFFF' }}
-                      >
-                        <option value="healthy">Saludable / Normal</option>
-                        <option value="thin_weak">Delgada / Frágil</option>
-                        <option value="onychophagy">Onicofagia (Mordida)</option>
-                        <option value="sensitive_lamp">Sensible</option>
-                      </select>
+                        onChange={(val) => setNewNailCondition(val as NailPlateCondition)}
+                        options={[
+                          { value: 'healthy', label: 'Saludable / Normal' },
+                          { value: 'thin_weak', label: 'Delgada / Frágil' },
+                          { value: 'onychophagy', label: 'Onicofagia (Mordida)' },
+                          { value: 'sensitive_lamp', label: 'Sensible' }
+                        ]}
+                      />
                     </div>
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                         Sensibilidad Lámpara UV
                       </label>
-                      <select
+                      <LuxurySelect
                         value={newHeatSensitivity}
-                        onChange={(e) => setNewHeatSensitivity(e.target.value as 'low' | 'medium' | 'high')}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '0.8rem', background: '#FFFFFF' }}
-                      >
-                        <option value="low">Baja / Normal</option>
-                        <option value="medium">Media</option>
-                        <option value="high">Alta (Modo Low Heat)</option>
-                      </select>
+                        onChange={(val) => setNewHeatSensitivity(val as 'low' | 'medium' | 'high')}
+                        options={[
+                          { value: 'low', label: 'Baja / Normal' },
+                          { value: 'medium', label: 'Media' },
+                          { value: 'high', label: 'Alta (Modo Low Heat)' }
+                        ]}
+                      />
                     </div>
                   </div>
 

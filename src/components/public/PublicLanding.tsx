@@ -21,7 +21,7 @@ import { InteractiveGlamBackground } from '../effects/InteractiveGlamBackground'
 import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
 import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
 import { WorkShowcaseCarousel } from './WorkShowcaseCarousel';
-import { WebCustomizationConfig } from '../../types/webConfig';
+import { WebCustomizationConfig, DEFAULT_WEB_CONFIG } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { getThemeFromConfig } from '../../lib/themeStyles';
 
@@ -43,63 +43,39 @@ export const PublicLanding: React.FC<Props> = ({
   const theme = getThemeFromConfig(config);
   const [activeFeature, setActiveFeature] = useState<number>(0);
 
-  const whyChooseUs = [
-    {
-      id: 0,
-      title: 'TRATAMIENTOS DE AUTOR',
-      icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-          <path d="M12 2v4" />
-          <path d="m4.93 4.93 2.83 2.83" />
-          <path d="M2 12h4" />
-          <path d="m4.93 19.07 2.83-2.83" />
-          <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" />
-          <path d="m14 14 5 5" />
-          <path d="m17 12 3 3" />
-        </svg>
-      ),
-      description: 'Viví una experiencia exclusiva con nuestros tratamientos: manicuría rusa combinada, nivelación con gel Rubber y cuidado profundo de la uña.'
-    },
-    {
-      id: 1,
-      title: 'PRODUCTOS HIPOALERGÉNICOS',
-      icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-          <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4Z" />
-          <path d="M10 8h4" />
-          <circle cx="12" cy="15" r="2" />
-        </svg>
-      ),
-      description: 'Utilizamos exclusivamente productos biocompatibles 100% libres de HEMA para garantizar un acabado impecable, seguro y sin alergias.'
-    },
-    {
-      id: 2,
-      title: 'MANICURISTAS EXPERTAS',
-      icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-          <rect width="20" height="14" x="2" y="7" rx="2" />
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
-      ),
-      description: 'Nuestras manicuristas maestras dominan la arquitectura ungueal, el corte milimétrico de cutículas y el diseño a mano alzada de precisión.'
-    },
-    {
-      id: 3,
-      title: 'AMBIENTE BOUTIQUE',
-      icon: (
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-          <circle cx="12" cy="12" r="8" />
-          <path d="M12 2v2" />
-          <path d="M12 20v2" />
-          <path d="m4.93 4.93 1.41 1.41" />
-          <path d="m17.66 17.66 1.41 1.41" />
-          <path d="M2 12h2" />
-          <path d="M20 12h2" />
-        </svg>
-      ),
-      description: 'Relajate en un ambiente de spa exclusivo, pensado para brindarte tranquilidad, café de especialidad y desconexión absoluta.'
-    }
+  const defaultWhyUsIcons = [
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
+      <path d="M12 2v4" />
+      <path d="m4.93 4.93 2.83 2.83" />
+      <path d="M2 12h4" />
+      <path d="m4.93 19.07 2.83-2.83" />
+      <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" />
+      <path d="m14 14 5 5" />
+      <path d="m17 12 3 3" />
+    </svg>,
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
+      <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4Z" />
+      <path d="M10 8h4" />
+      <circle cx="12" cy="15" r="2" />
+    </svg>,
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
+      <rect width="20" height="14" x="2" y="7" rx="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </svg>,
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+    </svg>
   ];
+
+  const whyUsFeatures = (config.whyUsFeatures && config.whyUsFeatures.length > 0)
+    ? config.whyUsFeatures
+    : DEFAULT_WEB_CONFIG.whyUsFeatures;
 
   return (
     <div
@@ -226,7 +202,7 @@ export const PublicLanding: React.FC<Props> = ({
             letterSpacing: '0.03em',
             fontWeight: 400
           }}>
-            ¿POR QUÉ ELEGIRNOS?
+            {config.whyUsTitle || '¿POR QUÉ ELEGIRNOS?'}
           </h2>
 
           <div style={{
@@ -237,20 +213,22 @@ export const PublicLanding: React.FC<Props> = ({
             borderRadius: 'var(--radius-sm)',
             overflow: 'hidden'
           }}>
-            {whyChooseUs.map((item, index) => {
-              const isActive = activeFeature === item.id;
+            {whyUsFeatures.map((item, index) => {
+              const itemId = item.id ?? index;
+              const isActive = activeFeature === itemId;
+              const icon = defaultWhyUsIcons[index % defaultWhyUsIcons.length];
               return (
                 <div
-                  key={item.id}
-                  onMouseEnter={() => setActiveFeature(item.id)}
+                  key={itemId}
+                  onMouseEnter={() => setActiveFeature(itemId)}
                   className={`glam-feature-card ${isActive ? 'active' : ''}`}
                   style={{
-                    borderRight: index < 3 ? '1px solid var(--border-subtle)' : 'none',
+                    borderRight: index < whyUsFeatures.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                     cursor: 'pointer'
                   }}
                 >
                   <div style={{ marginBottom: '1.75rem', height: '48px', display: 'flex', alignItems: 'center' }}>
-                    {item.icon}
+                    {icon}
                   </div>
 
                   <h3 style={{

@@ -44,7 +44,7 @@ export interface NailTechnician {
   commissionRate: number; // e.g. 0.50
 }
 
-export type AppointmentStatus = 'pending_deposit' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'pending' | 'pending_deposit' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
 
 export interface Appointment {
   id: string;
@@ -132,6 +132,29 @@ export interface SupplierOrder {
   receivedAt?: string;
 }
 
+export interface TimeRangeBlock {
+  id: string;
+  startTime: string; // "HH:MM" e.g. "09:00"
+  endTime: string;   // "HH:MM" e.g. "12:00"
+}
+
+export interface DayScheduleConfig {
+  enabled: boolean;
+  ranges: TimeRangeBlock[];
+}
+
+export type DayOfWeekKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export interface ScheduleByDay {
+  monday: DayScheduleConfig;
+  tuesday: DayScheduleConfig;
+  wednesday: DayScheduleConfig;
+  thursday: DayScheduleConfig;
+  friday: DayScheduleConfig;
+  saturday: DayScheduleConfig;
+  sunday: DayScheduleConfig;
+}
+
 export interface SalonOperatingSettings {
   salonName: string;
   branchName: string;
@@ -150,6 +173,7 @@ export interface SalonOperatingSettings {
     saturday: boolean;
     sunday: boolean;
   };
+  scheduleByDay?: ScheduleByDay;
   simultaneousTablesCount: number;
   depositAmount: number;
   depositRequired: boolean;

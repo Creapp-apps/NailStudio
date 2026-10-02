@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { ClientProfile } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
+import { LuxurySelect } from '../common/LuxurySelect';
 
 interface Props {
   clients: ClientProfile[];
@@ -447,17 +448,17 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
 
               <div className="space-y-1">
                 <label className="font-semibold text-foreground">Motivo / Concepto</label>
-                <select
+                <LuxurySelect
                   value={adjustmentReason}
-                  onChange={(e) => setAdjustmentReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs"
-                >
-                  <option value="Bonificación Fidelidad / Cumpleaños">Bonificación Fidelidad / Cumpleaños</option>
-                  <option value="Recompensa por Referir Amiga">Recompensa por Referir Amiga (+1000 pts)</option>
-                  <option value="Canje por Servicio en Mesa">Canje por Servicio en Mesa (Descuento)</option>
-                  <option value="Compensación de Salón">Compensación de Salón</option>
-                  <option value="Ajuste Manual Administrativo">Ajuste Manual Administrativo</option>
-                </select>
+                  onChange={(val) => setAdjustmentReason(String(val))}
+                  options={[
+                    { value: 'Bonificación Fidelidad / Cumpleaños', label: 'Bonificación Fidelidad / Cumpleaños' },
+                    { value: 'Recompensa por Referir Amiga', label: 'Recompensa por Referir Amiga (+1000 pts)' },
+                    { value: 'Canje por Servicio en Mesa', label: 'Canje por Servicio en Mesa (Descuento)' },
+                    { value: 'Compensación de Salón', label: 'Compensación de Salón' },
+                    { value: 'Ajuste Manual Administrativo', label: 'Ajuste Manual Administrativo' }
+                  ]}
+                />
               </div>
 
               <div className="p-3 rounded-xl bg-muted/40 border border-border text-[11px] text-muted-foreground">

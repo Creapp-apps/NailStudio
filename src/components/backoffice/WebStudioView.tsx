@@ -27,6 +27,7 @@ import {
   ImagePlus,
   X,
   ShieldCheck,
+  Clock,
   ZoomIn,
   ZoomOut,
   Crop,
@@ -37,6 +38,7 @@ import { useWebConfig } from '../../hooks/useWebConfig';
 import { syncDocumentBrand } from '../../utils/brandSync';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LuxurySelect } from '../common/LuxurySelect';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PublicHeader } from '../navigation/PublicHeader';
@@ -323,7 +325,10 @@ export const WebStudioView: React.FC = () => {
       techniqueTag: 'Kapping Rubber',
       description: 'Nivelación con gel hipoalergénico y acabado brillante de 21 días.',
       badgeInfo: 'Duración intacta 21+ días • HEMA-Free',
-      durationDays: 21
+      durationDays: 21,
+      estimatedTime: '~60 - 80m',
+      formula: '100% Segura',
+      maintenance: '21 a 28 días'
     };
     handleFieldChange('showcaseItems', [...current, newItem]);
   };
@@ -1139,40 +1144,69 @@ export const WebStudioView: React.FC = () => {
                     <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
                       Tipografía para Títulos (Serif Glamour)
                     </label>
-                    <select
+                    <LuxurySelect
                       value={draftConfig.headingFont}
-                      onChange={e => handleFieldChange('headingFont', e.target.value as any)}
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-serif font-bold text-foreground focus:border-[#DE738F] focus:outline-none"
-                    >
-                      <option value="Italiana">Italiana (Romance & Editorial Elegante)</option>
-                      <option value="Cinzel">Cinzel (Clásica Romana Haute Couture)</option>
-                      <option value="Cormorant Garamond">Cormorant Garamond (Elegancia Clásica)</option>
-                      <option value="Playfair Display">Playfair Display (Vogue Style)</option>
-                      <option value="Prata">Prata (Lujo Moderno)</option>
-                    </select>
+                      onChange={val => handleFieldChange('headingFont', val as any)}
+                      options={[
+                        { value: 'Italiana', label: 'Italiana (Romance & Editorial Elegante)' },
+                        { value: 'Cinzel', label: 'Cinzel (Clásica Romana Haute Couture)' },
+                        { value: 'Cormorant Garamond', label: 'Cormorant Garamond (Elegancia Clásica)' },
+                        { value: 'Playfair Display', label: 'Playfair Display (Vogue Style)' },
+                        { value: 'Prata', label: 'Prata (Lujo Moderno)' }
+                      ]}
+                    />
                   </div>
 
-                  <div className="p-4 rounded-xl border border-rose-200/60 dark:border-rose-900/30 bg-gradient-to-br from-rose-500/[0.04] to-amber-500/[0.02]">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-1">Muestra de Título Editorial</span>
-                    <div style={{ fontFamily: draftConfig.headingFont, fontSize: '1.4rem' }} className="font-bold text-foreground leading-snug">
-                      Arte, Precisión & Alta Costura
+                  <div className="p-4 rounded-xl border border-rose-200/60 dark:border-rose-900/30 bg-gradient-to-br from-rose-500/[0.04] to-amber-500/[0.02] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest block">
+                        Muestra de Título Editorial (H1 Editable)
+                      </span>
+                      <span className="text-[9px] text-[#DE738F] font-bold bg-rose-500/10 px-2 py-0.5 rounded-full">
+                        En Vivo
+                      </span>
                     </div>
+                    <textarea
+                      rows={2}
+                      value={draftConfig.heroTitle}
+                      onChange={e => handleFieldChange('heroTitle', e.target.value)}
+                      placeholder="ARTE, PRECISIÓN Y ALTA COSTURA PARA TUS UÑAS..."
+                      style={{ fontFamily: draftConfig.headingFont, fontSize: '1.25rem' }}
+                      className="w-full font-bold text-foreground leading-snug bg-background/90 rounded-xl p-3 border border-rose-200/70 dark:border-rose-900/40 focus:border-[#DE738F] focus:outline-none resize-none transition-all shadow-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Podés tipear tu propio título aquí en tiempo real; se actualiza automáticamente en toda la web.
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 block">
                       Tipografía para Textos de Lectura (Sans-Serif)
                     </label>
-                    <select
+                    <LuxurySelect
                       value={draftConfig.bodyFont}
-                      onChange={e => handleFieldChange('bodyFont', e.target.value as any)}
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-sans text-foreground focus:border-[#DE738F] focus:outline-none"
-                    >
-                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (Ultra Legible & Premium)</option>
-                      <option value="Inter">Inter (Limpio & Tecnológico)</option>
-                      <option value="Montserrat">Montserrat (Moderno & Geométrico)</option>
-                      <option value="Outfit">Outfit (Contemporáneo Suave)</option>
-                    </select>
+                      onChange={val => handleFieldChange('bodyFont', val as any)}
+                      options={[
+                        { value: 'Plus Jakarta Sans', label: 'Plus Jakarta Sans (Ultra Legible & Premium)' },
+                        { value: 'Inter', label: 'Inter (Limpio & Tecnológico)' },
+                        { value: 'Montserrat', label: 'Montserrat (Moderno & Geométrico)' },
+                        { value: 'Outfit', label: 'Outfit (Contemporáneo Suave)' }
+                      ]}
+                    />
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-rose-200/60 dark:border-rose-900/30 bg-background/60 space-y-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest block">
+                      Muestra de Texto de Lectura (Bajada Editable)
+                    </span>
+                    <input
+                      type="text"
+                      value={draftConfig.heroSubtitle}
+                      onChange={e => handleFieldChange('heroSubtitle', e.target.value)}
+                      placeholder="Subtítulo o bajada editorial..."
+                      style={{ fontFamily: draftConfig.bodyFont }}
+                      className="w-full text-xs text-foreground/90 bg-background/90 rounded-lg px-3 py-2 border border-rose-200/70 dark:border-rose-900/40 focus:border-[#DE738F] focus:outline-none transition-all"
+                    />
                   </div>
                 </div>
               )}
@@ -1640,16 +1674,16 @@ export const WebStudioView: React.FC = () => {
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
                                   <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Categoría</label>
-                                  <select
+                                  <LuxurySelect
                                     value={work.category}
-                                    onChange={(e) => updateWorkItem(work.id, { category: e.target.value })}
-                                    className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
-                                  >
-                                    <option value="kapping">Kapping Gel</option>
-                                    <option value="nail_art">Nail Art & Efectos</option>
-                                    <option value="soft_gel">Soft Gel</option>
-                                    <option value="rusa">Manicuría Rusa</option>
-                                  </select>
+                                    onChange={(val) => updateWorkItem(work.id, { category: String(val) })}
+                                    options={[
+                                      { value: 'kapping', label: 'Kapping Gel' },
+                                      { value: 'nail_art', label: 'Nail Art & Efectos' },
+                                      { value: 'soft_gel', label: 'Soft Gel' },
+                                      { value: 'rusa', label: 'Manicuría Rusa' }
+                                    ]}
+                                  />
                                 </div>
                                 <div>
                                   <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Técnica (Pill)</label>
@@ -1689,6 +1723,56 @@ export const WebStudioView: React.FC = () => {
                                   placeholder="Ej: Duración intacta 28+ días • HEMA-Free"
                                   className="w-full text-[11px] font-medium text-foreground bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/40"
                                 />
+                              </div>
+                            </div>
+
+                            {/* Ficha Técnica / Modal (Tiempo Estimado, Fórmula, Mantenimiento) */}
+                            <div className="rounded-lg bg-pink-50/50 dark:bg-rose-950/20 p-2 border border-pink-100 dark:border-rose-900/30 space-y-1">
+                              <span className="text-[9px] uppercase tracking-wider text-rose-500/80 font-bold block">
+                                Ficha Técnica (Modal al hacer Click)
+                              </span>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                <div>
+                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                    <Clock className="size-2.5 text-pink-500" />
+                                    <span>Tiempo</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={work.estimatedTime ?? '~60 - 80m'}
+                                    onChange={(e) => updateWorkItem(work.id, { estimatedTime: e.target.value })}
+                                    placeholder="~60 - 80m"
+                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                    <ShieldCheck className="size-2.5 text-emerald-600" />
+                                    <span>Fórmula</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={work.formula ?? '100% Segura'}
+                                    onChange={(e) => updateWorkItem(work.id, { formula: e.target.value })}
+                                    placeholder="100% Segura"
+                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                    <CheckCircle2 className="size-2.5 text-pink-500" />
+                                    <span>Mantenimiento</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={work.maintenance ?? (work.durationDays ? `${work.durationDays} días` : '21 a 28 días')}
+                                    onChange={(e) => updateWorkItem(work.id, { maintenance: e.target.value })}
+                                    placeholder="21 a 28 días"
+                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                  />
+                                </div>
                               </div>
                             </div>
 

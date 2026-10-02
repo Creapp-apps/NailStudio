@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { SupplyItem, SupplierOrder, SupplierOrderItem } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
+import { LuxuryDatePicker } from '../common/LuxuryDatePicker';
+import { LuxurySelect } from '../common/LuxurySelect';
 
 interface Props {
   supplies: SupplyItem[];
@@ -585,17 +587,20 @@ export const SupplierOrdersView: React.FC<Props> = ({ supplies }) => {
                         {/* Select from existing inventory */}
                         {supplies.length > 0 && (
                           <div className="col-span-12">
-                            <select
-                              onChange={(e) => handleSelectExistingSupply(idx, e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-[11px] text-muted-foreground"
-                            >
-                              <option value="">Seleccionar insumo de tu catálogo (opcional)...</option>
-                              {supplies.map(s => (
-                                <option key={s.id} value={s.id}>
-                                  {s.name} ({s.brand}) - Stock actual: {s.currentStock} {s.unit}
-                                </option>
-                              ))}
-                            </select>
+                            <LuxurySelect
+                              value=""
+                              placeholder="Seleccionar insumo de tu catálogo (opcional)..."
+                              searchable
+                              onChange={(val) => handleSelectExistingSupply(idx, String(val))}
+                              options={[
+                                { value: '', label: 'Seleccionar insumo de tu catálogo (opcional)...' },
+                                ...supplies.map(s => ({
+                                  value: s.id,
+                                  label: `${s.name} (${s.brand})`,
+                                  description: `Stock actual: ${s.currentStock} ${s.unit}`
+                                }))
+                              ]}
+                            />
                           </div>
                         )}
 
@@ -621,16 +626,17 @@ export const SupplierOrdersView: React.FC<Props> = ({ supplies }) => {
                               className="w-16 px-2 py-1.5 rounded-lg bg-background border border-border text-xs text-center"
                               required
                             />
-                            <select
+                            <LuxurySelect
                               value={item.unit}
-                              onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
-                              className="w-full px-1.5 py-1.5 rounded-lg bg-background border border-border text-[11px]"
-                            >
-                              <option value="unidades">unid.</option>
-                              <option value="ml">ml</option>
-                              <option value="frascos">frascos</option>
-                              <option value="paquetes">paquetes</option>
-                            </select>
+                              onChange={(val) => handleItemChange(idx, 'unit', String(val))}
+                              options={[
+                                { value: 'unidades', label: 'unid.' },
+                                { value: 'ml', label: 'ml' },
+                                { value: 'frascos', label: 'frascos' },
+                                { value: 'paquetes', label: 'paquetes' }
+                              ]}
+                              className="w-full"
+                            />
                           </div>
                         </div>
 
@@ -654,12 +660,10 @@ export const SupplierOrdersView: React.FC<Props> = ({ supplies }) => {
               {/* Delivery Date & Notes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-border pt-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-foreground">Fecha Estimada de Entrega</label>
-                  <input
-                    type="date"
+                  <LuxuryDatePicker
+                    label="Fecha Estimada de Entrega"
                     value={expectedDate}
-                    onChange={(e) => setExpectedDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs"
+                    onChange={(date) => setExpectedDate(date)}
                   />
                 </div>
 
