@@ -20,6 +20,7 @@ import {
   INITIAL_SUPPLIES
 } from './mockData';
 import { supabase } from './supabaseClient';
+import { PlatformTier } from '../types/platformTiers';
 
 const STORAGE_KEYS = {
   SERVICES: 'atelier_services',
@@ -30,7 +31,8 @@ const STORAGE_KEYS = {
   SUPPLIER_ORDERS: 'atelier_supplier_orders',
   CURRENT_CLIENT_ID: 'atelier_current_client_id',
   SALON_SETTINGS: 'atelier_salon_settings',
-  INTEGRATIONS: 'atelier_integrations_config'
+  INTEGRATIONS: 'atelier_integrations_config',
+  PLATFORM_TIER: 'atelier_platform_tier'
 };
 
 export const DEFAULT_STAFF: NailTechnician[] = [
@@ -770,6 +772,20 @@ class StorageService {
 
   public saveIntegrations(integrations: SalonIntegrationsConfig): void {
     localStorage.setItem(STORAGE_KEYS.INTEGRATIONS, JSON.stringify(integrations));
+    this.notify();
+  }
+
+  // --- Platform Subscription Tier ---
+  public getPlatformTier(): PlatformTier {
+    const raw = localStorage.getItem(STORAGE_KEYS.PLATFORM_TIER);
+    if (raw === 'bronce' || raw === 'silver' || raw === 'oro') {
+      return raw;
+    }
+    return 'oro'; // Default to full suite for exploration
+  }
+
+  public setPlatformTier(tier: PlatformTier): void {
+    localStorage.setItem(STORAGE_KEYS.PLATFORM_TIER, tier);
     this.notify();
   }
 

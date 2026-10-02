@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { storage, DEFAULT_SCHEDULE_BY_DAY } from '../../services/storage';
 import { SalonOperatingSettings, DayOfWeekKey, TimeRangeBlock } from '../../types/nailStudio';
+import { PlatformTier, PLATFORM_TIERS } from '../../types/platformTiers';
+import { PlatformTierSwitcher } from './PlatformTierSwitcher';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,9 +40,16 @@ const DAYS_MAP = [
 
 export const SalonSettingsView: React.FC = () => {
   const [settings, setSettings] = useState<SalonOperatingSettings>(storage.getSalonSettings());
+  const [currentTier, setCurrentTier] = useState<PlatformTier>(() => storage.getPlatformTier());
   const [isSaved, setIsSaved] = useState(false);
   const [activeDayKey, setActiveDayKey] = useState<DayOfWeekKey>('monday');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
+
+  const handleTierChange = (newTier: PlatformTier) => {
+    storage.setPlatformTier(newTier);
+    setCurrentTier(newTier);
+    window.dispatchEvent(new CustomEvent('atelier-tier-changed', { detail: newTier }));
+  };
 
   const currentSchedule = settings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
   const activeDayConfig = currentSchedule[activeDayKey] || { enabled: false, ranges: [] };
@@ -201,6 +210,37 @@ export const SalonSettingsView: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Platform Subscription Tier & Feature Selector */}
+      <Card className="border-rose-200/80 shadow-xs bg-gradient-to-br from-white via-rose-50/20 to-white overflow-hidden">
+        <CardHeader className="pb-3 border-b border-rose-100/60">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
+                <Sparkles className="size-4 text-amber-500" />
+                <CardTitle className="text-sm font-bold text-foreground">
+                  Nivel de Plan & Módulos Habilitados
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] border-rose-300 bg-rose-50 text-rose-700">
+                  {PLATFORM_TIERS[currentTier].name} Activo
+                </Badge>
+              </div>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                Adapta la interfaz según la escala de tu salón: simplifica para profesionales independientes o desbloquea operaciones completas de atelier.
+              </CardDescription>
+            </div>
+            <div className="text-[11px] font-medium text-muted-foreground">
+              {PLATFORM_TIERS[currentTier].allowedSections.length} módulos habilitados
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <PlatformTierSwitcher
+            currentTier={currentTier}
+            onSelectTier={handleTierChange}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: Días y Franjas Horarias */}

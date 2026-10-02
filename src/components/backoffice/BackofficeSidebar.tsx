@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Calendar,
@@ -29,23 +29,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { useAuth } from '../../context/AuthContext';
+import { storage } from '../../services/storage';
+import { PlatformTier, PLATFORM_TIERS, BackofficeSectionId } from '../../types/platformTiers';
+import { PlatformTierSwitcher } from './PlatformTierSwitcher';
 
-
-export type BackofficeSection =
-  | 'web_studio'
-  | 'calendar'
-  | 'waitlist'
-  | 'crm'
-  | 'health'
-  | 'inventory'
-  | 'orders'
-  | 'automations'
-  | 'loyalty'
-  | 'finances'
-  | 'commissions'
-  | 'staff'
-  | 'settings'
-  | 'integrations';
+export type BackofficeSection = BackofficeSectionId;
 
 interface Props {
   activeSection: BackofficeSection;
@@ -72,7 +60,28 @@ export const BackofficeSidebar: React.FC<Props> = ({
 }) => {
   const { config } = useWebConfig();
   const { user, logout } = useAuth();
-  const navigationGroups = [
+  const [currentTier, setCurrentTier] = useState<PlatformTier>(() => storage.getPlatformTier());
+
+  useEffect(() => {
+    const handleTierEvent = (e: any) => {
+      if (e.detail) {
+        setCurrentTier(e.detail);
+      }
+    };
+    window.addEventListener('atelier-tier-changed', handleTierEvent);
+    return () => window.removeEventListener('atelier-tier-changed', handleTierEvent);
+  }, []);
+
+  const handleTierChange = (newTier: PlatformTier) => {
+    storage.setPlatformTier(newTier);
+    setCurrentTier(newTier);
+    window.dispatchEvent(new CustomEvent('atelier-tier-changed', { detail: newTier }));
+    if (!PLATFORM_TIERS[newTier].allowedSections.includes(activeSection)) {
+      onSelectSection('calendar');
+    }
+  };
+
+  const rawNavigationGroups = [
 
     {
       rubro: 'DISEÑO & PERSONALIZACIÓN',
@@ -191,6 +200,15 @@ export const BackofficeSidebar: React.FC<Props> = ({
     }
   ];
 
+  // Filter sections according to active Platform Tier
+  const currentTierInfo = PLATFORM_TIERS[currentTier];
+  const navigationGroups = rawNavigationGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => currentTierInfo.allowedSections.includes(item.id))
+    }))
+    .filter(group => group.items.length > 0);
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -242,6 +260,15 @@ export const BackofficeSidebar: React.FC<Props> = ({
           >
             Haute SaaS
           </Badge>
+        </div>
+
+        {/* Tier Selector / Switcher */}
+        <div className="px-3 pt-3 pb-2 border-b border-white/5 bg-black/20">
+          <PlatformTierSwitcher
+            currentTier={currentTier}
+            onSelectTier={handleTierChange}
+            compact
+          />
         </div>
 
         {/* Navigation Sections */}

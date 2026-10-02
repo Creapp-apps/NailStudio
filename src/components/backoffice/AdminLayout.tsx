@@ -19,6 +19,7 @@ import { IntegrationsApiView } from './IntegrationsApiView';
 import { BookingModal } from '../booking/BookingModal';
 import { IncomingAppointmentModal } from './IncomingAppointmentModal';
 import { storage } from '../../services/storage';
+import { PlatformTier, PLATFORM_TIERS } from '../../types/platformTiers';
 import { format } from 'date-fns';
 
 interface Props {
@@ -29,12 +30,29 @@ interface Props {
 }
 
 export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, supplies }) => {
-  const [activeSection, setActiveSection] = useState<BackofficeSection>('web_studio');
+  const [currentTier, setCurrentTier] = useState<PlatformTier>(() => storage.getPlatformTier());
+  const [activeSection, setActiveSection] = useState<BackofficeSection>(() => {
+    const tier = storage.getPlatformTier();
+    const defaultSec: BackofficeSection = 'web_studio';
+    return PLATFORM_TIERS[tier].allowedSections.includes(defaultSec) ? defaultSec : 'calendar';
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [incomingAppointment, setIncomingAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
+    // 0. Listen for platform tier changes
+    const handleTierChange = (e: any) => {
+      if (e.detail) {
+        const nextTier = e.detail as PlatformTier;
+        setCurrentTier(nextTier);
+        if (!PLATFORM_TIERS[nextTier].allowedSections.includes(activeSection)) {
+          setActiveSection('calendar');
+        }
+      }
+    };
+    window.addEventListener('atelier-tier-changed', handleTierChange);
+
     // 1. Listen for window custom event
     const handleNewApt = (e: any) => {
       if (e.detail) {
@@ -70,11 +88,12 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      window.removeEventListener('atelier-tier-changed', handleTierChange);
       window.removeEventListener('atelier-new-appointment', handleNewApt);
       window.removeEventListener('storage', handleStorageChange);
       if (channel) channel.close();
     };
-  }, []);
+  }, [activeSection]);
 
   // Computed metrics for badges
   const todayStr = format(new Date(), 'yyyy-MM-dd');
