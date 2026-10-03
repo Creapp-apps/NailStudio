@@ -10,10 +10,14 @@ import {
   SalonOperatingSettings,
   SalonIntegrationsConfig,
   ScheduleByDay,
-  TimeRangeBlock
+  TimeRangeBlock,
+  RemovalOption,
+  NailArtTier
 } from '../types/nailStudio';
 import {
   INITIAL_SERVICES,
+  REMOVAL_OPTIONS,
+  NAIL_ART_TIERS,
   NAIL_TECHNICIANS,
   INITIAL_APPOINTMENTS,
   INITIAL_CLIENTS,
@@ -24,6 +28,8 @@ import { PlatformTier } from '../types/platformTiers';
 
 const STORAGE_KEYS = {
   SERVICES: 'atelier_services',
+  REMOVALS: 'atelier_removals',
+  NAIL_ART_TIERS: 'atelier_nail_art_tiers',
   TECHS: 'atelier_techs',
   APPOINTMENTS: 'atelier_appointments',
   CLIENTS: 'atelier_clients',
@@ -332,10 +338,125 @@ class StorageService {
     this.listeners.forEach((listener) => listener());
   }
 
-  // --- Services & Techs ---
+  // --- Services, Removals & Nail Art Tiers (Step-by-Step Booking Funnel) ---
   public getServices(): NailService[] {
     const raw = localStorage.getItem(STORAGE_KEYS.SERVICES);
-    return raw ? JSON.parse(raw) : INITIAL_SERVICES;
+    if (!raw) return INITIAL_SERVICES;
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_SERVICES;
+    } catch {
+      return INITIAL_SERVICES;
+    }
+  }
+
+  public saveServices(services: NailService[]): void {
+    localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
+    this.notify();
+  }
+
+  public addService(service: Omit<NailService, 'id'>): NailService {
+    const current = this.getServices();
+    const created: NailService = {
+      ...service,
+      id: `srv-${Date.now()}`
+    };
+    this.saveServices([...current, created]);
+    return created;
+  }
+
+  public updateService(updated: NailService): void {
+    const current = this.getServices();
+    const idx = current.findIndex(s => s.id === updated.id);
+    if (idx !== -1) {
+      current[idx] = updated;
+      this.saveServices(current);
+    }
+  }
+
+  public deleteService(id: string): void {
+    const current = this.getServices();
+    this.saveServices(current.filter(s => s.id !== id));
+  }
+
+  public getRemovals(): RemovalOption[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.REMOVALS);
+    if (!raw) return REMOVAL_OPTIONS;
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : REMOVAL_OPTIONS;
+    } catch {
+      return REMOVAL_OPTIONS;
+    }
+  }
+
+  public saveRemovals(removals: RemovalOption[]): void {
+    localStorage.setItem(STORAGE_KEYS.REMOVALS, JSON.stringify(removals));
+    this.notify();
+  }
+
+  public addRemoval(removal: Omit<RemovalOption, 'id'>): RemovalOption {
+    const current = this.getRemovals();
+    const created: RemovalOption = {
+      ...removal,
+      id: `rem-${Date.now()}`
+    };
+    this.saveRemovals([...current, created]);
+    return created;
+  }
+
+  public updateRemoval(updated: RemovalOption): void {
+    const current = this.getRemovals();
+    const idx = current.findIndex(r => r.id === updated.id);
+    if (idx !== -1) {
+      current[idx] = updated;
+      this.saveRemovals(current);
+    }
+  }
+
+  public deleteRemoval(id: string): void {
+    const current = this.getRemovals();
+    this.saveRemovals(current.filter(r => r.id !== id));
+  }
+
+  public getNailArtTiers(): NailArtTier[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.NAIL_ART_TIERS);
+    if (!raw) return NAIL_ART_TIERS;
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : NAIL_ART_TIERS;
+    } catch {
+      return NAIL_ART_TIERS;
+    }
+  }
+
+  public saveNailArtTiers(tiers: NailArtTier[]): void {
+    localStorage.setItem(STORAGE_KEYS.NAIL_ART_TIERS, JSON.stringify(tiers));
+    this.notify();
+  }
+
+  public addNailArtTier(tier: Omit<NailArtTier, 'id'>): NailArtTier {
+    const current = this.getNailArtTiers();
+    const created: NailArtTier = {
+      ...tier,
+      id: `art-${Date.now()}`
+    };
+    this.saveNailArtTiers([...current, created]);
+    return created;
+  }
+
+  public updateNailArtTier(updated: NailArtTier): void {
+    const current = this.getNailArtTiers();
+    const idx = current.findIndex(t => t.id === updated.id);
+    if (idx !== -1) {
+      current[idx] = updated;
+      this.saveNailArtTiers(current);
+    }
+  }
+
+  public deleteNailArtTier(id: string): void {
+    const current = this.getNailArtTiers();
+    this.saveNailArtTiers(current.filter(t => t.id !== id));
   }
 
   public getTechs(): NailTechnician[] {
@@ -886,6 +1007,7 @@ export const DEFAULT_SCHEDULE_BY_DAY: ScheduleByDay = {
 
 const DEFAULT_SALON_SETTINGS: SalonOperatingSettings = {
   salonName: 'Atelier Nails',
+  assistantName: 'Lucía Altieri',
   branchName: 'Recoleta Flagship',
   address: 'Av. Alvear 1850, Recoleta, CABA',
   googleMapsUrl: 'https://maps.google.com/?q=Av.+Alvear+1850,+CABA',

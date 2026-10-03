@@ -16,6 +16,7 @@ import { LiveDeskView } from './LiveDeskView';
 import { WebStudioView } from './WebStudioView';
 import { HomeDashboardView } from './HomeDashboardView';
 import { SalonSettingsView } from './SalonSettingsView';
+import { ServicesCatalogView } from './ServicesCatalogView';
 import { IntegrationsApiView } from './IntegrationsApiView';
 import { BookingModal } from '../booking/BookingModal';
 import { IncomingAppointmentModal } from './IncomingAppointmentModal';
@@ -189,6 +190,9 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
               )}
 
               {/* OPERACIONES */}
+              {activeSection === 'services' && (
+                <ServicesCatalogView onOpenBookingPreview={() => setIsBookingModalOpen(true)} />
+              )}
               {activeSection === 'waitlist' && (
                 <LiveDeskView appointments={appointments} techs={techs} />
               )}

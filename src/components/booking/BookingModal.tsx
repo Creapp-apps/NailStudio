@@ -38,6 +38,14 @@ export const BookingModal: React.FC<Props> = ({
     const s = storage.getServices();
     return s.length > 0 ? s : INITIAL_SERVICES;
   });
+  const [removals, setRemovals] = useState<RemovalOption[]>(() => {
+    const r = storage.getRemovals();
+    return r.length > 0 ? r : REMOVAL_OPTIONS;
+  });
+  const [nailArtTiers, setNailArtTiers] = useState<NailArtTier[]>(() => {
+    const t = storage.getNailArtTiers();
+    return t.length > 0 ? t : NAIL_ART_TIERS;
+  });
   const [availableTechs, setAvailableTechs] = useState<NailTechnician[]>(() => storage.getTechs());
   const [salonSettings, setSalonSettings] = useState(() => storage.getSalonSettings());
   const [appointments, setAppointments] = useState(() => storage.getAppointments());
@@ -46,6 +54,10 @@ export const BookingModal: React.FC<Props> = ({
     const unsub = storage.subscribe(() => {
       const s = storage.getServices();
       if (s.length > 0) setServices(s);
+      const r = storage.getRemovals();
+      if (r.length > 0) setRemovals(r);
+      const t = storage.getNailArtTiers();
+      if (t.length > 0) setNailArtTiers(t);
       setAvailableTechs(storage.getTechs());
       setSalonSettings(storage.getSalonSettings());
       setAppointments(storage.getAppointments());
@@ -66,8 +78,8 @@ export const BookingModal: React.FC<Props> = ({
     }
   }, [preselectedServiceId, services, isOpen]);
 
-  const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(REMOVAL_OPTIONS[0]);
-  const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(NAIL_ART_TIERS[0]);
+  const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(removals[0] || REMOVAL_OPTIONS[0]);
+  const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(nailArtTiers[0] || NAIL_ART_TIERS[0]);
   const [selectedTech, setSelectedTech] = useState<NailTechnician | null>(availableTechs[0] || null);
 
   // Helper to find next open date
@@ -245,7 +257,6 @@ export const BookingModal: React.FC<Props> = ({
 
   return createPortal(
     <div
-      onClick={handleResetAndClose}
       className="fixed inset-0 z-[99999] flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto"
       style={{
         background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.14) 0%, rgba(22, 12, 17, 0.48) 100%)',
@@ -399,7 +410,7 @@ export const BookingModal: React.FC<Props> = ({
               {step === 1 && (
                 <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
-                    {services.slice(0, 4).map(srv => {
+                    {services.filter(s => s.isActive !== false).map(srv => {
                       const isSelected = selectedService?.id === srv.id;
                       return (
                         <div
@@ -457,7 +468,7 @@ export const BookingModal: React.FC<Props> = ({
               {step === 2 && (
                 <div className="animate-fade-in w-full max-w-xl mx-auto flex flex-col justify-center">
                   <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
-                    {REMOVAL_OPTIONS.map(rem => {
+                    {removals.filter(r => r.isActive !== false).map(rem => {
                       const isSelected = selectedRemoval.id === rem.id;
                       return (
                         <div
@@ -496,7 +507,7 @@ export const BookingModal: React.FC<Props> = ({
               {step === 3 && (
                 <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
-                    {NAIL_ART_TIERS.map(tier => {
+                    {nailArtTiers.filter(t => t.isActive !== false).map(tier => {
                       const isSelected = selectedNailArt.id === tier.id;
                       return (
                         <div

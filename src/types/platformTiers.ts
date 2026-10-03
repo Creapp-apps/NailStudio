@@ -4,6 +4,7 @@ export type BackofficeSectionId =
   | 'home'
   | 'web_studio'
   | 'calendar'
+  | 'services'
   | 'waitlist'
   | 'crm'
   | 'health'
@@ -45,6 +46,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     allowedSections: [
       'home',
       'calendar',
+      'services',
       'crm',
       'settings',
       'web_studio'
@@ -67,6 +69,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     allowedSections: [
       'home',
       'calendar',
+      'services',
       'crm',
       'settings',
       'web_studio',
@@ -93,6 +96,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     allowedSections: [
       'home',
       'calendar',
+      'services',
       'crm',
       'settings',
       'web_studio',

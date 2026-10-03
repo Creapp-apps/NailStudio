@@ -52,7 +52,17 @@ export const NuevoTurnoModal: React.FC<Props> = ({
   const services = useMemo(() => {
     const s = storage.getServices();
     return s.length > 0 ? s : INITIAL_SERVICES;
-  }, []);
+  }, [isOpen]);
+
+  const removals = useMemo(() => {
+    const r = storage.getRemovals();
+    return r.length > 0 ? r : REMOVAL_OPTIONS;
+  }, [isOpen]);
+
+  const nailArtTiers = useMemo(() => {
+    const t = storage.getNailArtTiers();
+    return t.length > 0 ? t : NAIL_ART_TIERS;
+  }, [isOpen]);
 
   const clients = useMemo(() => storage.getClients(), [isOpen]);
 
@@ -61,7 +71,7 @@ export const NuevoTurnoModal: React.FC<Props> = ({
   const [clientEmail, setClientEmail] = useState('');
   const [techId, setTechId] = useState('');
   const [serviceId, setServiceId] = useState('');
-  const [removalId, setRemovalId] = useState<RemovalType>('none');
+  const [removalId, setRemovalId] = useState<string>('none');
   const [nailArtTierId, setNailArtTierId] = useState('art-0');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('10:00');
@@ -135,8 +145,8 @@ export const NuevoTurnoModal: React.FC<Props> = ({
 
   // Calculate duration and price dynamically
   const selectedService = services.find(s => s.id === serviceId) || services[0];
-  const selectedRemoval = REMOVAL_OPTIONS.find(r => r.id === removalId) || REMOVAL_OPTIONS[0];
-  const selectedNailArt = NAIL_ART_TIERS.find(t => t.id === nailArtTierId) || NAIL_ART_TIERS[0];
+  const selectedRemoval = removals.find(r => r.id === removalId) || removals[0];
+  const selectedNailArt = nailArtTiers.find(t => t.id === nailArtTierId) || nailArtTiers[0];
 
   const totalDurationMin = (selectedService?.baseDurationMin || 60) +
     (selectedRemoval?.additionalDurationMin || 0) +
@@ -341,8 +351,8 @@ export const NuevoTurnoModal: React.FC<Props> = ({
                 <LuxurySelect
                   label="Retiro Previo"
                   value={removalId}
-                  onChange={(val) => setRemovalId(val as RemovalType)}
-                  options={REMOVAL_OPTIONS.map(r => ({
+                  onChange={(val) => setRemovalId(val)}
+                  options={removals.filter(r => r.isActive !== false).map(r => ({
                     value: r.id,
                     label: r.label,
                     badge: r.additionalPrice > 0 ? `+$${r.additionalPrice.toLocaleString('es-AR')}` : undefined
@@ -355,7 +365,7 @@ export const NuevoTurnoModal: React.FC<Props> = ({
                   label="Nivel de Nail Art"
                   value={nailArtTierId}
                   onChange={setNailArtTierId}
-                  options={NAIL_ART_TIERS.map(t => ({
+                  options={nailArtTiers.filter(t => t.isActive !== false).map(t => ({
                     value: t.id,
                     label: t.name,
                     badge: t.price > 0 ? `+$${t.price.toLocaleString('es-AR')}` : undefined

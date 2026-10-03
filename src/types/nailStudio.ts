@@ -1,4 +1,4 @@
-export type ServiceCategory = 'semipermanente' | 'kapping' | 'soft_gel' | 'esculpidas';
+export type ServiceCategory = 'semipermanente' | 'kapping' | 'soft_gel' | 'esculpidas' | 'otros' | string;
 
 export interface NailService {
   id: string;
@@ -10,9 +10,10 @@ export interface NailService {
   badge?: string;
   imageUrl: string;
   recommendedFor: string;
+  isActive?: boolean;
 }
 
-export type RemovalType = 'none' | 'own_studio' | 'other_salon';
+export type RemovalType = 'none' | 'own_studio' | 'other_salon' | string;
 
 export interface RemovalOption {
   id: RemovalType;
@@ -20,17 +21,19 @@ export interface RemovalOption {
   description: string;
   additionalPrice: number;
   additionalDurationMin: number;
+  isActive?: boolean;
 }
 
 export interface NailArtTier {
   id: string;
-  tierLevel: 0 | 1 | 2 | 3;
+  tierLevel: number;
   name: string;
   price: number;
   additionalDurationMin: number;
   description: string;
   examples: string[];
   sampleImage: string;
+  isActive?: boolean;
 }
 
 export interface NailTechnician {
@@ -157,6 +160,7 @@ export interface ScheduleByDay {
 
 export interface SalonOperatingSettings {
   salonName: string;
+  assistantName?: string; // Nombre de la profesional / recepcionista virtual del Nail-Bot
   branchName: string;
   address: string;
   googleMapsUrl: string;

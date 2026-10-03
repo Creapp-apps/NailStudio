@@ -25,7 +25,10 @@ class WebConfigStorageService {
             ? parsed.showcaseItems
             : DEFAULT_WEB_CONFIG.showcaseItems,
           whyUsFeatures: parsed.whyUsFeatures && Array.isArray(parsed.whyUsFeatures) && parsed.whyUsFeatures.length > 0
-            ? parsed.whyUsFeatures
+            ? parsed.whyUsFeatures.map((feat: any, idx: number) => ({
+                ...feat,
+                icon: feat.icon || (idx === 0 ? 'heart' : idx === 1 ? 'palette' : idx === 2 ? 'award' : 'shield')
+              }))
             : DEFAULT_WEB_CONFIG.whyUsFeatures
         };
       }

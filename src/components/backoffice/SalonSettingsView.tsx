@@ -621,6 +621,22 @@ export const SalonSettingsView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
+              <label className="font-semibold text-zinc-700 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Sparkles className="size-3 text-rose-500" />
+                  <span>Nombre de la Profesional / Asistente Virtual (Nail-Bot)</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal">Recepción de turnos en chat</span>
+              </label>
+              <input
+                placeholder="Ej: Lucía Altieri, Valen, etc."
+                value={settings.assistantName || ''}
+                onChange={(e) => setSettings({ ...settings, assistantName: e.target.value })}
+                className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
+              />
+            </div>
+
+            <div className="space-y-1">
               <label className="font-semibold text-zinc-700 flex items-center gap-1">
                 <MapPin className="size-3 text-rose-500" />
                 <span>Dirección del Salón</span>

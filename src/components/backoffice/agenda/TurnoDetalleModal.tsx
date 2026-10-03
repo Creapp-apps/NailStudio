@@ -55,8 +55,8 @@ export const TurnoDetalleModal: React.FC<Props> = ({
   const services = storage.getServices();
   const allServices = services.length > 0 ? services : INITIAL_SERVICES;
   const service = allServices.find(s => s.id === appointment.serviceId);
-  const nailArt = NAIL_ART_TIERS.find(t => t.id === appointment.nailArtTierId);
-  const removal = REMOVAL_OPTIONS.find(r => r.id === appointment.removalId);
+  const nailArt = storage.getNailArtTiers().find(t => t.id === appointment.nailArtTierId) || NAIL_ART_TIERS.find(t => t.id === appointment.nailArtTierId);
+  const removal = storage.getRemovals().find(r => r.id === appointment.removalId) || REMOVAL_OPTIONS.find(r => r.id === appointment.removalId);
 
   // WhatsApp reminder message
   const cleanPhone = appointment.clientPhone.replace(/\D/g, '');

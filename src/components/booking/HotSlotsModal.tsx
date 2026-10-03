@@ -138,7 +138,6 @@ export const HotSlotsModal: React.FC<Props> = ({
 
   return createPortal(
     <div
-      onClick={handleClose}
       className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       style={{
         background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.14) 0%, rgba(22, 12, 17, 0.48) 100%)',

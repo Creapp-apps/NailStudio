@@ -28,6 +28,10 @@ import {
   X,
   ShieldCheck,
   Clock,
+  Award,
+  Gem,
+  Star,
+  UserCheck,
   ZoomIn,
   ZoomOut,
   Crop,
@@ -56,6 +60,18 @@ type StudioCategory =
   | 'cinta'
   | 'pilares'
   | 'contacto';
+
+const PILAR_ICON_OPTIONS = [
+  { key: 'heart', label: 'Atención', icon: HeartHandshake },
+  { key: 'palette', label: 'Colorimetría', icon: Palette },
+  { key: 'award', label: 'Técnicas', icon: Award },
+  { key: 'shield', label: 'Durabilidad', icon: ShieldCheck },
+  { key: 'sparkles', label: 'Brillo / Lujo', icon: Sparkles },
+  { key: 'diamond', label: 'Alta Gama', icon: Gem },
+  { key: 'clock', label: 'Puntualidad', icon: Clock },
+  { key: 'star', label: 'Calidad VIP', icon: Star },
+  { key: 'user', label: 'Personal', icon: UserCheck }
+];
 
 export const WebStudioView: React.FC = () => {
   const { config, updateConfig, resetConfig } = useWebConfig();
@@ -335,6 +351,36 @@ export const WebStudioView: React.FC = () => {
 
   const resetShowcasePresets = () => {
     handleFieldChange('showcaseItems', DEFAULT_WEB_CONFIG.showcaseItems);
+  };
+
+  const addPilarItem = () => {
+    const current = draftConfig.whyUsFeatures || DEFAULT_WEB_CONFIG.whyUsFeatures;
+    const nextId = current.length > 0 ? Math.max(...current.map(c => Number(c.id) || 0)) + 1 : 1;
+    const newItem: WhyUsFeatureItem = {
+      id: nextId,
+      title: 'NUEVO PILAR EXCLUSIVO',
+      description: 'Detalle o beneficio diferencial que tus clientas disfrutarán en su experiencia.',
+      tag: 'EXCLUSIVIDAD',
+      icon: 'sparkles'
+    };
+    handleFieldChange('whyUsFeatures', [...current, newItem]);
+  };
+
+  const removePilarItem = (id: string | number) => {
+    const current = draftConfig.whyUsFeatures || DEFAULT_WEB_CONFIG.whyUsFeatures;
+    if (current.length <= 1) return;
+    const updated = current.filter(item => item.id !== id);
+    handleFieldChange('whyUsFeatures', updated);
+  };
+
+  const updatePilarItem = (index: number, partial: Partial<WhyUsFeatureItem>) => {
+    const current = [...(draftConfig.whyUsFeatures || DEFAULT_WEB_CONFIG.whyUsFeatures)];
+    current[index] = { ...current[index], ...partial };
+    handleFieldChange('whyUsFeatures', current);
+  };
+
+  const resetPilarPresets = () => {
+    handleFieldChange('whyUsFeatures', DEFAULT_WEB_CONFIG.whyUsFeatures);
   };
 
   const handleSave = () => {
@@ -1863,32 +1909,104 @@ export const WebStudioView: React.FC = () => {
 
                   <div className="h-[1px] bg-rose-100 dark:bg-rose-900/30" />
 
-                  <div className="space-y-2.5">
-                    {draftConfig.whyUsFeatures.map((feat, index) => (
-                      <div key={feat.id} className="p-3 rounded-xl border border-rose-200/60 dark:border-rose-900/30 bg-rose-500/[0.03] space-y-2">
-                        <span className="text-[10px] font-bold text-[#DE738F] uppercase tracking-wider">Pilar #{index + 1}</span>
-                        <input
-                          type="text"
-                          value={feat.title}
-                          onChange={e => {
-                            const updated = [...draftConfig.whyUsFeatures];
-                            updated[index].title = e.target.value;
-                            handleFieldChange('whyUsFeatures', updated);
-                          }}
-                          className="w-full font-semibold rounded-lg border border-rose-200/70 bg-background/90 px-2.5 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
-                        />
-                        <textarea
-                          rows={2}
-                          value={feat.description}
-                          onChange={e => {
-                            const updated = [...draftConfig.whyUsFeatures];
-                            updated[index].description = e.target.value;
-                            handleFieldChange('whyUsFeatures', updated);
-                          }}
-                          className="w-full rounded-lg border border-rose-200/70 bg-background/90 px-2.5 py-1.5 text-[11px] text-foreground focus:border-[#DE738F] focus:outline-none"
-                        />
-                      </div>
-                    ))}
+                  <div className="space-y-3.5">
+                    {(draftConfig.whyUsFeatures || DEFAULT_WEB_CONFIG.whyUsFeatures).map((feat, index) => {
+                      const currentIconKey = feat.icon || (
+                        index === 0 ? 'heart' : index === 1 ? 'palette' : index === 2 ? 'award' : 'shield'
+                      );
+
+                      return (
+                        <div key={feat.id || index} className="p-3.5 rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-gradient-to-b from-rose-50/50 to-transparent dark:from-rose-950/10 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DE738F]/10 text-[#DE738F] uppercase tracking-wider">
+                              Pilar #{index + 1}
+                            </span>
+                            {(draftConfig.whyUsFeatures?.length || 0) > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removePilarItem(feat.id)}
+                                className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                title="Eliminar este pilar"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-medium text-muted-foreground">Título del Pilar</label>
+                            <input
+                              type="text"
+                              value={feat.title}
+                              onChange={e => updatePilarItem(index, { title: e.target.value })}
+                              placeholder="Ej: ATENCIÓN PERSONALIZADA"
+                              className="w-full font-semibold rounded-lg border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-2.5 py-1.5 text-xs text-foreground focus:border-[#DE738F] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] font-medium text-muted-foreground flex items-center justify-between">
+                              <span>Ícono Representativo</span>
+                              <span className="text-[9px] text-[#DE738F] font-semibold">
+                                {PILAR_ICON_OPTIONS.find(o => o.key === currentIconKey)?.label || currentIconKey}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {PILAR_ICON_OPTIONS.map(opt => {
+                                const IconComp = opt.icon;
+                                const isSelected = currentIconKey === opt.key;
+                                return (
+                                  <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => updatePilarItem(index, { icon: opt.key })}
+                                    className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all text-left border ${
+                                      isSelected
+                                        ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] shadow-xs'
+                                        : 'bg-background/80 border-rose-200/50 dark:border-rose-900/30 text-muted-foreground hover:border-rose-300 hover:text-foreground'
+                                    }`}
+                                  >
+                                    <IconComp className={`size-3.5 shrink-0 ${isSelected ? 'text-[#DE738F]' : 'text-muted-foreground'}`} />
+                                    <span className="truncate">{opt.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-medium text-muted-foreground">Descripción Detallada</label>
+                            <textarea
+                              rows={3}
+                              value={feat.description}
+                              onChange={e => updatePilarItem(index, { description: e.target.value })}
+                              placeholder="Describe la exclusividad, propuesta de valor y beneficios de este pilar..."
+                              className="w-full rounded-lg border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-2.5 py-1.5 text-[11px] leading-relaxed text-foreground focus:border-[#DE738F] focus:outline-none resize-none"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <div className="pt-1 flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addPilarItem}
+                        className="text-xs w-full gap-1.5 h-8 rounded-xl border-dashed border-rose-300 hover:border-rose-500 hover:bg-rose-500/5 text-rose-700 dark:text-rose-300 font-semibold"
+                      >
+                        <Plus className="size-3.5" />
+                        <span>Agregar Nuevo Pilar</span>
+                      </Button>
+
+                      <button
+                        type="button"
+                        onClick={resetPilarPresets}
+                        className="text-[10px] text-muted-foreground hover:text-[#DE738F] text-center transition-colors underline decoration-dotted"
+                      >
+                        Restaurar los 4 pilares predeterminados de alta gama
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

@@ -3,6 +3,7 @@ export interface WhyUsFeatureItem {
   title: string;
   description: string;
   tag: string;
+  icon?: string;
 }
 
 export interface ShowcaseWorkItem {
@@ -232,27 +233,31 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   whyUsFeatures: [
     {
       id: 0,
-      title: 'TRATAMIENTOS DE AUTOR',
-      description: 'Viví una experiencia exclusiva con nuestros tratamientos: manicuría rusa combinada, nivelación con gel Rubber y cuidado profundo de la uña.',
-      tag: 'Técnica Rusa'
+      title: 'ATENCIÓN PERSONALIZADA',
+      description: 'Cada clienta recibe un servicio único adaptado a sus necesidades y estilo personal.',
+      tag: 'Exclusividad',
+      icon: 'heart'
     },
     {
       id: 1,
-      title: 'PRODUCTOS HIPOALERGÉNICOS',
-      description: 'Utilizamos exclusivamente productos biocompatibles 100% libres de HEMA para garantizar un acabado impecable, seguro y sin alergias.',
-      tag: '100% HEMA-Free'
+      title: 'ARTE Y COLORIMETRÍA EXCLUSIVA',
+      description: 'Diseñamos la fórmula cromática exacta de cada referencia para lograr un resultado 100% personalizado y único en tus manos.',
+      tag: 'Colorimetría',
+      icon: 'palette'
     },
     {
       id: 2,
-      title: 'MANICURISTAS EXPERTAS',
-      description: 'Nuestras manicuristas maestras dominan la arquitectura ungueal, el corte milimétrico de cutículas y el diseño a mano alzada de precisión.',
-      tag: 'Master Artists'
+      title: 'TÉCNICAS ACTUALIZADAS',
+      description: 'Formación constante en las últimas tendencias y técnicas del mundo nail art.',
+      tag: 'Master Artists',
+      icon: 'award'
     },
     {
       id: 3,
-      title: 'AMBIENTE BOUTIQUE',
-      description: 'Relajate en un ambiente de spa exclusivo, pensado para brindarte tranquilidad, café de especialidad y desconexión absoluta.',
-      tag: 'Experiencia Sensorial'
+      title: 'DURABILIDAD GARANTIZADA',
+      description: 'Resultados que perduran gracias a nuestra técnica y productos de calidad.',
+      tag: '21+ Días',
+      icon: 'shield'
     }
   ],
 

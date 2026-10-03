@@ -13,7 +13,10 @@ import {
   Heart,
   Gem,
   PackageCheck,
-  Feather
+  Feather,
+  HeartHandshake,
+  Palette,
+  UserCheck
 } from 'lucide-react';
 import { NailService, NailArtTier } from '../../types/nailStudio';
 import { INITIAL_SERVICES, NAIL_ART_TIERS } from '../../services/mockData';
@@ -43,35 +46,45 @@ export const PublicLanding: React.FC<Props> = ({
   const theme = getThemeFromConfig(config);
   const [activeFeature, setActiveFeature] = useState<number>(0);
 
-  const defaultWhyUsIcons = [
-    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-      <path d="M12 2v4" />
-      <path d="m4.93 4.93 2.83 2.83" />
-      <path d="M2 12h4" />
-      <path d="m4.93 19.07 2.83-2.83" />
-      <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" />
-      <path d="m14 14 5 5" />
-      <path d="m17 12 3 3" />
-    </svg>,
-    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-      <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4Z" />
-      <path d="M10 8h4" />
-      <circle cx="12" cy="15" r="2" />
-    </svg>,
-    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-      <rect width="20" height="14" x="2" y="7" rx="2" />
-      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-    </svg>,
-    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.primary }}>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-    </svg>
-  ];
+  const renderWhyUsIcon = (item: { icon?: string; title?: string }, index: number) => {
+    const lower = (item.title || '').toLowerCase();
+    const iconKey = item.icon || (
+      lower.includes('atención') || lower.includes('personaliz') ? 'heart' :
+      lower.includes('arte') || lower.includes('color') || lower.includes('diseño') ? 'palette' :
+      lower.includes('técnica') || lower.includes('actualiz') || lower.includes('tendenc') ? 'award' :
+      lower.includes('durabil') || lower.includes('garant') || lower.includes('calidad') ? 'shield' :
+      index === 0 ? 'heart' : index === 1 ? 'palette' : index === 2 ? 'award' : 'shield'
+    );
+
+    const iconProps = {
+      size: 40,
+      strokeWidth: 1.5,
+      style: { color: theme.primary, filter: 'drop-shadow(0 2px 6px rgba(222, 115, 143, 0.2))' }
+    };
+
+    switch (iconKey) {
+      case 'heart':
+        return <HeartHandshake {...iconProps} />;
+      case 'palette':
+        return <Palette {...iconProps} />;
+      case 'award':
+        return <Award {...iconProps} />;
+      case 'shield':
+        return <ShieldCheck {...iconProps} />;
+      case 'sparkles':
+        return <Sparkles {...iconProps} />;
+      case 'diamond':
+        return <Gem {...iconProps} />;
+      case 'clock':
+        return <Clock {...iconProps} />;
+      case 'star':
+        return <Star {...iconProps} />;
+      case 'user':
+        return <UserCheck {...iconProps} />;
+      default:
+        return <Sparkles {...iconProps} />;
+    }
+  };
 
   const whyUsFeatures = (config.whyUsFeatures && config.whyUsFeatures.length > 0)
     ? config.whyUsFeatures
@@ -216,7 +229,7 @@ export const PublicLanding: React.FC<Props> = ({
             {whyUsFeatures.map((item, index) => {
               const itemId = item.id ?? index;
               const isActive = activeFeature === itemId;
-              const icon = defaultWhyUsIcons[index % defaultWhyUsIcons.length];
+              const icon = renderWhyUsIcon(item, index);
               return (
                 <div
                   key={itemId}

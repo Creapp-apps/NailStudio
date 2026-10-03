@@ -10,6 +10,7 @@ import { CinematicPreloader } from '../components/public/CinematicPreloader';
 import { useWebConfig } from '../hooks/useWebConfig';
 import { WebCustomizationConfig } from '../types/webConfig';
 import { getThemeFromConfig } from '../lib/themeStyles';
+import { storage } from '../services/storage';
 
 export const PublicWebView: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,12 @@ export const PublicWebView: React.FC = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isHotSlotsOpen, setIsHotSlotsOpen] = useState(false);
   const [isNailBotOpen, setIsNailBotOpen] = useState(false);
+  const [isBotTriggerCollapsed, setIsBotTriggerCollapsed] = useState(false);
+  const [isHoveredTrigger, setIsHoveredTrigger] = useState(false);
   const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
+
+  const salonSettings = storage.getSalonSettings();
+  const assistantName = salonSettings.assistantName || 'Lucía Altieri';
 
   const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
   const theme = getThemeFromConfig(liveConfig);
@@ -170,47 +176,141 @@ export const PublicWebView: React.FC = () => {
           className={isRevealed ? 'cinematic-stagger-floating' : ''}
           style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            bottom: '20px',
+            right: '20px',
             zIndex: 80,
-            opacity: isRevealed ? 1 : 0
+            opacity: isRevealed ? 1 : 0,
+            display: isNailBotOpen ? 'none' : 'flex',
+            alignItems: 'center',
+            gap: '0.45rem'
           }}
         >
-        {!isNailBotOpen && (
-          <button
-            onClick={() => setIsNailBotOpen(true)}
-            style={{
-              background: 'linear-gradient(135deg, #2D1E1B 0%, #1A1210 100%)',
-              color: '#FFFFFF',
-              border: '1px solid rgba(212, 175, 122, 0.4)',
-              padding: '0.85rem 1.25rem',
-              borderRadius: 'var(--radius-full)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-              boxShadow: '0 8px 30px rgba(35, 25, 22, 0.35)',
-              transition: 'var(--transition-smooth)'
-            }}
-          >
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'var(--brand-terracotta)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Sparkles size={15} color="#FFF" />
+          {isBotTriggerCollapsed ? (
+            /* Ultra-discrete collapsed mini-icon */
+            <button
+              onClick={() => setIsBotTriggerCollapsed(false)}
+              title={`Abrir asistente virtual con ${assistantName}`}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #2A171D 0%, #1A0E13 100%)',
+                border: '1px solid rgba(222, 115, 143, 0.4)',
+                color: '#FFAEC0',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.35)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Sparkles size={16} />
+            </button>
+          ) : (
+            /* Compact luxury reception widget */
+            <div
+              onMouseEnter={() => setIsHoveredTrigger(true)}
+              onMouseLeave={() => setIsHoveredTrigger(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, #251419 0%, #170C11 100%)',
+                border: '1px solid rgba(222, 115, 143, 0.35)',
+                borderRadius: '999px',
+                padding: '0.35rem 0.5rem 0.35rem 0.35rem',
+                boxShadow: '0 10px 32px rgba(25, 12, 16, 0.4), 0 0 0 1px rgba(222, 115, 143, 0.15)',
+                gap: '0.55rem',
+                cursor: 'pointer',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+            >
+              {/* Main Avatar Trigger */}
+              <button
+                onClick={() => setIsNailBotOpen(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem'
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #DE738F 0%, #B84D6B 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFFFFF',
+                      fontWeight: 700,
+                      fontSize: '1rem',
+                      fontFamily: 'var(--font-display)',
+                      boxShadow: '0 0 14px rgba(222, 115, 143, 0.5)'
+                    }}
+                  >
+                    {assistantName.charAt(0)}
+                  </div>
+                  {/* Green pulse dot */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '0px',
+                      right: '0px',
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      border: '2px solid #170C11'
+                    }}
+                  />
+                </div>
+
+                <div style={{ textAlign: 'left', paddingRight: '0.2rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFFFFF', fontFamily: 'var(--font-display)', letterSpacing: '0.01em' }}>
+                    {assistantName}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#D9AAB7', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <span style={{ color: '#34D399', fontSize: '0.6rem' }}>●</span> Recepción de turnos
+                  </div>
+                </div>
+              </button>
+
+              {/* Minimize toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsBotTriggerCollapsed(true);
+                }}
+                title="Minimizar ícono"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  color: '#D9AAB7',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '0.7rem',
+                  lineHeight: 1,
+                  marginLeft: '0.1rem',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                ✕
+              </button>
             </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, fontFamily: 'var(--font-display)' }}>Nail-Bot IA</div>
-              <div style={{ fontSize: '0.65rem', color: '#C89688' }}>Asistente de Turnos</div>
-            </div>
-          </button>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       {/* Booking Stepper Modal */}
@@ -233,11 +333,12 @@ export const PublicWebView: React.FC = () => {
         onOpenStandardBooking={() => setIsBookingOpen(true)}
       />
 
-      {/* Nail-Bot AI Chatbot Modal */}
+      {/* Nail-Bot AI Receptionist Modal */}
       <NailBotModal
         isOpen={isNailBotOpen}
         onClose={() => setIsNailBotOpen(false)}
         onOpenBooking={(srvId) => handleOpenBooking(srvId)}
+        onOpenHotSlots={() => setIsHotSlotsOpen(true)}
       />
     </div>
   );

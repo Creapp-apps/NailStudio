@@ -126,6 +126,11 @@ export const BackofficeSidebar: React.FC<Props> = ({
           badgeVariant: 'secondary' as const
         },
         {
+          id: 'services' as BackofficeSection,
+          label: 'Carta de Servicios & Precios',
+          icon: <Sparkles className="size-4 text-[#DE738F]" />
+        },
+        {
           id: 'waitlist' as BackofficeSection,
           label: 'En Mesa & Check-in',
           icon: <Clock className="size-4" />,
