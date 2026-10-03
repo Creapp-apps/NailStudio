@@ -413,6 +413,7 @@ export const NuevoTurnoModal: React.FC<Props> = ({
                   required
                   value={scheduledTime}
                   onChange={setScheduledTime}
+                  align="right"
                 />
               </div>
             </div>

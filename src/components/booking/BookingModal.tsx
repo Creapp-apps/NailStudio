@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Check,
@@ -102,8 +103,6 @@ export const BookingModal: React.FC<Props> = ({
   const [bookingNotes, setBookingNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [confirmedApt, setConfirmedApt] = useState<Appointment | null>(null);
-
-  if (!isOpen) return null;
 
   const totalDuration = (selectedService?.baseDurationMin || 0) +
     selectedRemoval.additionalDurationMin +
@@ -239,19 +238,27 @@ export const BookingModal: React.FC<Props> = ({
     setConfirmedApt(null);
     setStep(1);
     onClose();
-  };  return (
+  };
+
+  if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto"
+      onClick={handleResetAndClose}
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto"
       style={{
-        background: 'rgba(26, 17, 21, 0.72)',
-        backdropFilter: 'blur(10px)'
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.14) 0%, rgba(22, 12, 17, 0.48) 100%)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}
     >
       {/* FLOATING MODAL CARD (Luxury Editorial Haute Glam) */}
       <div
+        onClick={(e) => e.stopPropagation()}
         className="w-full max-w-[760px] max-h-[94vh] sm:max-h-[88vh] flex flex-col relative rounded-2xl sm:rounded-3xl bg-white shadow-2xl overflow-hidden my-auto animate-fade-in"
         style={{
-          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(222, 115, 143, 0.22)'
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.22)'
         }}
       >
         {/* Top Accent Luxury Ribbon */}
@@ -828,6 +835,7 @@ export const BookingModal: React.FC<Props> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

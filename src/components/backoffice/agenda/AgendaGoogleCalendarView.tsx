@@ -51,13 +51,16 @@ interface Props {
 }
 
 type ViewMode = 'hoy' | '3dias' | 'semana' | 'mes';
-type ZoomLevel = 'compacto' | 'normal' | 'expandido';
+type ZoomLevel = '0.75x' | '1x' | '1.25x' | '1.5x';
 
-const ZOOM_HEIGHTS: Record<ZoomLevel, number> = {
-  compacto: 65,
-  normal: 82,
-  expandido: 105
+const ZOOM_CONFIG: Record<ZoomLevel, { height: number; label: string }> = {
+  '0.75x': { height: 62, label: '0.75x' },
+  '1x': { height: 82, label: '1x' },
+  '1.25x': { height: 105, label: '1.25x' },
+  '1.5x': { height: 130, label: '1.5x' }
 };
+
+const ZOOM_ORDER: ZoomLevel[] = ['0.75x', '1x', '1.25x', '1.5x'];
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 to 21:00
 
@@ -66,7 +69,7 @@ export const AgendaGoogleCalendarView: React.FC<Props> = ({ appointments, techs 
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('hoy');
   const [techFilter, setTechFilter] = useState<string>('todos');
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('normal');
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('1x');
 
   // Modals state
   const [nuevoModalOpen, setNuevoModalOpen] = useState(false);
@@ -84,7 +87,25 @@ export const AgendaGoogleCalendarView: React.FC<Props> = ({ appointments, techs 
     return () => clearInterval(timer);
   }, []);
 
-  const hourHeight = ZOOM_HEIGHTS[zoomLevel];
+  const hourHeight = ZOOM_CONFIG[zoomLevel].height;
+
+  const handleZoomIn = () => {
+    const currentIndex = ZOOM_ORDER.indexOf(zoomLevel);
+    if (currentIndex < ZOOM_ORDER.length - 1) {
+      setZoomLevel(ZOOM_ORDER[currentIndex + 1]);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const currentIndex = ZOOM_ORDER.indexOf(zoomLevel);
+    if (currentIndex > 0) {
+      setZoomLevel(ZOOM_ORDER[currentIndex - 1]);
+    }
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel('1x');
+  };
 
   // Auto-scroll to current hour on initial mount
   useEffect(() => {
@@ -257,7 +278,7 @@ export const AgendaGoogleCalendarView: React.FC<Props> = ({ appointments, techs 
   return (
     <div className="flex flex-col w-full h-full flex-1 bg-background overflow-hidden animate-fade-in text-xs border-0">
       {/* ── 1. Top Navigation & Toolbar Bar ─────────────────────── */}
-      <div className="p-3.5 sm:p-4 border-b border-border/80 bg-background/80 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="relative z-40 p-3.5 sm:p-4 border-b border-border/80 bg-white/95 dark:bg-card/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-2xs">
         {/* Left: Date navigation */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex items-center rounded-xl border border-border bg-card p-0.5 shadow-xs">
@@ -311,7 +332,7 @@ export const AgendaGoogleCalendarView: React.FC<Props> = ({ appointments, techs 
           </div>
 
           {/* Manicurista Selector */}
-          <div className="w-44 sm:w-52">
+          <div className="w-44 sm:w-52 relative z-50">
             <LuxurySelect
               size="sm"
               icon={<User className="size-3.5" />}
@@ -330,25 +351,42 @@ export const AgendaGoogleCalendarView: React.FC<Props> = ({ appointments, techs 
 
           {/* Zoom scale selector (only for timeline views) */}
           {viewMode !== 'mes' && (
-            <div className="hidden lg:flex items-center rounded-xl border border-border bg-card p-0.5 text-xs">
+            <div className="hidden lg:flex items-center rounded-xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card p-0.5 text-xs shadow-xs">
               <button
-                onClick={() => setZoomLevel('compacto')}
-                title="Escala Compacta"
-                className={`p-1.5 rounded-lg ${zoomLevel === 'compacto' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+                type="button"
+                onClick={handleZoomOut}
+                disabled={zoomLevel === ZOOM_ORDER[0]}
+                title="Reducir escala de horas"
+                className={`p-1.5 rounded-lg transition-all ${
+                  zoomLevel === ZOOM_ORDER[0]
+                    ? 'opacity-30 cursor-not-allowed text-muted-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer active:scale-95'
+                }`}
               >
                 <ZoomOut className="size-3.5" />
               </button>
               <button
-                onClick={() => setZoomLevel('normal')}
-                title="Escala Normal"
-                className={`px-1.5 py-0.5 text-[10px] font-bold ${zoomLevel === 'normal' ? 'bg-muted text-foreground rounded' : 'text-muted-foreground'}`}
+                type="button"
+                onClick={handleResetZoom}
+                title="Click para restablecer a 1x"
+                className={`px-2 py-0.5 text-[11px] font-bold tracking-tight rounded-md transition-all cursor-pointer ${
+                  zoomLevel === '1x'
+                    ? 'bg-rose-500/15 text-[#C45774] dark:text-rose-300 font-extrabold'
+                    : 'text-foreground hover:bg-muted font-bold'
+                }`}
               >
-                1x
+                {zoomLevel}
               </button>
               <button
-                onClick={() => setZoomLevel('expandido')}
-                title="Escala Expandida"
-                className={`p-1.5 rounded-lg ${zoomLevel === 'expandido' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+                type="button"
+                onClick={handleZoomIn}
+                disabled={zoomLevel === ZOOM_ORDER[ZOOM_ORDER.length - 1]}
+                title="Aumentar escala de horas"
+                className={`p-1.5 rounded-lg transition-all ${
+                  zoomLevel === ZOOM_ORDER[ZOOM_ORDER.length - 1]
+                    ? 'opacity-30 cursor-not-allowed text-muted-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer active:scale-95'
+                }`}
               >
                 <ZoomIn className="size-3.5" />
               </button>

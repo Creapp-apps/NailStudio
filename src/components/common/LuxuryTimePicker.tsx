@@ -11,6 +11,7 @@ interface Props {
   minuteStep?: number; // default 15
   className?: string;
   placeholder?: string;
+  align?: 'left' | 'right' | 'auto';
 }
 
 const COMMON_PRESETS = [
@@ -33,10 +34,28 @@ export const LuxuryTimePicker: React.FC<Props> = ({
   maxHour = 21,
   minuteStep = 15,
   className = '',
-  placeholder = 'Seleccionar hora'
+  placeholder = 'Seleccionar hora',
+  align = 'auto'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [computedAlign, setComputedAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+
+  useEffect(() => {
+    if (align && align !== 'auto') {
+      setComputedAlign(align);
+      return;
+    }
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceRight = window.innerWidth - rect.left;
+      if (spaceRight < 340 || rect.right > window.innerWidth - 100) {
+        setComputedAlign('right');
+      } else {
+        setComputedAlign('left');
+      }
+    }
+  }, [isOpen, align]);
 
   // Parse current hour & minute
   const { currentHour, currentMinute } = useMemo(() => {
@@ -160,7 +179,9 @@ export const LuxuryTimePicker: React.FC<Props> = ({
       {/* Floating Popover Menu */}
       {isOpen && (
         <div
-          className="absolute z-50 top-full left-0 mt-1.5 w-72 sm:w-80 rounded-2xl bg-card border border-border/80 shadow-2xl overflow-hidden animate-scale-up"
+          className={`absolute z-50 top-full mt-1.5 w-72 sm:w-80 rounded-2xl bg-card border border-border/80 shadow-2xl overflow-hidden animate-scale-up ${
+            computedAlign === 'right' ? 'right-0 left-auto' : 'left-0 right-auto'
+          }`}
           style={{
             boxShadow: '0 16px 36px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(222, 115, 143, 0.2)'
           }}

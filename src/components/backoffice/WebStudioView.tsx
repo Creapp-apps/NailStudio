@@ -356,7 +356,7 @@ export const WebStudioView: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Studio Header Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-background/95 p-4 shadow-sm backdrop-blur-md">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card p-4 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-foreground font-serif">
@@ -404,7 +404,7 @@ export const WebStudioView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* Sub-Sidebar: Categories of Web Components (Cols 1-3 on mobile, 1-2 on desktop preview) */}
-        <div className={`${previewDevice === 'desktop' ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-1.5 rounded-2xl border border-rose-200/50 dark:border-rose-900/30 bg-card/85 backdrop-blur-md p-2.5 shadow-[0_10px_30px_-15px_rgba(222,115,143,0.08)]`}>
+        <div className={`${previewDevice === 'desktop' ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-1.5 rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card p-3 shadow-md`}>
           <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center justify-between">
             <span>Secciones del Sitio</span>
             <span className="text-[9px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">8 Módulos</span>
@@ -551,7 +551,7 @@ export const WebStudioView: React.FC = () => {
 
         {/* Middle Column: Active Category Controls (Cols 4-7) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="relative rounded-2xl border border-rose-200/70 dark:border-rose-900/40 bg-card/95 backdrop-blur-xl shadow-[0_20px_50px_-15px_rgba(222,115,143,0.12),0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
+          <div className="relative rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card shadow-xl overflow-hidden">
             {/* Ambient Haute Couture Top Accent Glow */}
             <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-[#DE738F] via-[#E0C89E] to-[#C45774]" />
 
@@ -614,7 +614,7 @@ export const WebStudioView: React.FC = () => {
                         value={draftConfig.brandName}
                         onChange={e => handleFieldChange('brandName', e.target.value)}
                         placeholder="Ej: Atelier Nails & Co."
-                        className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:bg-background focus:outline-none focus:ring-4 focus:ring-rose-500/15"
+                        className="w-full rounded-xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:bg-white focus:outline-none focus:ring-4 focus:ring-rose-500/15"
                       />
                     </div>
                   </div>
@@ -633,12 +633,12 @@ export const WebStudioView: React.FC = () => {
                       value={draftConfig.brandTagline}
                       onChange={e => handleFieldChange('brandTagline', e.target.value)}
                       placeholder="Ej: HAUTE MANICURE & ESTUDIO DE ARTE UNGUEAL"
-                      className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:bg-background focus:outline-none focus:ring-4 focus:ring-rose-500/15"
+                      className="w-full rounded-xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs transition-all duration-200 hover:border-rose-400/80 focus:border-[#DE738F] focus:bg-white focus:outline-none focus:ring-4 focus:ring-rose-500/15"
                     />
                   </div>
 
                   {/* Identidad Visual: Logo Personal & Sello de Respaldo */}
-                  <div className="rounded-2xl border border-rose-200/70 dark:border-rose-900/40 bg-gradient-to-br from-rose-500/[0.06] via-card to-amber-500/[0.04] p-4 space-y-4 shadow-xs">
+                  <div className="rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-[#FFF9FB] dark:bg-card p-4 space-y-4 shadow-xs">
                     <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/30 pb-2.5">
                       <div className="flex items-center gap-2">
                         <ImageIcon className="size-4 text-[#DE738F]" />
@@ -660,7 +660,7 @@ export const WebStudioView: React.FC = () => {
                     </div>
 
                     {/* Live Badge Preview */}
-                    <div className="flex items-center gap-3.5 bg-background/70 p-3 rounded-xl border border-rose-200/50 dark:border-rose-900/30 shadow-2xs">
+                    <div className="flex items-center gap-3.5 bg-white dark:bg-card p-3 rounded-xl border border-rose-200/80 dark:border-rose-900/40 shadow-xs">
                       <div className="relative shrink-0">
                         {draftConfig.customLogoUrl ? (
                           <div className="size-14 rounded-full overflow-hidden bg-white shadow-md border-2 border-white ring-2 ring-emerald-500/30 flex items-center justify-center p-1">
@@ -1298,7 +1298,7 @@ export const WebStudioView: React.FC = () => {
               {activeCategory === 'hero' && (
                 <div className="space-y-4 text-xs">
                   {/* 1. Titulares Principales */}
-                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                  <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/40 p-3 bg-[#FFF9FB] dark:bg-card space-y-3">
                     <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
                       1. Titulares & Botones del Hero
                     </span>
@@ -1354,7 +1354,7 @@ export const WebStudioView: React.FC = () => {
                   </div>
 
                   {/* 2. Información de la Tarjeta 3D ("Tendencia 2026") */}
-                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                  <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/40 p-3 bg-[#FFF9FB] dark:bg-card space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
                         2. Textos de la Tarjeta 3D ("Tendencia 2026")
@@ -1405,7 +1405,7 @@ export const WebStudioView: React.FC = () => {
                   </div>
 
                   {/* 3. Fotografía de la Portada 3D */}
-                  <div className="rounded-xl border border-rose-200/60 dark:border-rose-900/30 p-3 bg-card/60 space-y-3">
+                  <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/40 p-3 bg-[#FFF9FB] dark:bg-card space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90 block">
                         3. Fotografía de la Portada 3D
@@ -1965,7 +1965,7 @@ export const WebStudioView: React.FC = () => {
         {/* Right Column: Real-Time Live Website Preview Frame (Cols 8-12 on mobile, 7-12 on desktop) */}
         <div className={`${previewDevice === 'desktop' ? 'lg:col-span-6' : 'lg:col-span-5'} space-y-3`}>
           {/* Device Switcher & Status Bar */}
-          <div className="flex items-center justify-between rounded-xl border border-border bg-card/80 backdrop-blur-sm px-3.5 py-2 shadow-xs text-xs">
+          <div className="flex items-center justify-between rounded-xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card px-3.5 py-2 shadow-xs text-xs">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Preview:</span>
               <div className="flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/40">

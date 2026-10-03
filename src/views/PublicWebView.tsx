@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react';
 import { PublicHeader } from '../components/navigation/PublicHeader';
 import { PublicLanding } from '../components/public/PublicLanding';
 import { BookingModal } from '../components/booking/BookingModal';
+import { HotSlotsModal } from '../components/booking/HotSlotsModal';
 import { NailBotModal } from '../components/ai/NailBotModal';
 import { CinematicPreloader } from '../components/public/CinematicPreloader';
 import { useWebConfig } from '../hooks/useWebConfig';
@@ -15,6 +16,7 @@ export const PublicWebView: React.FC = () => {
   const { config: globalConfig } = useWebConfig();
   const [liveConfig, setLiveConfig] = useState<WebCustomizationConfig>(globalConfig);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isHotSlotsOpen, setIsHotSlotsOpen] = useState(false);
   const [isNailBotOpen, setIsNailBotOpen] = useState(false);
   const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
 
@@ -61,6 +63,27 @@ export const PublicWebView: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Detect direct hot slot link (e.g. /?flash=hoy, /?flash=true, /?turnos_hoy=true, #turnos-calientes)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const hasFlashParam =
+      params.get('flash') === 'true' ||
+      params.get('flash') === 'hoy' ||
+      params.get('hot_slots') === 'true' ||
+      params.get('turnos_hoy') === 'true' ||
+      window.location.hash === '#turnos-calientes' ||
+      window.location.hash === '#turnos-hoy';
+
+    if (hasFlashParam) {
+      // Auto open Hot Slots modal immediately
+      setIsHotSlotsOpen(true);
+      // Skip preloader if coming from direct flash link so client has zero-friction instant booking
+      setShowPreloader(false);
+      setIsRevealed(true);
+    }
+  }, []);
+
   // Synchronize active theme CSS variables to document.documentElement and document.body
   // so that root-level browser styles (scrollbars, sticky header, body background) match the palette instantly
   useEffect(() => {
@@ -85,7 +108,7 @@ export const PublicWebView: React.FC = () => {
     if (liveConfig.accentFont) root.style.setProperty('--font-couture', liveConfig.accentFont);
     if (liveConfig.bodyFont) root.style.setProperty('--font-body', liveConfig.bodyFont);
 
-    document.body.style.backgroundColor = theme.bgApp;
+    document.body.style.backgroundColor = 'transparent';
     document.body.style.transition = 'background-color 0.3s ease';
   }, [theme, liveConfig]);
 
@@ -100,7 +123,7 @@ export const PublicWebView: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: theme.bgApp,
+        backgroundColor: 'transparent',
         '--bg-app': theme.bgApp,
         '--bg-card': theme.bgCard,
         '--bg-card-hover': theme.bgCardHover,
@@ -195,6 +218,19 @@ export const PublicWebView: React.FC = () => {
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
         preselectedServiceId={preselectedService}
+      />
+
+      {/* Express Hot Slots of Today Modal */}
+      <HotSlotsModal
+        isOpen={isHotSlotsOpen}
+        onClose={() => {
+          setIsHotSlotsOpen(false);
+          // Clean URL params if closed
+          if (typeof window !== 'undefined' && window.location.search) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        }}
+        onOpenStandardBooking={() => setIsBookingOpen(true)}
       />
 
       {/* Nail-Bot AI Chatbot Modal */}

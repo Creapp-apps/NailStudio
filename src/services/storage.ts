@@ -84,6 +84,9 @@ class StorageService {
         if (Array.isArray(parsed)) {
           const cleaned = parsed.filter(c =>
             !['cli-1', 'cli-2', 'cli-3'].includes(c.id) &&
+            !c.id.startsWith('tenant_') &&
+            c.name !== 'Staff Sync System' &&
+            c.name !== 'Belcalis Nails' &&
             !['Lucía Fernández', 'Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Valentina Rossi'].includes(c.name)
           );
           localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(cleaned));
@@ -265,6 +268,9 @@ class StorageService {
       if (cliData) {
         const filtered = cliData.filter(c =>
           !['cli-1', 'cli-2', 'cli-3'].includes(c.id) &&
+          !c.id.startsWith('tenant_') &&
+          c.name !== 'Staff Sync System' &&
+          c.name !== 'Belcalis Nails' &&
           !['Camila De La Torre', 'Valentina Albarracín', 'Lucía Santillán', 'Lucía Fernández', 'Valentina Rossi'].includes(c.name)
         );
         const mappedClients: ClientProfile[] = filtered.map(c => ({
@@ -608,6 +614,33 @@ class StorageService {
 
       this.updateClientInSupabase(updatedClient);
       this.notify();
+    }
+  }
+
+  public deleteClient(id: string): void {
+    const clients = this.getClients().filter(c => c.id !== id);
+    localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+    this.notify();
+    try {
+      supabase.from('client_profiles').delete().eq('id', id).then(() => {});
+    } catch (err) {
+      console.warn('Error deleting client from Supabase:', err);
+    }
+  }
+
+  public purgeTestClients(): void {
+    const testNames = ['Staff Sync System', 'Belcalis Nails', 'Paula Santander', 'Florencia Live', 'Clienta Test'];
+    const clients = this.getClients().filter(c =>
+      !c.id.startsWith('tenant_') &&
+      !testNames.includes(c.name) &&
+      !c.name.toLowerCase().includes('test')
+    );
+    localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+    this.notify();
+    try {
+      supabase.from('client_profiles').delete().in('name', testNames).then(() => {});
+    } catch (err) {
+      console.warn('Error purging test clients from Supabase:', err);
     }
   }
 

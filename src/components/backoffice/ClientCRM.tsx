@@ -21,7 +21,8 @@ import {
   Lock,
   Eye,
   EyeOff,
-  ShieldAlert
+  ShieldAlert,
+  Trash2
 } from 'lucide-react';
 import { ClientProfile, NailPlateCondition } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -74,11 +75,28 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     setNewPassword(generateInitialPassword());
   };
 
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search) ||
-    c.referralCode.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = clients
+    .filter(c =>
+      !c.id.startsWith('tenant_') &&
+      c.name !== 'Staff Sync System' &&
+      c.name !== 'Belcalis Nails'
+    )
+    .filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search) ||
+      (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
+      c.referralCode.toLowerCase().includes(search.toLowerCase())
+    );
+
+  const handleDeleteClient = (clientToDelete: ClientProfile) => {
+    if (confirm(`¿Estás segura de que deseas eliminar la ficha de "${clientToDelete.name}"? Esta acción borrará permanentemente sus datos técnicos y de fidelización.`)) {
+      storage.deleteClient(clientToDelete.id);
+      if (selectedClient?.id === clientToDelete.id) {
+        const remaining = filtered.filter(c => c.id !== clientToDelete.id);
+        setSelectedClient(remaining[0] || null);
+      }
+    }
+  };
 
   const handleSelectClient = (c: ClientProfile) => {
     setSelectedClient(c);
@@ -362,11 +380,36 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
                 <span className="badge-luxury badge-gold">{selectedClient.tier}</span>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   Código: <strong>{selectedClient.referralCode}</strong>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClient(selectedClient)}
+                  title="Eliminar Ficha de Clienta"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid rgba(229, 62, 62, 0.35)',
+                    color: '#E53E3E',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.73rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                    marginTop: '0.3rem',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(229, 62, 62, 0.08)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <Trash2 size={12} />
+                  <span>Eliminar Ficha</span>
+                </button>
               </div>
             </div>
 

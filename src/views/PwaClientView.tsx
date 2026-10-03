@@ -42,10 +42,10 @@ export const PwaClientView: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', flexDirection: 'column' }}>
       {/* PWA Dedicated Top Application Bar */}
       <header style={{
-        background: 'rgba(255, 247, 250, 0.95)',
+        background: 'rgba(255, 247, 250, 0.8)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
         position: 'sticky',

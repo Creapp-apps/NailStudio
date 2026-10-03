@@ -1,6 +1,7 @@
 export type PlatformTier = 'bronce' | 'silver' | 'oro';
 
 export type BackofficeSectionId =
+  | 'home'
   | 'web_studio'
   | 'calendar'
   | 'waitlist'
@@ -42,6 +43,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     icon: '🥉',
     targetAudience: 'Profesionales individuales independientes',
     allowedSections: [
+      'home',
       'calendar',
       'crm',
       'settings',
@@ -63,6 +65,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     icon: '🥈',
     targetAudience: 'Estudios con gestión de stock, caja y fidelización',
     allowedSections: [
+      'home',
       'calendar',
       'crm',
       'settings',
@@ -88,6 +91,7 @@ export const PLATFORM_TIERS: Record<PlatformTier, TierDefinition> = {
     icon: '👑',
     targetAudience: 'Salones integrales, multi-mesa, staff y WhatsApp bot',
     allowedSections: [
+      'home',
       'calendar',
       'crm',
       'settings',

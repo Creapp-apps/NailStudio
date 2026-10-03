@@ -14,6 +14,7 @@ import { CommissionsView } from './CommissionsView';
 import { StaffManagementView } from './StaffManagementView';
 import { LiveDeskView } from './LiveDeskView';
 import { WebStudioView } from './WebStudioView';
+import { HomeDashboardView } from './HomeDashboardView';
 import { SalonSettingsView } from './SalonSettingsView';
 import { IntegrationsApiView } from './IntegrationsApiView';
 import { BookingModal } from '../booking/BookingModal';
@@ -33,12 +34,29 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
   const [currentTier, setCurrentTier] = useState<PlatformTier>(() => storage.getPlatformTier());
   const [activeSection, setActiveSection] = useState<BackofficeSection>(() => {
     const tier = storage.getPlatformTier();
-    const defaultSec: BackofficeSection = 'web_studio';
+    const defaultSec: BackofficeSection = 'home';
     return PLATFORM_TIERS[tier].allowedSections.includes(defaultSec) ? defaultSec : 'calendar';
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('atelier_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [incomingAppointment, setIncomingAppointment] = useState<Appointment | null>(null);
+
+  const handleToggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('atelier_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     // 0. Listen for platform tier changes
@@ -119,8 +137,8 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
   };
 
   return (
-    <div className="flex min-h-screen bg-muted/20 font-sans text-foreground">
-      {/* 1. High-End Elegant SaaS Sidebar */}
+    <div className="flex min-h-screen items-start bg-transparent font-sans text-foreground">
+      {/* 1. High-End Elegant SaaS Floating Pill Sidebar */}
       <BackofficeSidebar
         activeSection={activeSection}
         onSelectSection={setActiveSection}
@@ -131,10 +149,12 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
         retentionPendingCount={retentionPending.length}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebarCollapse}
       />
 
       {/* 2. Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-h-screen w-full">
         {/* Top Navbar */}
         <BackofficeTopNav
           activeSection={activeSection}
@@ -151,6 +171,18 @@ export const AdminLayout: React.FC<Props> = ({ appointments, techs, clients, sup
         ) : (
           <main className="flex-1 overflow-y-auto p-4 lg:p-6">
             <div className="mx-auto max-w-7xl">
+              {/* HOME (DASHBOARD PRINCIPAL DE LA PLATAFORMA) */}
+              {activeSection === 'home' && (
+                <HomeDashboardView
+                  appointments={appointments}
+                  techs={techs}
+                  clients={clients}
+                  supplies={supplies}
+                  onNavigate={setActiveSection}
+                  onOpenNewBooking={() => setIsBookingModalOpen(true)}
+                />
+              )}
+
               {/* PERSONALIZACIÓN & WEB STUDIO */}
               {activeSection === 'web_studio' && (
                 <WebStudioView />

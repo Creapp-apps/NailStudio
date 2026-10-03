@@ -91,7 +91,7 @@ export const LuxurySelect = <T extends string | number = string | number>({
   const isSmall = size === 'sm';
 
   return (
-    <div className={`relative flex flex-col ${className}`} ref={containerRef}>
+    <div className={`relative flex flex-col ${isOpen ? 'z-50' : 'z-10'} ${className}`} ref={containerRef}>
       {label && (
         <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">
           {label} {required && <span className="text-rose-500">*</span>}
@@ -137,9 +137,9 @@ export const LuxurySelect = <T extends string | number = string | number>({
       {/* Floating Dropdown Menu (Haute Glam Popover) */}
       {isOpen && (
         <div
-          className="absolute z-50 top-full left-0 right-0 min-w-[200px] mt-1.5 rounded-2xl bg-card border border-border/80 shadow-2xl overflow-hidden animate-scale-up"
+          className="absolute z-50 top-full left-0 right-0 min-w-[200px] mt-1.5 rounded-2xl bg-white dark:bg-card border border-rose-200/80 dark:border-rose-900/40 shadow-2xl overflow-hidden animate-scale-up"
           style={{
-            boxShadow: '0 18px 40px -8px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.22)'
+            boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(222, 115, 143, 0.25)'
           }}
         >
           {/* Search bar inside dropdown if many options */}
