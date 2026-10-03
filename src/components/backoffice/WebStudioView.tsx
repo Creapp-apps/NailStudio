@@ -35,6 +35,11 @@ import {
   ZoomIn,
   ZoomOut,
   Crop,
+  Crosshair,
+  Move,
+  ArrowUp,
+  ArrowDown,
+  Maximize2,
   Link as LinkIcon
 } from 'lucide-react';
 import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem, ShowcaseWorkItem } from '../../types/webConfig';
@@ -1594,6 +1599,323 @@ export const WebStudioView: React.FC = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* 4. Ajuste, Encuadre y Posicionamiento de la Foto */}
+                  <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/40 p-3.5 bg-[#FFF9FB] dark:bg-card space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Crosshair className="size-4 text-[#DE738F]" />
+                        <span className="text-[11px] font-bold tracking-wider uppercase text-foreground/90">
+                          4. Encuadre y Posicionamiento de la Foto
+                        </span>
+                      </div>
+                      <Badge className="bg-[#DE738F]/10 text-[#DE738F] border-[#DE738F]/20 text-[9px] font-semibold">
+                        Ajuste Milimétrico
+                      </Badge>
+                    </div>
+
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Seleccioná el área de visualización correcta de la uña. Podés desplazar la foto verticalmente o cambiar la tarjeta de texto arriba para que <strong>no tape la uña</strong>.
+                    </p>
+
+                    {/* Previsualizador Interactivo de Encuadre */}
+                    <div className="relative mx-auto max-w-[240px] aspect-[4/5] rounded-xl overflow-hidden border-2 border-rose-300/80 dark:border-rose-800 shadow-md group select-none bg-black/5">
+                      {/* Imagen con el encuadre en tiempo real */}
+                      <img
+                        src={draftConfig.heroCardImage}
+                        alt="Encuadre Portada"
+                        className="w-full h-full object-cover pointer-events-none transition-all duration-150"
+                        style={{
+                          objectPosition: `${draftConfig.heroCardImagePositionX ?? 50}% ${draftConfig.heroCardImagePositionY ?? 35}%`,
+                          transform: (draftConfig.heroCardImageScale && draftConfig.heroCardImageScale !== 100)
+                            ? `scale(${(draftConfig.heroCardImageScale / 100).toFixed(2)})`
+                            : 'none',
+                          transformOrigin: `${draftConfig.heroCardImagePositionX ?? 50}% ${draftConfig.heroCardImagePositionY ?? 35}%`
+                        }}
+                      />
+
+                      {/* Guías de encuadre en cruz (regla de los tercios sutil) */}
+                      <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-white/20">
+                        <div className="border-r border-b border-white/15" />
+                        <div className="border-r border-b border-white/15" />
+                        <div className="border-b border-white/15" />
+                        <div className="border-r border-b border-white/15" />
+                        <div className="border-r border-b border-white/15" />
+                        <div className="border-b border-white/15" />
+                        <div className="border-r border-b border-white/15" />
+                        <div className="border-r border-b border-white/15" />
+                        <div />
+                      </div>
+
+                      {/* Punto de Enfoque Retícula interactiva */}
+                      <div
+                        className="absolute size-6 -ml-3 -mt-3 rounded-full border-2 border-[#DE738F] bg-white/50 backdrop-blur-xs shadow-lg pointer-events-none flex items-center justify-center transition-all duration-150"
+                        style={{
+                          left: `${draftConfig.heroCardImagePositionX ?? 50}%`,
+                          top: `${draftConfig.heroCardImagePositionY ?? 35}%`
+                        }}
+                      >
+                        <div className="size-1.5 rounded-full bg-[#DE738F]" />
+                      </div>
+
+                      {/* Capa de clic interactivo sobre la foto */}
+                      <div
+                        className="absolute inset-0 cursor-crosshair"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                          const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                          handleFieldChange('heroCardImagePositionX', Math.max(0, Math.min(100, x)));
+                          handleFieldChange('heroCardImagePositionY', Math.max(0, Math.min(100, y)));
+                        }}
+                        title="Haz clic en cualquier punto para enfocar ahí"
+                      />
+
+                      {/* Vista previa de la Tarjeta Flotante en la posición configurada */}
+                      {draftConfig.heroCardBadgePosition !== 'none' && (
+                        <div
+                          className={`absolute left-2.5 right-2.5 p-2 rounded-lg bg-white/90 dark:bg-black/85 backdrop-blur-md border border-white/30 dark:border-white/15 shadow-sm pointer-events-none transition-all duration-200 ${
+                            draftConfig.heroCardBadgePosition === 'top' ? 'top-2.5' : 'bottom-2.5'
+                          }`}
+                        >
+                          <span className="text-[8px] font-bold text-[#DE738F] uppercase tracking-wider block truncate">
+                            {draftConfig.heroCardBadge || 'TENDENCIA 2026'}
+                          </span>
+                          <span className="text-[10px] font-semibold text-foreground block truncate">
+                            {draftConfig.heroCardTitle || 'Arquitectura Soft Gel'}
+                          </span>
+                          {draftConfig.heroCardSubtitle && (
+                            <span className="text-[8px] text-muted-foreground block truncate">
+                              {draftConfig.heroCardSubtitle}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] px-1.5 py-0.5 rounded-md pointer-events-none">
+                        Clic para enfocar
+                      </div>
+                    </div>
+
+                    {/* Atajos Rápidos de Encuadre */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-semibold text-muted-foreground block">
+                        Atajos de Encuadre Rápido:
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleFieldChange('heroCardImagePositionY', 15);
+                            handleFieldChange('heroCardImagePositionX', 50);
+                          }}
+                          className={`px-2 py-1.5 rounded-lg text-[10px] font-medium border flex items-center justify-center gap-1 transition-all ${
+                            (draftConfig.heroCardImagePositionY ?? 35) <= 25
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          <ArrowUp className="size-3" />
+                          <span>Uña Superior</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleFieldChange('heroCardImagePositionY', 50);
+                            handleFieldChange('heroCardImagePositionX', 50);
+                          }}
+                          className={`px-2 py-1.5 rounded-lg text-[10px] font-medium border flex items-center justify-center gap-1 transition-all ${
+                            (draftConfig.heroCardImagePositionY ?? 35) > 25 && (draftConfig.heroCardImagePositionY ?? 35) < 70
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          <Crosshair className="size-3" />
+                          <span>Centro</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleFieldChange('heroCardImagePositionY', 85);
+                            handleFieldChange('heroCardImagePositionX', 50);
+                          }}
+                          className={`px-2 py-1.5 rounded-lg text-[10px] font-medium border flex items-center justify-center gap-1 transition-all ${
+                            (draftConfig.heroCardImagePositionY ?? 35) >= 70
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          <ArrowDown className="size-3" />
+                          <span>Uña Inferior</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sliders de Precisión */}
+                    <div className="space-y-3 pt-1">
+                      {/* Eje Y */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-medium">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Move className="size-3 text-[#DE738F]" />
+                            <span>Posición Vertical (Eje Y)</span>
+                          </span>
+                          <span className="font-mono text-[#DE738F] font-semibold">
+                            {draftConfig.heroCardImagePositionY ?? 35}% { (draftConfig.heroCardImagePositionY ?? 35) < 35 ? '↑ Arriba' : (draftConfig.heroCardImagePositionY ?? 35) > 65 ? '↓ Abajo' : '• Centro' }
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={draftConfig.heroCardImagePositionY ?? 35}
+                          onChange={e => handleFieldChange('heroCardImagePositionY', parseInt(e.target.value, 10))}
+                          className="w-full accent-[#DE738F] cursor-pointer"
+                        />
+                        <div className="flex justify-between text-[9px] text-muted-foreground/70">
+                          <span>0% (Enfocar Arriba)</span>
+                          <span>100% (Enfocar Abajo)</span>
+                        </div>
+                      </div>
+
+                      {/* Eje X */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-medium">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Move className="size-3 text-[#DE738F] rotate-90" />
+                            <span>Posición Horizontal (Eje X)</span>
+                          </span>
+                          <span className="font-mono text-[#DE738F] font-semibold">
+                            {draftConfig.heroCardImagePositionX ?? 50}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={draftConfig.heroCardImagePositionX ?? 50}
+                          onChange={e => handleFieldChange('heroCardImagePositionX', parseInt(e.target.value, 10))}
+                          className="w-full accent-[#DE738F] cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Escala / Zoom */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-medium">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Maximize2 className="size-3 text-[#DE738F]" />
+                            <span>Zoom / Escala de la Foto</span>
+                          </span>
+                          <span className="font-mono text-[#DE738F] font-semibold">
+                            {draftConfig.heroCardImageScale ?? 100}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleFieldChange('heroCardImageScale', Math.max(100, (draftConfig.heroCardImageScale ?? 100) - 10))}
+                            className="size-7 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted text-muted-foreground"
+                            title="Reducir Zoom"
+                          >
+                            <ZoomOut className="size-3.5" />
+                          </button>
+                          <input
+                            type="range"
+                            min="100"
+                            max="180"
+                            step="5"
+                            value={draftConfig.heroCardImageScale ?? 100}
+                            onChange={e => handleFieldChange('heroCardImageScale', parseInt(e.target.value, 10))}
+                            className="flex-1 accent-[#DE738F] cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleFieldChange('heroCardImageScale', Math.min(180, (draftConfig.heroCardImageScale ?? 100) + 10))}
+                            className="size-7 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted text-muted-foreground"
+                            title="Aumentar Zoom"
+                          >
+                            <ZoomIn className="size-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-[1px] bg-rose-100 dark:bg-rose-900/30" />
+
+                    {/* Posición de la Tarjeta de Texto Flotante */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-foreground/80 block">
+                          Ubicación de la Tarjeta de Texto
+                        </span>
+                        <span className="text-[9px] text-[#DE738F] font-medium">
+                          Evita tapar la uña
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleFieldChange('heroCardBadgePosition', 'bottom')}
+                          className={`p-2 rounded-xl text-[10px] font-medium border flex flex-col items-center gap-1 transition-all ${
+                            (draftConfig.heroCardBadgePosition || 'bottom') === 'bottom'
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold shadow-xs'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground'
+                          }`}
+                        >
+                          <ArrowDown className="size-3.5 text-[#DE738F]" />
+                          <span>Abajo (Clásica)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleFieldChange('heroCardBadgePosition', 'top')}
+                          className={`p-2 rounded-xl text-[10px] font-medium border flex flex-col items-center gap-1 transition-all ${
+                            draftConfig.heroCardBadgePosition === 'top'
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold shadow-xs'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground'
+                          }`}
+                        >
+                          <ArrowUp className="size-3.5 text-[#DE738F]" />
+                          <span>Arriba (Despeja Uña)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleFieldChange('heroCardBadgePosition', 'none')}
+                          className={`p-2 rounded-xl text-[10px] font-medium border flex flex-col items-center gap-1 transition-all ${
+                            draftConfig.heroCardBadgePosition === 'none'
+                              ? 'bg-[#DE738F]/15 border-[#DE738F] text-[#DE738F] font-semibold shadow-xs'
+                              : 'bg-background/80 border-rose-200/60 hover:border-rose-300 text-muted-foreground'
+                          }`}
+                        >
+                          <Eye className="size-3.5 text-[#DE738F]" />
+                          <span>Sin Tarjeta (Limpia)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Botón Restablecer Encuadre */}
+                    <div className="pt-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleFieldChange('heroCardImagePositionX', 50);
+                          handleFieldChange('heroCardImagePositionY', 35);
+                          handleFieldChange('heroCardImageScale', 100);
+                          handleFieldChange('heroCardBadgePosition', 'bottom');
+                        }}
+                        className="text-[10px] text-muted-foreground hover:text-[#DE738F] flex items-center gap-1 transition-colors"
+                      >
+                        <RotateCcw className="size-3" />
+                        <span>Restablecer encuadre original</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

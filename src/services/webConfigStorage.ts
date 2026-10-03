@@ -21,6 +21,10 @@ class WebConfigStorageService {
         return {
           ...DEFAULT_WEB_CONFIG,
           ...parsed,
+          heroCardImagePositionX: typeof parsed.heroCardImagePositionX === 'number' ? parsed.heroCardImagePositionX : DEFAULT_WEB_CONFIG.heroCardImagePositionX,
+          heroCardImagePositionY: typeof parsed.heroCardImagePositionY === 'number' ? parsed.heroCardImagePositionY : DEFAULT_WEB_CONFIG.heroCardImagePositionY,
+          heroCardImageScale: typeof parsed.heroCardImageScale === 'number' ? parsed.heroCardImageScale : DEFAULT_WEB_CONFIG.heroCardImageScale,
+          heroCardBadgePosition: parsed.heroCardBadgePosition || DEFAULT_WEB_CONFIG.heroCardBadgePosition,
           showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
             ? parsed.showcaseItems
             : DEFAULT_WEB_CONFIG.showcaseItems,

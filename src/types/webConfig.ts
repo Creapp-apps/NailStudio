@@ -57,6 +57,10 @@ export interface WebCustomizationConfig {
   ctaPrimaryText: string;
   ctaSecondaryText: string;
   heroCardImage: string;
+  heroCardImagePositionX?: number; // 0 a 100% horizontal
+  heroCardImagePositionY?: number; // 0 a 100% vertical
+  heroCardImageScale?: number; // 100 a 200% escala/zoom
+  heroCardBadgePosition?: 'bottom' | 'top' | 'none'; // Ubicación de la tarjeta de texto
   heroCardBadge: string;
   heroCardTitle: string;
   heroCardSubtitle: string;
@@ -128,9 +132,13 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   ctaPrimaryText: 'VER SERVICIOS Y RESERVAR',
   ctaSecondaryText: 'CONSULTAR CON NAIL-BOT IA',
   heroCardImage: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
-  heroCardBadge: 'Tendencia 2026',
-  heroCardTitle: 'Arquitectura Soft Gel & Kapping',
-  heroCardSubtitle: 'Nivelación Rubber con Manicura Rusa',
+  heroCardImagePositionX: 50,
+  heroCardImagePositionY: 30,
+  heroCardImageScale: 100,
+  heroCardBadgePosition: 'bottom',
+  heroCardBadge: 'TENDENCIA 2026',
+  heroCardTitle: 'Esculpidas en acrílico',
+  heroCardSubtitle: 'Diseños Nail Art & Relieves 3D',
   heroCardRating: '',
 
   // Galería de Trabajos Destacados (Work Carousel)

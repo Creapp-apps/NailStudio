@@ -81,7 +81,13 @@ export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            display: 'block'
+            objectPosition: `${config.heroCardImagePositionX ?? 50}% ${config.heroCardImagePositionY ?? 50}%`,
+            transform: (config.heroCardImageScale && config.heroCardImageScale !== 100)
+              ? `scale(${(config.heroCardImageScale / 100).toFixed(2)})`
+              : 'none',
+            transformOrigin: `${config.heroCardImagePositionX ?? 50}% ${config.heroCardImagePositionY ?? 50}%`,
+            display: 'block',
+            transition: 'object-position 0.15s ease, transform 0.15s ease'
           }}
         />
 
@@ -105,68 +111,76 @@ export const Hero3DTiltCard: React.FC<Props> = ({ config: propConfig }) => {
           style={{
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(180deg, rgba(${theme.primaryRgb}, 0.05) 0%, rgba(30, 18, 22, 0.45) 100%)`,
+            background: config.heroCardBadgePosition === 'top'
+              ? `linear-gradient(0deg, rgba(${theme.primaryRgb}, 0.05) 0%, rgba(30, 18, 22, 0.45) 100%)`
+              : `linear-gradient(180deg, rgba(${theme.primaryRgb}, 0.05) 0%, rgba(30, 18, 22, 0.45) 100%)`,
             pointerEvents: 'none'
           }}
         />
 
-        {/* 3D Parallax Floating Card Footer */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '18px',
-            left: '18px',
-            right: '18px',
-            background: 'rgba(255, 255, 255, 0.94)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.85rem 1.15rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            border: `1px solid ${theme.borderSubtle}`,
-            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)',
-            transform: config.enable3DTilt ? 'translateZ(30px)' : 'none'
-          }}
-        >
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{
-              fontSize: '0.68rem',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: theme.secondary,
-              fontWeight: 700,
-              fontFamily: 'var(--font-couture)',
-              marginBottom: '0.2rem'
-            }}>
-              {config.heroCardBadge || 'TENDENCIA 2026'}
-            </div>
-            <div style={{
-              fontSize: '0.96rem',
-              color: 'var(--brand-espresso)',
-              fontWeight: 600,
-              lineHeight: 1.25,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              {config.heroCardTitle || 'Arquitectura Soft Gel & Kapping'}
-            </div>
-            {config.heroCardSubtitle && (
+        {/* 3D Parallax Floating Card (Top or Bottom or Hidden) */}
+        {config.heroCardBadgePosition !== 'none' && (
+          <div
+            style={{
+              position: 'absolute',
+              ...(config.heroCardBadgePosition === 'top'
+                ? { top: '18px', bottom: 'auto' }
+                : { bottom: '18px', top: 'auto' }
+              ),
+              left: '18px',
+              right: '18px',
+              background: 'rgba(255, 255, 255, 0.94)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '0.85rem 1.15rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+              border: `1px solid ${theme.borderSubtle}`,
+              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)',
+              transform: config.enable3DTilt ? 'translateZ(30px)' : 'none',
+              transition: 'top 0.3s ease, bottom 0.3s ease, transform 0.2s ease'
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{
-                fontSize: '0.72rem',
-                color: 'var(--text-secondary)',
-                marginTop: '0.2rem',
+                fontSize: '0.68rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: theme.secondary,
+                fontWeight: 700,
+                fontFamily: 'var(--font-couture)',
+                marginBottom: '0.2rem'
+              }}>
+                {config.heroCardBadge || 'TENDENCIA 2026'}
+              </div>
+              <div style={{
+                fontSize: '0.96rem',
+                color: 'var(--brand-espresso)',
+                fontWeight: 600,
+                lineHeight: 1.25,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
               }}>
-                {config.heroCardSubtitle}
+                {config.heroCardTitle || 'Arquitectura Soft Gel & Kapping'}
               </div>
-            )}
+              {config.heroCardSubtitle && (
+                <div style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-secondary)',
+                  marginTop: '0.2rem',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {config.heroCardSubtitle}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
