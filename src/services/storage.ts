@@ -219,10 +219,29 @@ class StorageService {
             localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(parsed.services));
           }
           if (Array.isArray(parsed.removals) && parsed.removals.length > 0) {
-            localStorage.setItem(STORAGE_KEYS.REMOVALS, JSON.stringify(parsed.removals));
+            const normalizedRemovals = parsed.removals.map((r: any) => ({
+              id: r.id || 'none',
+              label: r.label || 'Retiro de material',
+              description: r.description || '',
+              additionalPrice: Number(r.additionalPrice ?? r.price ?? 0),
+              additionalDurationMin: Number(r.additionalDurationMin ?? r.durationMin ?? 0),
+              isActive: r.isActive ?? true
+            }));
+            localStorage.setItem(STORAGE_KEYS.REMOVALS, JSON.stringify(normalizedRemovals));
           }
           if (Array.isArray(parsed.nailArtTiers) && parsed.nailArtTiers.length > 0) {
-            localStorage.setItem(STORAGE_KEYS.NAIL_ART_TIERS, JSON.stringify(parsed.nailArtTiers));
+            const normalizedTiers = parsed.nailArtTiers.map((t: any, idx: number) => ({
+              id: t.id || `tier-${idx}`,
+              tierLevel: Number(t.tierLevel ?? idx),
+              name: t.name || `Nivel ${idx}`,
+              price: Number(t.price ?? t.extraPrice ?? 0),
+              additionalDurationMin: Number(t.additionalDurationMin ?? t.extraDurationMin ?? 0),
+              description: t.description || '',
+              examples: Array.isArray(t.examples) ? t.examples : (t.examples ? [String(t.examples)] : ['Diseño personalizado', 'Efecto en tendencia']),
+              sampleImage: t.sampleImage || '',
+              isActive: t.isActive ?? true
+            }));
+            localStorage.setItem(STORAGE_KEYS.NAIL_ART_TIERS, JSON.stringify(normalizedTiers));
           }
         } else {
           // Fallback to nail_services table if tenant_catalog_config doesn't exist yet
@@ -415,7 +434,15 @@ class StorageService {
     if (!raw) return REMOVAL_OPTIONS;
     try {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : REMOVAL_OPTIONS;
+      const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : REMOVAL_OPTIONS;
+      return list.map((r: any) => ({
+        id: r.id || 'none',
+        label: r.label || 'Retiro de material',
+        description: r.description || '',
+        additionalPrice: Number(r.additionalPrice ?? r.price ?? 0),
+        additionalDurationMin: Number(r.additionalDurationMin ?? r.durationMin ?? 0),
+        isActive: r.isActive ?? true
+      }));
     } catch {
       return REMOVAL_OPTIONS;
     }
@@ -456,7 +483,18 @@ class StorageService {
     if (!raw) return NAIL_ART_TIERS;
     try {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : NAIL_ART_TIERS;
+      const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : NAIL_ART_TIERS;
+      return list.map((t: any, idx: number) => ({
+        id: t.id || `tier-${idx}`,
+        tierLevel: Number(t.tierLevel ?? idx),
+        name: t.name || `Nivel ${idx}`,
+        price: Number(t.price ?? t.extraPrice ?? 0),
+        additionalDurationMin: Number(t.additionalDurationMin ?? t.extraDurationMin ?? 0),
+        description: t.description || '',
+        examples: Array.isArray(t.examples) ? t.examples : (t.examples ? [String(t.examples)] : ['Diseño personalizado', 'Efecto en tendencia']),
+        sampleImage: t.sampleImage || '',
+        isActive: t.isActive ?? true
+      }));
     } catch {
       return NAIL_ART_TIERS;
     }

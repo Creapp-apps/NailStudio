@@ -73,7 +73,7 @@ export const BookingModal: React.FC<Props> = ({
 
   const [step, setStep] = useState<number>(1);
   const [selectedService, setSelectedService] = useState<NailService | null>(
-    services.find(s => s.id === preselectedServiceId) || services[0]
+    services.find(s => s.id === preselectedServiceId) || services[0] || null
   );
 
   // Synchronize preselected service when opening modal with a chosen design
@@ -81,12 +81,26 @@ export const BookingModal: React.FC<Props> = ({
     if (preselectedServiceId) {
       const match = services.find(s => s.id === preselectedServiceId);
       if (match) setSelectedService(match);
+    } else if (!selectedService && services.length > 0) {
+      setSelectedService(services[0]);
     }
-  }, [preselectedServiceId, services, isOpen]);
+  }, [preselectedServiceId, services, isOpen, selectedService]);
 
-  const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(removals[0] || REMOVAL_OPTIONS[0]);
-  const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(nailArtTiers[0] || NAIL_ART_TIERS[0]);
+  const [selectedRemoval, setSelectedRemoval] = useState<RemovalOption>(() => removals[0] || REMOVAL_OPTIONS[0]);
+  const [selectedNailArt, setSelectedNailArt] = useState<NailArtTier>(() => nailArtTiers[0] || NAIL_ART_TIERS[0]);
   const [selectedTech, setSelectedTech] = useState<NailTechnician | null>(availableTechs[0] || null);
+
+  useEffect(() => {
+    if (!selectedRemoval && removals.length > 0) {
+      setSelectedRemoval(removals[0]);
+    }
+  }, [removals, selectedRemoval]);
+
+  useEffect(() => {
+    if (!selectedNailArt && nailArtTiers.length > 0) {
+      setSelectedNailArt(nailArtTiers[0]);
+    }
+  }, [nailArtTiers, selectedNailArt]);
 
   // Helper to find next open date
   const findNextOpenDate = (fromStr: string) => {
@@ -126,13 +140,13 @@ export const BookingModal: React.FC<Props> = ({
   const [isRedirectingMp, setIsRedirectingMp] = useState<boolean>(false);
   const [mpError, setMpError] = useState<string | null>(null);
 
-  const totalDuration = (selectedService?.baseDurationMin || 0) +
-    selectedRemoval.additionalDurationMin +
-    selectedNailArt.additionalDurationMin;
+  const removalDuration = Number(selectedRemoval?.additionalDurationMin ?? (selectedRemoval as any)?.durationMin ?? 0);
+  const removalPrice = Number(selectedRemoval?.additionalPrice ?? (selectedRemoval as any)?.price ?? 0);
+  const nailArtDuration = Number(selectedNailArt?.additionalDurationMin ?? (selectedNailArt as any)?.extraDurationMin ?? 0);
+  const nailArtPrice = Number(selectedNailArt?.price ?? (selectedNailArt as any)?.extraPrice ?? 0);
 
-  const totalPrice = (selectedService?.basePrice || 0) +
-    selectedRemoval.additionalPrice +
-    selectedNailArt.price;
+  const totalDuration = (selectedService?.baseDurationMin || 0) + removalDuration + nailArtDuration;
+  const totalPrice = (selectedService?.basePrice || 0) + removalPrice + nailArtPrice;
 
   const hours = Math.floor(totalDuration / 60);
   const minutes = totalDuration % 60;
@@ -238,14 +252,18 @@ export const BookingModal: React.FC<Props> = ({
     if (paymentMethod === 'mercadopago') {
       setIsRedirectingMp(true);
       try {
+        const targetServiceId = selectedService?.id || services[0]?.id || 'srv-kapping';
+        const targetRemovalId = selectedRemoval?.id || 'none';
+        const targetArtTierId = selectedNailArt?.id || 'art-0';
+
         const created = storage.createAppointment({
           clientName: clientName.trim(),
           clientPhone: clientPhone.trim(),
           clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
           techId: targetTechId,
-          serviceId: selectedService!.id,
-          removalId: selectedRemoval.id,
-          nailArtTierId: selectedNailArt.id,
+          serviceId: targetServiceId,
+          removalId: targetRemovalId,
+          nailArtTierId: targetArtTierId,
           totalDurationMin: totalDuration,
           totalPrice,
           depositAmount: depositVal,
@@ -259,7 +277,7 @@ export const BookingModal: React.FC<Props> = ({
         const pref = await mercadoPagoService.createPreference({
           appointment: created,
           amount: depositVal,
-          title: `Seña Turno: ${selectedService!.title} - Belcalis Nails`,
+          title: `Seña Turno: ${selectedService?.title || 'Servicio Manicuría'} - Belcalis Nails`,
           client: {
             name: clientName.trim(),
             phone: clientPhone.trim(),
@@ -283,14 +301,18 @@ export const BookingModal: React.FC<Props> = ({
 
     // Flow B: Manual Transfer with WhatsApp
     setTimeout(() => {
+      const targetServiceId = selectedService?.id || services[0]?.id || 'srv-kapping';
+      const targetRemovalId = selectedRemoval?.id || 'none';
+      const targetArtTierId = selectedNailArt?.id || 'art-0';
+
       const created = storage.createAppointment({
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
         clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
         techId: targetTechId,
-        serviceId: selectedService!.id,
-        removalId: selectedRemoval.id,
-        nailArtTierId: selectedNailArt.id,
+        serviceId: targetServiceId,
+        removalId: targetRemovalId,
+        nailArtTierId: targetArtTierId,
         totalDurationMin: totalDuration,
         totalPrice,
         depositAmount: depositVal,
@@ -446,7 +468,7 @@ export const BookingModal: React.FC<Props> = ({
                 </div>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-stone-500">Técnica & Deco:</span>
-                  <strong className="text-[#2B181C]">{selectedService?.title} ({selectedNailArt.name.split(':')[0]})</strong>
+                  <strong className="text-[#2B181C]">{selectedService?.title || 'Manicuría'} ({selectedNailArt?.name ? selectedNailArt.name.split(':')[0] : 'Deco'})</strong>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-stone-200 font-bold">
                   <span>Total estimado:</span>
@@ -543,8 +565,10 @@ export const BookingModal: React.FC<Props> = ({
               {step === 2 && (
                 <div className="animate-fade-in w-full max-w-xl mx-auto flex flex-col justify-center">
                   <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
-                    {removals.filter(r => r.isActive !== false).map(rem => {
-                      const isSelected = selectedRemoval.id === rem.id;
+                    {removals.filter(r => r && r.isActive !== false).map(rem => {
+                      const isSelected = selectedRemoval?.id === rem.id;
+                      const remPrice = Number(rem.additionalPrice ?? (rem as any).price ?? 0);
+                      const remDur = Number(rem.additionalDurationMin ?? (rem as any).durationMin ?? 0);
                       return (
                         <div
                           key={rem.id}
@@ -565,10 +589,10 @@ export const BookingModal: React.FC<Props> = ({
                           </div>
                           <div className="text-right shrink-0">
                             <div className="text-[0.92rem] sm:text-base font-extrabold text-[#C45774]">
-                              {rem.additionalPrice > 0 ? `+$${rem.additionalPrice.toLocaleString('es-AR')}` : 'Sin costo'}
+                              {remPrice > 0 ? `+$${remPrice.toLocaleString('es-AR')}` : 'Sin costo'}
                             </div>
                             <span className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-stone-400">
-                              {rem.additionalDurationMin > 0 ? `+${rem.additionalDurationMin} min` : '0 min'}
+                              {remDur > 0 ? `+${remDur} min` : '0 min'}
                             </span>
                           </div>
                         </div>
@@ -582,8 +606,11 @@ export const BookingModal: React.FC<Props> = ({
               {step === 3 && (
                 <div className="animate-fade-in w-full max-w-2xl mx-auto flex flex-col justify-center">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
-                    {nailArtTiers.filter(t => t.isActive !== false).map(tier => {
-                      const isSelected = selectedNailArt.id === tier.id;
+                    {nailArtTiers.filter(t => t && t.isActive !== false).map(tier => {
+                      const isSelected = selectedNailArt?.id === tier.id;
+                      const tierPrice = Number(tier.price ?? (tier as any).extraPrice ?? 0);
+                      const tierTitle = tier.name ? tier.name.split(':')[0] : 'Nail Art';
+                      const examples = Array.isArray(tier.examples) ? tier.examples : (tier.examples ? [String(tier.examples)] : []);
                       return (
                         <div
                           key={tier.id}
@@ -598,10 +625,10 @@ export const BookingModal: React.FC<Props> = ({
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <h4 className="text-[0.88rem] sm:text-[0.92rem] font-bold text-[#2B181C] leading-snug">
-                                {tier.name.split(':')[0]}
+                                {tierTitle}
                               </h4>
                               <span className="text-[0.88rem] sm:text-[0.92rem] font-extrabold text-[#C45774] shrink-0">
-                                {tier.price > 0 ? `+$${tier.price.toLocaleString('es-AR')}` : 'Incluido'}
+                                {tierPrice > 0 ? `+$${tierPrice.toLocaleString('es-AR')}` : 'Incluido'}
                               </span>
                             </div>
                             <p className="text-[0.72rem] sm:text-[0.75rem] text-stone-500 leading-relaxed mb-2">
@@ -609,16 +636,18 @@ export const BookingModal: React.FC<Props> = ({
                             </p>
                           </div>
 
-                          <div className="flex flex-wrap gap-1 pt-1.5 border-t border-dashed border-stone-200/80">
-                            {tier.examples.map(ex => (
-                              <span
-                                key={ex}
-                                className="text-[0.62rem] sm:text-[0.65rem] font-medium bg-[#DE738F]/10 text-[#2B181C] px-2 py-0.5 rounded-md"
-                              >
-                                {ex}
-                              </span>
-                            ))}
-                          </div>
+                          {examples.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1.5 border-t border-dashed border-stone-200/80">
+                              {examples.map(ex => (
+                                <span
+                                  key={ex}
+                                  className="text-[0.62rem] sm:text-[0.65rem] font-medium bg-[#DE738F]/10 text-[#2B181C] px-2 py-0.5 rounded-md"
+                                >
+                                  {ex}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
