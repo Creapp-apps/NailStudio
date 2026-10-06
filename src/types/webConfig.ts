@@ -6,6 +6,11 @@ export interface WhyUsFeatureItem {
   icon?: string;
 }
 
+export interface ShowcaseCategoryItem {
+  id: string;
+  label: string;
+}
+
 export interface ShowcaseWorkItem {
   id: string;
   title: string;
@@ -18,6 +23,7 @@ export interface ShowcaseWorkItem {
   estimatedTime?: string;
   formula?: string;
   maintenance?: string;
+  objectPosition?: string;
 }
 
 export interface WebCustomizationConfig {
@@ -70,7 +76,13 @@ export interface WebCustomizationConfig {
   showcaseBadge: string;
   showcaseTitle: string;
   showcaseSubtitle: string;
+  showcaseCategories?: ShowcaseCategoryItem[];
   showcaseItems: ShowcaseWorkItem[];
+
+  // 5.c Menú de Técnicas Estructurales Exclusivas
+  servicesBadge?: string;
+  servicesTitle?: string;
+  servicesSubtitle?: string;
 
   // 6. Cinta de Lujo (Marquee)
   marqueePhrases: string[];
@@ -135,16 +147,22 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
   heroCardImagePositionX: 50,
   heroCardImagePositionY: 30,
   heroCardImageScale: 100,
-  heroCardBadgePosition: 'bottom',
-  heroCardBadge: 'TENDENCIA 2026',
-  heroCardTitle: 'Esculpidas en acrílico',
-  heroCardSubtitle: 'Diseños Nail Art & Relieves 3D',
+  heroCardBadgePosition: 'none',
+  heroCardBadge: '',
+  heroCardTitle: '',
+  heroCardSubtitle: '',
   heroCardRating: '',
 
   // Galería de Trabajos Destacados (Work Carousel)
   showcaseBadge: '✦ OBRAS DE AUTOR & PORTFOLIO ✦',
   showcaseTitle: 'GALERÍA DE TRABAJOS DESTACADOS',
   showcaseSubtitle: 'Explorá nuestras técnicas más solicitadas: arquitectura estructural en Soft Gel, Kapping con Rubber hipoalergénico y Nail Art exclusivo de alta precisión.',
+  showcaseCategories: [
+    { id: 'kapping', label: 'Kapping Gel' },
+    { id: 'nail_art', label: 'Nail Art & Efectos' },
+    { id: 'soft_gel', label: 'Soft Gel' },
+    { id: 'rusa', label: 'Manicuría Rusa' }
+  ],
   showcaseItems: [
     {
       id: 'work-1',
@@ -225,6 +243,11 @@ export const DEFAULT_WEB_CONFIG: WebCustomizationConfig = {
       maintenance: '21 a 28 días'
     }
   ],
+
+  // Menú de Técnicas Estructurales Exclusivas
+  servicesBadge: 'MENÚ DE ALTA MANICURÍA',
+  servicesTitle: 'TÉCNICAS ESTRUCTURALES EXCLUSIVAS',
+  servicesSubtitle: 'Duración garantizada de 21 días sin desprendimientos, con geles hipoalergénicos libres de HEMA.',
 
   // Marquee
   marqueePhrases: [

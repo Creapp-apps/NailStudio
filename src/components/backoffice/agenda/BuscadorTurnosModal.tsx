@@ -77,8 +77,32 @@ export const BuscadorTurnosModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto" onClick={onClose}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+        animation: 'modalBackdropFade 0.2s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
+        style={{
+          animation: 'modalCardPop 0.25s ease-out',
+          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)'
+        }}
         className="w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[82vh]"
         onClick={(e) => e.stopPropagation()}
       >

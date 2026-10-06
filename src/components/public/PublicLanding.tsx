@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { NailService, NailArtTier } from '../../types/nailStudio';
 import { INITIAL_SERVICES, NAIL_ART_TIERS } from '../../services/mockData';
+import { storage } from '../../services/storage';
 import { InteractiveGlamBackground } from '../effects/InteractiveGlamBackground';
 import { Hero3DTiltCard } from '../effects/Hero3DTiltCard';
 import { InfiniteCoutureMarquee } from '../effects/InfiniteCoutureMarquee';
@@ -45,6 +46,23 @@ export const PublicLanding: React.FC<Props> = ({
   const config = propConfig || hookConfig;
   const theme = getThemeFromConfig(config);
   const [activeFeature, setActiveFeature] = useState<number>(0);
+
+  const [services, setServices] = useState<NailService[]>(() => {
+    const s = storage.getServices();
+    return s && s.length > 0 ? s : INITIAL_SERVICES;
+  });
+  const [nailArtTiers, setNailArtTiers] = useState<NailArtTier[]>(() => {
+    const t = storage.getNailArtTiers();
+    return t && t.length > 0 ? t : NAIL_ART_TIERS;
+  });
+
+  useEffect(() => {
+    const unsub = storage.subscribe(() => {
+      setServices(storage.getServices());
+      setNailArtTiers(storage.getNailArtTiers());
+    });
+    return unsub;
+  }, []);
 
   const renderWhyUsIcon = (item: { icon?: string; title?: string }, index: number) => {
     const lower = (item.title || '').toLowerCase();
@@ -132,23 +150,6 @@ export const PublicLanding: React.FC<Props> = ({
           
           {/* Left Column: Editorial Headline & Actions */}
           <div style={{ maxWidth: '620px' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'rgba(255, 255, 255, 0.88)',
-              padding: '0.4rem 0.9rem',
-              borderRadius: 'var(--radius-full)',
-              border: `1px solid ${theme.borderSubtle}`,
-              marginBottom: '1.25rem',
-              boxShadow: `0 4px 15px rgba(${theme.primaryRgb}, 0.12)`
-            }}>
-              <Sparkles size={14} color={theme.primary} />
-              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-couture)', letterSpacing: '0.14em', textTransform: 'uppercase', color: theme.secondary, fontWeight: 700 }}>
-                {config.badgeText || config.heroPill}
-              </span>
-            </div>
-
             <h1 style={{
               fontSize: 'clamp(2rem, 5vw, 4.2rem)',
               lineHeight: 1.1,
@@ -156,22 +157,11 @@ export const PublicLanding: React.FC<Props> = ({
               fontFamily: 'var(--font-serif-glam)',
               letterSpacing: '0.01em',
               fontWeight: 400,
-              marginBottom: '1rem',
+              marginBottom: '2rem',
               wordBreak: 'break-word'
             }}>
               {config.heroTitle}
             </h1>
-
-            <p style={{
-              fontSize: 'clamp(1rem, 1.3vw, 1.25rem)',
-              fontFamily: 'var(--font-editorial)',
-              fontStyle: 'italic',
-              color: 'var(--text-secondary)',
-              marginBottom: '2rem',
-              letterSpacing: '0.02em'
-            }}>
-              {config.heroSubtitle}
-            </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
               <button
@@ -226,7 +216,7 @@ export const PublicLanding: React.FC<Props> = ({
             borderRadius: 'var(--radius-sm)',
             overflow: 'hidden'
           }}>
-            {whyUsFeatures.map((item, index) => {
+            {(Array.isArray(whyUsFeatures) ? whyUsFeatures : []).map((item, index) => {
               const itemId = item.id ?? index;
               const isActive = activeFeature === itemId;
               const icon = renderWhyUsIcon(item, index);
@@ -276,27 +266,16 @@ export const PublicLanding: React.FC<Props> = ({
       <section id="servicios" style={{ padding: '5.5rem 1.5rem', background: 'rgba(255, 255, 255, 0.82)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
-            <span
-              className="badge-luxury"
-              style={{
-                background: `rgba(${theme.primaryRgb}, 0.12)`,
-                color: theme.secondary,
-                border: `1px solid ${theme.borderSubtle}`,
-                marginBottom: '0.75rem'
-              }}
-            >
-              MENÚ DE ALTA MANICURÍA
-            </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
-              TÉCNICAS ESTRUCTURALES EXCLUSIVAS
+              {config.servicesTitle || 'TÉCNICAS ESTRUCTURALES EXCLUSIVAS'}
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-              Duración garantizada de 21 días sin desprendimientos, con geles hipoalergénicos libres de HEMA.
+              {config.servicesSubtitle || 'Duración garantizada de 21 días sin desprendimientos, con geles hipoalergénicos libres de HEMA.'}
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-            {INITIAL_SERVICES.map(service => (
+            {(Array.isArray(services) ? services : []).filter(s => s && s.isActive !== false).map(service => (
               <div
                 key={service.id}
                 style={{
@@ -313,8 +292,8 @@ export const PublicLanding: React.FC<Props> = ({
               >
                 <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
                   <img
-                    src={service.imageUrl}
-                    alt={service.title}
+                    src={service.imageUrl || 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=600&q=80'}
+                    alt={service.title || 'Servicio'}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   {service.badge && (
@@ -337,15 +316,15 @@ export const PublicLanding: React.FC<Props> = ({
                 <div style={{ padding: '1.75rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.4rem' }}>
-                      {service.title}
+                      {service.title || ''}
                     </h3>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                       <span style={{ fontSize: '1.4rem', fontWeight: 800, color: theme.secondary, fontFamily: 'var(--font-couture)' }}>
-                        ${service.basePrice.toLocaleString('es-AR')}
+                        ${(service.basePrice || 0).toLocaleString('es-AR')}
                       </span>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Clock size={14} /> {service.baseDurationMin} min
+                        <Clock size={14} /> {service.baseDurationMin || 60} min
                       </span>
                     </div>
 
@@ -353,17 +332,19 @@ export const PublicLanding: React.FC<Props> = ({
                       {service.description}
                     </p>
 
-                    <div style={{
-                      background: `rgba(${theme.primaryRgb}, 0.08)`,
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.75rem',
-                      color: theme.secondary,
-                      marginBottom: '1.5rem',
-                      border: `1px solid ${theme.borderSubtle}`
-                    }}>
-                      <strong>Recomendado:</strong> {service.recommendedFor}
-                    </div>
+                    {service.recommendedFor && (
+                      <div style={{
+                        background: `rgba(${theme.primaryRgb}, 0.08)`,
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.75rem',
+                        color: theme.secondary,
+                        marginBottom: '1.5rem',
+                        border: `1px solid ${theme.borderSubtle}`
+                      }}>
+                        <strong>Recomendado:</strong> {service.recommendedFor}
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -389,17 +370,6 @@ export const PublicLanding: React.FC<Props> = ({
       <section id="nail-art" style={{ padding: '5.5rem 1.5rem', background: theme.bgApp, backdropFilter: 'blur(16px)', borderTop: `1px solid ${theme.borderSubtle}`, position: 'relative', zIndex: 10 }}>
         <div className="app-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3.5rem auto' }}>
-            <span
-              className="badge-luxury"
-              style={{
-                background: `rgba(${theme.accentRgb}, 0.25)`,
-                color: theme.secondary,
-                border: `1px solid ${theme.borderSubtle}`,
-                marginBottom: '0.75rem'
-              }}
-            >
-              BARRA DE NAIL ART & DISEÑO
-            </span>
             <h2 style={{ fontSize: '2.6rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)' }}>
               NIVELES DE NAIL ART & TIEMPO ADITIVO
             </h2>
@@ -409,7 +379,7 @@ export const PublicLanding: React.FC<Props> = ({
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
-            {NAIL_ART_TIERS.map(tier => (
+            {(Array.isArray(nailArtTiers) ? nailArtTiers : []).filter(t => t && t.isActive !== false).map(tier => (
               <div
                 key={tier.id}
                 style={{
@@ -421,24 +391,30 @@ export const PublicLanding: React.FC<Props> = ({
                 }}
               >
                 <div style={{ height: '160px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '1rem' }}>
-                  <img src={tier.sampleImage} alt={tier.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={tier.sampleImage || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80'}
+                    alt={tier.name || 'Nail Art'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
                 <h4 style={{ fontSize: '1rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.3rem' }}>
-                  {tier.name}
+                  {tier.name || ''}
                 </h4>
                 <div style={{ fontSize: '1.15rem', fontWeight: 800, color: theme.secondary, marginBottom: '0.5rem', fontFamily: 'var(--font-couture)' }}>
-                  {tier.price > 0 ? `+$${tier.price.toLocaleString('es-AR')}` : 'Sin costo adicional'}
+                  {(tier.price || 0) > 0 ? `+$${(tier.price || 0).toLocaleString('es-AR')}` : 'Sin costo adicional'}
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
-                  {tier.description}
+                  {tier.description || ''}
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                  {tier.examples.map(ex => (
-                    <span key={ex} style={{ fontSize: '0.7rem', background: `rgba(${theme.primaryRgb}, 0.08)`, padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', color: theme.secondary, border: `1px solid ${theme.borderSubtle}` }}>
-                      {ex}
-                    </span>
-                  ))}
-                </div>
+                {Array.isArray(tier.examples) && tier.examples.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {tier.examples.map(ex => (
+                      <span key={ex} style={{ fontSize: '0.7rem', background: `rgba(${theme.primaryRgb}, 0.08)`, padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', color: theme.secondary, border: `1px solid ${theme.borderSubtle}` }}>
+                        {ex}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

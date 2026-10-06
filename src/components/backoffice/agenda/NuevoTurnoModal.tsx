@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   DollarSign,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Crown
 } from 'lucide-react';
 import {
   Appointment,
@@ -143,6 +144,17 @@ export const NuevoTurnoModal: React.FC<Props> = ({
     setShowSuggestions(false);
   };
 
+  // Detect if client is Vitalicia
+  const cleanPhone = clientPhone.replace(/\D/g, '');
+  const matchedClient = clients.find(c => {
+    const cp = (c.phone || '').replace(/\D/g, '');
+    return (cleanPhone.length >= 6 && cp.length >= 6 && (cp.includes(cleanPhone) || cleanPhone.includes(cp))) ||
+      (c.name.toLowerCase().trim() === clientName.toLowerCase().trim() && clientName.trim().length > 0);
+  });
+
+  const isVitalicia = Boolean(matchedClient?.isVitalicia);
+  const vitaliciaDiscountPct = matchedClient?.vitaliciaDiscountPercentage || 15;
+
   // Calculate duration and price dynamically
   const selectedService = services.find(s => s.id === serviceId) || services[0];
   const selectedRemoval = removals.find(r => r.id === removalId) || removals[0];
@@ -152,9 +164,12 @@ export const NuevoTurnoModal: React.FC<Props> = ({
     (selectedRemoval?.additionalDurationMin || 0) +
     (selectedNailArt?.additionalDurationMin || 0);
 
-  const totalPrice = (selectedService?.basePrice || 15000) +
+  const rawTotalPrice = (selectedService?.basePrice || 15000) +
     (selectedRemoval?.additionalPrice || 0) +
     (selectedNailArt?.price || 0);
+
+  const discountAmount = isVitalicia ? Math.round(rawTotalPrice * (vitaliciaDiscountPct / 100)) : 0;
+  const totalPrice = rawTotalPrice - discountAmount;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +199,9 @@ export const NuevoTurnoModal: React.FC<Props> = ({
         nailArtTierId,
         totalDurationMin,
         totalPrice,
+        isVitaliciaApplied: isVitalicia,
+        originalPrice: rawTotalPrice,
+        discountAmount,
         depositAmount: Number(depositAmount),
         depositPaid,
         scheduledDate,
@@ -204,6 +222,9 @@ export const NuevoTurnoModal: React.FC<Props> = ({
         nailArtTierId,
         totalDurationMin,
         totalPrice,
+        isVitaliciaApplied: isVitalicia,
+        originalPrice: rawTotalPrice,
+        discountAmount,
         depositAmount: Number(depositAmount),
         depositPaid,
         scheduledDate,
@@ -220,8 +241,32 @@ export const NuevoTurnoModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto" onClick={onClose}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+        animation: 'modalBackdropFade 0.2s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
+        style={{
+          animation: 'modalCardPop 0.25s ease-out',
+          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)'
+        }}
         className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -380,11 +425,37 @@ export const NuevoTurnoModal: React.FC<Props> = ({
                 <Clock className="size-3.5 text-rose-500" />
                 <span>Tiempo Total: <strong className="text-foreground">{totalDurationMin} minutos</strong></span>
               </span>
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <DollarSign className="size-3.5 text-emerald-600" />
-                <span>Precio Total: <strong className="text-emerald-600 font-bold">${totalPrice.toLocaleString('es-AR')}</strong></span>
-              </span>
+              <div className="text-right">
+                {isVitalicia ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] line-through text-muted-foreground">${rawTotalPrice.toLocaleString('es-AR')}</span>
+                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
+                      <Crown className="size-3.5 text-amber-500" />
+                      <span>${totalPrice.toLocaleString('es-AR')} (-{vitaliciaDiscountPct}%)</span>
+                    </span>
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <DollarSign className="size-3.5 text-emerald-600" />
+                    <span>Precio Total: <strong className="text-emerald-600 font-bold">${totalPrice.toLocaleString('es-AR')}</strong></span>
+                  </span>
+                )}
+              </div>
             </div>
+
+            {isVitalicia && (
+              <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-transparent border border-amber-500/30 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                  <Crown className="size-4 shrink-0 text-amber-500" />
+                  <span>
+                    <strong>Clienta Vitalicia:</strong> Se aplicó automáticamente el {vitaliciaDiscountPct}% OFF de por vida (-${discountAmount.toLocaleString('es-AR')}).
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                  Tarifa Protegida
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 3. Schedule & Specialist */}

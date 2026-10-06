@@ -24,7 +24,9 @@ class WebConfigStorageService {
           heroCardImagePositionX: typeof parsed.heroCardImagePositionX === 'number' ? parsed.heroCardImagePositionX : DEFAULT_WEB_CONFIG.heroCardImagePositionX,
           heroCardImagePositionY: typeof parsed.heroCardImagePositionY === 'number' ? parsed.heroCardImagePositionY : DEFAULT_WEB_CONFIG.heroCardImagePositionY,
           heroCardImageScale: typeof parsed.heroCardImageScale === 'number' ? parsed.heroCardImageScale : DEFAULT_WEB_CONFIG.heroCardImageScale,
-          heroCardBadgePosition: parsed.heroCardBadgePosition || DEFAULT_WEB_CONFIG.heroCardBadgePosition,
+          showcaseCategories: parsed.showcaseCategories && Array.isArray(parsed.showcaseCategories) && parsed.showcaseCategories.length > 0
+            ? parsed.showcaseCategories
+            : DEFAULT_WEB_CONFIG.showcaseCategories,
           showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
             ? parsed.showcaseItems
             : DEFAULT_WEB_CONFIG.showcaseItems,
@@ -93,6 +95,9 @@ class WebConfigStorageService {
         this.currentConfig = {
           ...DEFAULT_WEB_CONFIG,
           ...parsed,
+          showcaseCategories: parsed.showcaseCategories && Array.isArray(parsed.showcaseCategories) && parsed.showcaseCategories.length > 0
+            ? parsed.showcaseCategories
+            : DEFAULT_WEB_CONFIG.showcaseCategories,
           showcaseItems: parsed.showcaseItems && Array.isArray(parsed.showcaseItems) && parsed.showcaseItems.length > 0
             ? parsed.showcaseItems
             : DEFAULT_WEB_CONFIG.showcaseItems,

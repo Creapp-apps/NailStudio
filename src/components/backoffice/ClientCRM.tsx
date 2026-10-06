@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   AlertTriangle,
@@ -22,7 +23,8 @@ import {
   Eye,
   EyeOff,
   ShieldAlert,
-  Trash2
+  Trash2,
+  Crown
 } from 'lucide-react';
 import { ClientProfile, NailPlateCondition } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -42,6 +44,11 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(clients.length > 0 ? (clients[0].technicianNotes || '') : '');
 
+  // Vitalicia State for selected client
+  const [filterTab, setFilterTab] = useState<'all' | 'vitalicias'>('all');
+  const [isVitalicia, setIsVitalicia] = useState(clients.length > 0 ? Boolean(clients[0].isVitalicia) : false);
+  const [vitaliciaDiscount, setVitaliciaDiscount] = useState<number>(clients.length > 0 ? (clients[0].vitaliciaDiscountPercentage || 15) : 15);
+
   // New Client Modal State (Controlled by Salon Authority)
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -54,6 +61,8 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
   const [newHeatSensitivity, setNewHeatSensitivity] = useState<'low' | 'medium' | 'high'>('low');
   const [newNailCondition, setNewNailCondition] = useState<NailPlateCondition>('healthy');
   const [newNotes, setNewNotes] = useState('');
+  const [newIsVitalicia, setNewIsVitalicia] = useState(true); // Default true for clients loaded by Lu
+  const [newVitaliciaDiscount, setNewVitaliciaDiscount] = useState(15);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -75,7 +84,7 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     setNewPassword(generateInitialPassword());
   };
 
-  const filtered = clients
+  const baseFiltered = clients
     .filter(c =>
       !c.id.startsWith('tenant_') &&
       c.name !== 'Staff Sync System' &&
@@ -87,6 +96,12 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
       (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
       c.referralCode.toLowerCase().includes(search.toLowerCase())
     );
+
+  const vitaliciasCount = baseFiltered.filter(c => c.isVitalicia).length;
+
+  const filtered = filterTab === 'vitalicias'
+    ? baseFiltered.filter(c => c.isVitalicia)
+    : baseFiltered;
 
   const handleDeleteClient = (clientToDelete: ClientProfile) => {
     if (confirm(`¿Estás segura de que deseas eliminar la ficha de "${clientToDelete.name}"? Esta acción borrará permanentemente sus datos técnicos y de fidelización.`)) {
@@ -102,6 +117,8 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     setSelectedClient(c);
     setNotesValue(c.technicianNotes);
     setIsEditingNotes(false);
+    setIsVitalicia(Boolean(c.isVitalicia));
+    setVitaliciaDiscount(c.vitaliciaDiscountPercentage || 15);
   };
 
   const handleSaveNotes = () => {
@@ -113,6 +130,20 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
     storage.updateClient(updated);
     setSelectedClient(updated);
     setIsEditingNotes(false);
+  };
+
+  const handleSaveVitalicia = () => {
+    if (!selectedClient) return;
+    const updated = storage.setVitaliciaStatus(selectedClient.id, isVitalicia, vitaliciaDiscount);
+    if (updated) {
+      setSelectedClient(updated);
+      setToastMessage(
+        isVitalicia
+          ? `👑 ¡Membresía Vitalicia guardada para ${updated.name}! Se le aplicará un ${vitaliciaDiscount}% OFF permanente en turnos y reservas.`
+          : `Tarifa estándar asignada a ${updated.name} (Beneficio Vitalicia removido).`
+      );
+      setTimeout(() => setToastMessage(null), 5000);
+    }
   };
 
   const handleCreateClient = async (e: React.FormEvent) => {
@@ -185,7 +216,10 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
       referralCode: referralCode,
       totalVisits: 0,
       lastVisitDate: new Date().toISOString().split('T')[0],
-      setsHistory: []
+      setsHistory: [],
+      isVitalicia: newIsVitalicia,
+      vitaliciaDiscountPercentage: newIsVitalicia ? newVitaliciaDiscount : undefined,
+      vitaliciaAssignedAt: newIsVitalicia ? new Date().toISOString().split('T')[0] : undefined
     };
 
     // Save in local storage & sync to Supabase
@@ -307,13 +341,60 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                 }}
               />
             </div>
+
+            {/* Filter Tabs */}
+            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.65rem' }}>
+              <button
+                type="button"
+                onClick={() => setFilterTab('all')}
+                style={{
+                  flex: 1,
+                  padding: '0.4rem 0.5rem',
+                  borderRadius: '8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: filterTab === 'all' ? 'var(--brand-terracotta)' : 'var(--bg-card)',
+                  color: filterTab === 'all' ? '#FFF' : 'var(--text-secondary)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Todas ({baseFiltered.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab('vitalicias')}
+                style={{
+                  flex: 1,
+                  padding: '0.4rem 0.5rem',
+                  borderRadius: '8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: filterTab === 'vitalicias' ? 'linear-gradient(135deg, #DE738F, #C45774)' : 'var(--bg-card)',
+                  color: filterTab === 'vitalicias' ? '#FFF' : 'var(--brand-terracotta)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.25rem',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Crown size={12} />
+                <span>Vitalicias ({vitaliciasCount})</span>
+              </button>
+            </div>
           </div>
 
           {/* Client Items */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
             {filtered.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                No se encontraron clientas.
+                {filterTab === 'vitalicias'
+                  ? 'No hay clientas marcadas como Vitalicias aún.'
+                  : 'No se encontraron clientas.'}
               </div>
             ) : (
               filtered.map(c => {
@@ -340,6 +421,24 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                     {c.email && (
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {c.email}
+                      </div>
+                    )}
+                    {c.isVitalicia && (
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        marginTop: '0.35rem',
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.7), rgba(255, 228, 230, 0.7))',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                        color: '#B45309',
+                        fontSize: '0.67rem',
+                        fontWeight: 800
+                      }}>
+                        <Crown size={10} />
+                        <span>Vitalicia (-{c.vitaliciaDiscountPercentage || 15}%)</span>
                       </div>
                     )}
                     {c.allergiesHema && (
@@ -381,7 +480,26 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
               </div>
 
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
-                <span className="badge-luxury badge-gold">{selectedClient.tier}</span>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  {selectedClient.isVitalicia && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '999px',
+                      background: 'linear-gradient(135deg, #F59E0B, #DE738F)',
+                      color: '#FFF',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      boxShadow: '0 2px 8px rgba(222, 115, 143, 0.35)'
+                    }}>
+                      <Crown size={12} />
+                      <span>Vitalicia -{selectedClient.vitaliciaDiscountPercentage || 15}%</span>
+                    </span>
+                  )}
+                  <span className="badge-luxury badge-gold">{selectedClient.tier}</span>
+                </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   Código: <strong>{selectedClient.referralCode}</strong>
                 </div>
@@ -411,6 +529,168 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                   <span>Eliminar Ficha</span>
                 </button>
               </div>
+            </div>
+
+            {/* 👑 VIP VITALICIA / TARIFA PROTEGIDA CARD */}
+            <div style={{
+              background: isVitalicia
+                ? 'linear-gradient(135deg, rgba(254, 243, 199, 0.45) 0%, rgba(255, 228, 230, 0.45) 100%)'
+                : 'var(--bg-card)',
+              border: isVitalicia
+                ? '1px solid rgba(245, 158, 11, 0.45)'
+                : '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1.25rem',
+              marginBottom: '1.5rem',
+              boxShadow: isVitalicia ? '0 4px 20px -2px rgba(222, 115, 143, 0.12)' : 'none',
+              transition: 'all 0.25s ease'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: isVitalicia ? 'linear-gradient(135deg, #F59E0B, #DE738F)' : 'var(--bg-card-subtle)',
+                    color: isVitalicia ? '#FFFFFF' : 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: isVitalicia ? '0 4px 12px rgba(245, 158, 11, 0.3)' : 'none'
+                  }}>
+                    <Crown size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--brand-espresso)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      Membresía Vitalicia (Tarifa Protegida Lu)
+                      {isVitalicia ? (
+                        <span style={{
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          border: '1px solid rgba(245, 158, 11, 0.4)',
+                          color: '#B45309',
+                          fontSize: '0.68rem',
+                          fontWeight: 800
+                        }}>
+                          ACTIVA • {vitaliciaDiscount}% OFF
+                        </span>
+                      ) : (
+                        <span style={{
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          background: 'var(--bg-card)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-muted)',
+                          fontSize: '0.68rem',
+                          fontWeight: 600
+                        }}>
+                          TARIFA ESTÁNDAR
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                      {isVitalicia
+                        ? `Clienta histórica. Al agendar turnos se le descuenta de forma automática y permanente un ${vitaliciaDiscount}%.`
+                        : 'Abonará el precio completo de lista cuando reserve o se le carguen turnos.'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle Action */}
+                <button
+                  type="button"
+                  onClick={() => setIsVitalicia(!isVitalicia)}
+                  style={{
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    border: isVitalicia ? '1px solid rgba(222, 115, 143, 0.4)' : '1px solid var(--border-strong)',
+                    background: isVitalicia ? '#FFFFFF' : 'var(--bg-surface)',
+                    color: isVitalicia ? '#C45774' : 'var(--brand-espresso)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Crown size={14} color={isVitalicia ? '#DE738F' : '#888'} />
+                  <span>{isVitalicia ? 'Desactivar Vitalicia' : '⭐ Activar como Vitalicia'}</span>
+                </button>
+              </div>
+
+              {isVitalicia && (
+                <div style={{
+                  marginTop: '1rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px dashed rgba(245, 158, 11, 0.35)',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--brand-espresso)', textTransform: 'uppercase' }}>
+                      % Descuento:
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={vitaliciaDiscount}
+                        onChange={(e) => setVitaliciaDiscount(Number(e.target.value) || 15)}
+                        style={{
+                          width: '70px',
+                          padding: '0.35rem 0.5rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-strong)',
+                          fontWeight: 800,
+                          fontSize: '0.9rem',
+                          textAlign: 'center',
+                          background: '#FFFFFF'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-espresso)' }}>% OFF</span>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    flex: 1,
+                    minWidth: '260px',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    padding: '0.55rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(222, 115, 143, 0.25)'
+                  }}>
+                    💡 <strong>Ejemplo en vivo:</strong> En un ticket nuevo de <strong>$40.000</strong>, pagará automáticamente <strong>${Math.round(40000 * (1 - vitaliciaDiscount / 100)).toLocaleString('es-AR')}</strong> (-${Math.round(40000 * (vitaliciaDiscount / 100)).toLocaleString('es-AR')} de beneficio).
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveVitalicia}
+                    style={{
+                      padding: '0.5rem 1.1rem',
+                      fontSize: '0.8rem',
+                      background: 'linear-gradient(135deg, #DE738F 0%, #C45774 100%)',
+                      border: 'none',
+                      color: '#FFF',
+                      borderRadius: '10px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(222, 115, 143, 0.3)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Guardar Beneficio
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Critical Health Alerts */}
@@ -589,33 +869,44 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
       </div>
 
       {/* MODAL: ALTA DE CLIENTA VIP (SALON AUTHORITY CONTROLLED) */}
-      {isNewModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(46, 30, 30, 0.65)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            width: '100%',
-            maxWidth: '540px',
-            background: '#FFFFFF',
-            borderRadius: '20px',
-            border: '1px solid rgba(222, 115, 143, 0.3)',
-            boxShadow: '0 25px 50px -12px rgba(46, 30, 30, 0.25)',
-            overflow: 'hidden',
-            maxHeight: '90vh',
+      {isNewModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 99999,
+            background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             display: 'flex',
-            flexDirection: 'column'
-          }} className="animate-fade-in">
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            overflowY: 'auto',
+            animation: 'modalBackdropFade 0.2s ease-out'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsNewModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '540px',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              border: '1px solid rgba(222, 115, 143, 0.3)',
+              boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)',
+              overflow: 'hidden',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              animation: 'modalCardPop 0.25s ease-out'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div style={{
               padding: '1.25rem 1.5rem',
@@ -862,6 +1153,51 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
                       style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}
                     />
                   </div>
+
+                  {/* 👑 Membresía Vitalicia Option */}
+                  <div style={{
+                    padding: '0.85rem 1rem',
+                    borderRadius: '12px',
+                    background: newIsVitalicia
+                      ? 'linear-gradient(135deg, rgba(254, 243, 199, 0.6) 0%, rgba(255, 228, 230, 0.5) 100%)'
+                      : 'var(--bg-card-subtle)',
+                    border: newIsVitalicia
+                      ? '1px solid rgba(245, 158, 11, 0.45)'
+                      : '1px solid var(--border-subtle)',
+                    transition: 'all 0.2s'
+                  }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', color: 'var(--brand-espresso)' }}>
+                      <input
+                        type="checkbox"
+                        checked={newIsVitalicia}
+                        onChange={(e) => setNewIsVitalicia(e.target.checked)}
+                        style={{ width: '17px', height: '17px', accentColor: '#DE738F', cursor: 'pointer' }}
+                      />
+                      <span>👑 Asignar como Clienta Vitalicia (Tarifa Protegida Lu)</span>
+                    </label>
+                    {newIsVitalicia && (
+                      <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                        <span>Descuento permanente:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={newVitaliciaDiscount}
+                          onChange={(e) => setNewVitaliciaDiscount(Number(e.target.value) || 15)}
+                          style={{
+                            width: '65px',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-strong)',
+                            fontWeight: 800,
+                            textAlign: 'center',
+                            background: '#FFFFFF'
+                          }}
+                        />
+                        <span style={{ fontWeight: 700 }}>% OFF automático en reservas</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -913,7 +1249,8 @@ export const ClientCRM: React.FC<Props> = ({ clients }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

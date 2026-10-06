@@ -9,13 +9,19 @@ import {
   Clock,
   User,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard,
+  Building2,
+  Copy,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment, DayOfWeekKey, TimeRangeBlock } from '../../types/nailStudio';
 import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
 import { storage, DEFAULT_SCHEDULE_BY_DAY } from '../../services/storage';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { LuxuryDatePicker } from '../common/LuxuryDatePicker';
+import { mercadoPagoService } from '../../services/mercadoPagoService';
 import { format } from 'date-fns';
 
 interface Props {
@@ -115,6 +121,10 @@ export const BookingModal: React.FC<Props> = ({
   const [bookingNotes, setBookingNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [confirmedApt, setConfirmedApt] = useState<Appointment | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('mercadopago');
+  const [copiedAlias, setCopiedAlias] = useState<boolean>(false);
+  const [isRedirectingMp, setIsRedirectingMp] = useState<boolean>(false);
+  const [mpError, setMpError] = useState<string | null>(null);
 
   const totalDuration = (selectedService?.baseDurationMin || 0) +
     selectedRemoval.additionalDurationMin +
@@ -211,17 +221,68 @@ export const BookingModal: React.FC<Props> = ({
     'Datos de Contacto'
   ];
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     if (!clientName.trim() || !clientPhone.trim()) {
       alert('Por favor completa tu nombre y número de WhatsApp');
       return;
     }
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      const targetTech = selectedTech || availableTechs[0] || null;
-      const targetTechId = targetTech?.id || 'tech-1';
+    const targetTech = selectedTech || availableTechs[0] || null;
+    const targetTechId = targetTech?.id || 'tech-1';
+    const depositVal = salonSettings.depositAmount || 5000;
 
+    setIsSubmitting(true);
+    setMpError(null);
+
+    // Flow A: Mercado Pago Checkout Pro
+    if (paymentMethod === 'mercadopago') {
+      setIsRedirectingMp(true);
+      try {
+        const created = storage.createAppointment({
+          clientName: clientName.trim(),
+          clientPhone: clientPhone.trim(),
+          clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+          techId: targetTechId,
+          serviceId: selectedService!.id,
+          removalId: selectedRemoval.id,
+          nailArtTierId: selectedNailArt.id,
+          totalDurationMin: totalDuration,
+          totalPrice,
+          depositAmount: depositVal,
+          depositPaid: false,
+          scheduledDate: selectedDate,
+          scheduledTime: selectedTime,
+          status: 'pending',
+          notes: bookingNotes ? `${bookingNotes} [Seña Mercado Pago]` : '[Seña Mercado Pago]'
+        });
+
+        const pref = await mercadoPagoService.createPreference({
+          appointment: created,
+          amount: depositVal,
+          title: `Seña Turno: ${selectedService!.title} - Belcalis Nails`,
+          client: {
+            name: clientName.trim(),
+            phone: clientPhone.trim(),
+            email: clientEmail.trim() || undefined
+          }
+        });
+
+        const targetUrl = (storage.getIntegrations()?.mercadoPago?.sandboxMode && pref.sandboxInitPoint)
+          ? pref.sandboxInitPoint
+          : pref.initPoint;
+
+        window.location.href = targetUrl;
+      } catch (err: any) {
+        console.error('Error al iniciar Mercado Pago:', err);
+        setMpError(err.message || 'No se pudo conectar con Mercado Pago. Podés intentar nuevamente o abonar por Transferencia Bancaria.');
+        setIsSubmitting(false);
+        setIsRedirectingMp(false);
+      }
+      return;
+    }
+
+    // Flow B: Manual Transfer with WhatsApp
+    setTimeout(() => {
       const created = storage.createAppointment({
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
@@ -232,18 +293,18 @@ export const BookingModal: React.FC<Props> = ({
         nailArtTierId: selectedNailArt.id,
         totalDurationMin: totalDuration,
         totalPrice,
-        depositAmount: 5000,
-        depositPaid: true,
+        depositAmount: depositVal,
+        depositPaid: false,
         scheduledDate: selectedDate,
         scheduledTime: selectedTime,
         status: 'pending',
-        notes: bookingNotes
+        notes: bookingNotes ? `${bookingNotes} [Transferencia manual]` : '[Transferencia manual]'
       });
 
       setIsSubmitting(false);
       setConfirmedApt(created);
       if (onBookingSuccess) onBookingSuccess(created);
-    }, 500);
+    }, 400);
   };
 
   const handleResetAndClose = () => {
@@ -388,19 +449,33 @@ export const BookingModal: React.FC<Props> = ({
                   <strong className="text-[#2B181C]">{selectedService?.title} ({selectedNailArt.name.split(':')[0]})</strong>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-stone-200 font-bold">
-                  <span>Total en mesa:</span>
-                  <span className="text-[#C45774]">${(confirmedApt.totalPrice - 5000).toLocaleString('es-AR')} (Seña de $5.000 bonificada)</span>
+                  <span>Total estimado:</span>
+                  <span className="text-[#C45774]">${confirmedApt.totalPrice.toLocaleString('es-AR')}</span>
+                </div>
+                <div className="flex justify-between items-center pt-1 text-[0.72rem] text-stone-500">
+                  <span>Seña requerida:</span>
+                  <span className="font-semibold text-stone-700">${(confirmedApt.depositAmount || 5000).toLocaleString('es-AR')}</span>
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col sm:flex-row justify-center gap-2">
+                <a
+                  href={`https://wa.me/${(salonSettings.phoneWhatsapp || '+54 9 11 5820-9911').replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `¡Hola Belcalis Nails! Acabo de solicitar mi turno para el ${confirmedApt.scheduledDate} a las ${confirmedApt.scheduledTime} hs (${selectedService?.title}). Mi nombre es ${confirmedApt.clientName}.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-satin-pink px-5 py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-md bg-[#25D366] hover:bg-[#20ba5a] text-white"
+                >
+                  <span>Enviar Comprobante por WhatsApp</span>
+                </a>
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="btn-satin-pink px-6 py-2.5 text-xs sm:text-sm flex items-center gap-2 rounded-full cursor-pointer shadow-md"
+                  className="px-5 py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 cursor-pointer shadow-sm"
                 >
                   <Check size={16} strokeWidth={2.5} />
-                  <span>Entendido y Finalizar</span>
+                  <span>Finalizar</span>
                 </button>
               </div>
             </div>
@@ -760,9 +835,105 @@ export const BookingModal: React.FC<Props> = ({
                   </div>
 
                   {/* Trust Banner */}
-                  <div className="mt-3.5 p-2.5 sm:p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2 text-[0.7rem] sm:text-xs text-amber-900 w-full">
+                  <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 text-[0.7rem] sm:text-xs text-amber-900 w-full">
                     <ShieldCheck size={16} className="text-amber-700 shrink-0" />
-                    <span>Seña protegida de $5.000 ARS deducible al presentarte en el salón. Cancelación gratuita con 24h de aviso.</span>
+                    <span>Seña deducible de ${(salonSettings.depositAmount || 5000).toLocaleString('es-AR')} ARS al presentarte en el salón. Cancelación con 24h de aviso.</span>
+                  </div>
+
+                  {/* Payment Method Selector */}
+                  <div className="mt-3.5 pt-3 border-t border-stone-200 w-full">
+                    <label className="text-[0.72rem] font-bold text-[#2B181C] block mb-2">
+                      Elegí cómo abonar tu Seña de ${(salonSettings.depositAmount || 5000).toLocaleString('es-AR')} ARS:
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Option 1: Mercado Pago (Checkout Pro) */}
+                      <div
+                        onClick={() => setPaymentMethod('mercadopago')}
+                        className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                          paymentMethod === 'mercadopago'
+                            ? 'border-[#009EE3] bg-[#009EE3]/5 shadow-sm'
+                            : 'border-stone-200 hover:border-stone-300 bg-white'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-6 h-6 rounded-md bg-[#009EE3] text-white flex items-center justify-center font-black text-[10px]">
+                                MP
+                              </div>
+                              <span className="font-bold text-xs text-stone-900">Mercado Pago</span>
+                            </div>
+                            <span className="text-[0.62rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#009EE3]/15 text-[#0074A8]">
+                              Inmediato
+                            </span>
+                          </div>
+                          <p className="text-[0.68rem] text-stone-500 leading-tight">
+                            Tarjetas de débito/crédito, dinero en cuenta o transferencia vía MP.
+                          </p>
+                        </div>
+
+                        <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center gap-1 text-[0.65rem] text-[#0074A8] font-semibold">
+                          <Lock size={11} /> Checkout Pro 100% Seguro
+                        </div>
+                      </div>
+
+                      {/* Option 2: Transferencia Directa */}
+                      <div
+                        onClick={() => setPaymentMethod('transfer')}
+                        className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                          paymentMethod === 'transfer'
+                            ? 'border-[#C45774] bg-[#C45774]/5 shadow-sm'
+                            : 'border-stone-200 hover:border-stone-300 bg-white'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 size={16} className="text-[#C45774]" />
+                              <span className="font-bold text-xs text-stone-900">Transferencia</span>
+                            </div>
+                            <span className="text-[0.62rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
+                              Alias / CBU
+                            </span>
+                          </div>
+                          <p className="text-[0.68rem] text-stone-500 leading-tight">
+                            Transferí desde tu app bancaria y adjuntá comprobante.
+                          </p>
+                        </div>
+
+                        {salonSettings.bankAlias ? (
+                          <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center justify-between text-[0.68rem]">
+                            <span className="font-mono text-stone-700 font-semibold truncate max-w-[130px]">
+                              {salonSettings.bankAlias}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(salonSettings.bankAlias);
+                                setCopiedAlias(true);
+                                setTimeout(() => setCopiedAlias(false), 2000);
+                              }}
+                              className="text-[#C45774] font-bold hover:underline flex items-center gap-0.5"
+                            >
+                              <Copy size={11} /> {copiedAlias ? '¡Copiado!' : 'Copiar'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-2.5 pt-2 border-t border-stone-100 text-[0.65rem] text-stone-400">
+                            Alias disponible al confirmar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {mpError && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-rose-800 text-xs">
+                        <AlertCircle size={15} className="shrink-0 text-rose-600" />
+                        <span>{mpError}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -788,7 +959,7 @@ export const BookingModal: React.FC<Props> = ({
               <div className="text-sm sm:text-base font-extrabold text-[#C45774]">
                 ${totalPrice.toLocaleString('es-AR')}
                 <span className="text-[0.68rem] font-semibold text-stone-400 ml-1.5 font-sans">
-                  (Seña $5.000)
+                  (Seña ${(salonSettings.depositAmount || 5000).toLocaleString('es-AR')})
                 </span>
               </div>
             </div>
@@ -834,12 +1005,25 @@ export const BookingModal: React.FC<Props> = ({
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleConfirmBooking}
-                  className={`btn-satin-pink px-6 py-2 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-md bg-gradient-to-r from-[#427A5B] to-[#2F5740] ${
-                    step === 1 ? 'w-full sm:w-auto' : 'flex-1 sm:flex-initial'
-                  }`}
+                  className={`btn-satin-pink px-6 py-2 text-xs sm:text-sm flex items-center justify-center gap-2 rounded-full cursor-pointer shadow-md transition-all ${
+                    paymentMethod === 'mercadopago'
+                      ? 'bg-gradient-to-r from-[#009EE3] to-[#0074A8] text-white hover:brightness-105'
+                      : 'bg-gradient-to-r from-[#427A5B] to-[#2F5740] text-white'
+                  } ${step === 1 ? 'w-full sm:w-auto' : 'flex-1 sm:flex-initial'}`}
                 >
-                  <span>{isSubmitting ? 'Confirmando...' : 'Confirmar Reserva'}</span>
-                  <Check size={14} />
+                  {isSubmitting ? (
+                    <span>{isRedirectingMp ? 'Abriendo Mercado Pago...' : 'Confirmando...'}</span>
+                  ) : paymentMethod === 'mercadopago' ? (
+                    <>
+                      <span>Abonar Seña con Mercado Pago</span>
+                      <Lock size={13} />
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirmar y Enviar Comprobante</span>
+                      <Check size={14} />
+                    </>
+                  )}
                 </button>
               )}
             </div>

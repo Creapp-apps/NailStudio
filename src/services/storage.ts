@@ -205,21 +205,48 @@ class StorageService {
     this.isSyncing = true;
 
     try {
-      // 1. Services
-      const { data: srvData } = await supabase.from('nail_services').select('*');
-      if (srvData && srvData.length > 0) {
-        const mappedServices: NailService[] = srvData.map(s => ({
-          id: s.id,
-          title: s.title,
-          category: s.category,
-          basePrice: Number(s.base_price),
-          baseDurationMin: Number(s.base_duration_min),
-          description: s.description || '',
-          badge: s.badge || undefined,
-          imageUrl: s.image_url || '',
-          recommendedFor: s.recommended_for || ''
-        }));
-        localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
+      // 1. Services & Full Catalog (from tenant_catalog_config or fallback to nail_services)
+      try {
+        const { data: catalogConfig } = await supabase
+          .from('client_profiles')
+          .select('technician_notes')
+          .eq('id', 'tenant_catalog_config')
+          .maybeSingle();
+
+        if (catalogConfig && catalogConfig.technician_notes) {
+          const parsed = JSON.parse(catalogConfig.technician_notes);
+          if (Array.isArray(parsed.services) && parsed.services.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(parsed.services));
+          }
+          if (Array.isArray(parsed.removals) && parsed.removals.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.REMOVALS, JSON.stringify(parsed.removals));
+          }
+          if (Array.isArray(parsed.nailArtTiers) && parsed.nailArtTiers.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.NAIL_ART_TIERS, JSON.stringify(parsed.nailArtTiers));
+          }
+        } else {
+          // Fallback to nail_services table if tenant_catalog_config doesn't exist yet
+          const { data: srvData } = await supabase.from('nail_services').select('*');
+          if (srvData && srvData.length > 0) {
+            const mappedServices: NailService[] = srvData.map(s => ({
+              id: s.id,
+              title: s.title,
+              category: s.category,
+              basePrice: Number(s.base_price),
+              baseDurationMin: Number(s.base_duration_min),
+              description: s.description || '',
+              badge: s.badge || undefined,
+              imageUrl: s.image_url || '',
+              recommendedFor: s.recommended_for || '',
+              isActive: (s as any).is_active ?? true
+            }));
+            localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(mappedServices));
+            // Initialize tenant_catalog_config in Supabase
+            this.pushCatalogToSupabase();
+          }
+        }
+      } catch (err) {
+        console.warn('Could not sync catalog config from Supabase:', err);
       }
 
       // 2. Technicians (Sync staff from tenant_staff_config or fallback)
@@ -292,11 +319,14 @@ class StorageService {
           technicianNotes: c.technician_notes || '',
           pointsBalance: Number(c.points_balance || 0),
           tier: c.tier || 'Silver',
-          referralCode: c.referral_code,
+          referralCode: c.referral_code || `CLI-${c.id.slice(0, 6)}`,
           referredBy: c.referred_by || undefined,
           totalVisits: Number(c.total_visits || 0),
           lastVisitDate: c.last_visit_date || '2026-09-20',
-          setsHistory: []
+          setsHistory: [],
+          isVitalicia: Boolean((c as any).is_vitalicia ?? (c as any).isVitalicia ?? false),
+          vitaliciaDiscountPercentage: Number((c as any).vitalicia_discount_percentage ?? (c as any).vitaliciaDiscountPercentage ?? 15),
+          vitaliciaAssignedAt: (c as any).vitalicia_assigned_at || (c as any).vitaliciaAssignedAt || undefined
         }));
         localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(mappedClients));
 
@@ -353,6 +383,7 @@ class StorageService {
   public saveServices(services: NailService[]): void {
     localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
     this.notify();
+    this.pushCatalogToSupabase();
   }
 
   public addService(service: Omit<NailService, 'id'>): NailService {
@@ -393,6 +424,7 @@ class StorageService {
   public saveRemovals(removals: RemovalOption[]): void {
     localStorage.setItem(STORAGE_KEYS.REMOVALS, JSON.stringify(removals));
     this.notify();
+    this.pushCatalogToSupabase();
   }
 
   public addRemoval(removal: Omit<RemovalOption, 'id'>): RemovalOption {
@@ -433,6 +465,7 @@ class StorageService {
   public saveNailArtTiers(tiers: NailArtTier[]): void {
     localStorage.setItem(STORAGE_KEYS.NAIL_ART_TIERS, JSON.stringify(tiers));
     this.notify();
+    this.pushCatalogToSupabase();
   }
 
   public addNailArtTier(tier: Omit<NailArtTier, 'id'>): NailArtTier {
@@ -457,6 +490,38 @@ class StorageService {
   public deleteNailArtTier(id: string): void {
     const current = this.getNailArtTiers();
     this.saveNailArtTiers(current.filter(t => t.id !== id));
+  }
+
+  // --- Push Catalog to Supabase (Services, Removals, Nail Art Tiers) ---
+  public async pushCatalogToSupabase(): Promise<boolean> {
+    try {
+      const services = this.getServices();
+      const removals = this.getRemovals();
+      const nailArtTiers = this.getNailArtTiers();
+      const payload = {
+        services,
+        removals,
+        nailArtTiers,
+        updatedAt: new Date().toISOString()
+      };
+
+      const { error } = await supabase.from('client_profiles').upsert({
+        id: 'tenant_catalog_config',
+        name: 'Catalog Sync System',
+        phone: '+5491100000000',
+        referral_code: 'SYS_CATALOG_SYNC',
+        technician_notes: JSON.stringify(payload)
+      }, { onConflict: 'id' });
+
+      if (error) {
+        console.warn('Could not sync catalog config to Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('Sync catalog config to Supabase fallback:', err);
+      return false;
+    }
   }
 
   public getTechs(): NailTechnician[] {
@@ -626,6 +691,30 @@ class StorageService {
     }
   }
 
+  public confirmDepositPaid(id: string, paymentMethodNotes?: string): void {
+    const apts = this.getAppointments();
+    const idx = apts.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      apts[idx].depositPaid = true;
+      apts[idx].status = 'confirmed';
+      if (paymentMethodNotes) {
+        const existing = apts[idx].notes || '';
+        apts[idx].notes = existing ? `${existing} | ${paymentMethodNotes}` : paymentMethodNotes;
+      }
+      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(apts));
+      try {
+        supabase.from('appointments').update({
+          deposit_paid: true,
+          status: 'confirmed',
+          notes: apts[idx].notes
+        }).eq('id', id).then();
+      } catch (e) {
+        console.error('Error confirming deposit in Supabase:', e);
+      }
+      this.notify();
+    }
+  }
+
   private async updateAppointmentInSupabase(id: string, status: AppointmentStatus) {
     try {
       await supabase.from('appointments').update({ status }).eq('id', id);
@@ -765,6 +854,47 @@ class StorageService {
     }
   }
 
+  public toggleVitalicia(clientId: string, percentage: number = 15): ClientProfile | null {
+    const clients = this.getClients();
+    const idx = clients.findIndex(c => c.id === clientId);
+    if (idx !== -1) {
+      const current = clients[idx];
+      const willBeVitalicia = !current.isVitalicia;
+      const updated: ClientProfile = {
+        ...current,
+        isVitalicia: willBeVitalicia,
+        vitaliciaDiscountPercentage: willBeVitalicia ? (current.vitaliciaDiscountPercentage || percentage) : undefined,
+        vitaliciaAssignedAt: willBeVitalicia ? new Date().toISOString().split('T')[0] : undefined
+      };
+      clients[idx] = updated;
+      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+      this.updateClientInSupabase(updated);
+      this.notify();
+      return updated;
+    }
+    return null;
+  }
+
+  public setVitaliciaStatus(clientId: string, isVitalicia: boolean, percentage: number = 15): ClientProfile | null {
+    const clients = this.getClients();
+    const idx = clients.findIndex(c => c.id === clientId);
+    if (idx !== -1) {
+      const current = clients[idx];
+      const updated: ClientProfile = {
+        ...current,
+        isVitalicia,
+        vitaliciaDiscountPercentage: isVitalicia ? percentage : undefined,
+        vitaliciaAssignedAt: isVitalicia ? (current.vitaliciaAssignedAt || new Date().toISOString().split('T')[0]) : undefined
+      };
+      clients[idx] = updated;
+      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+      this.updateClientInSupabase(updated);
+      this.notify();
+      return updated;
+    }
+    return null;
+  }
+
   private async pushClientToSupabase(client: ClientProfile) {
     try {
       await supabase.from('client_profiles').upsert({
@@ -783,7 +913,9 @@ class StorageService {
         referral_code: client.referralCode,
         referred_by: client.referredBy || null,
         total_visits: client.totalVisits || 0,
-        last_visit_date: client.lastVisitDate || new Date().toISOString().split('T')[0]
+        last_visit_date: client.lastVisitDate || new Date().toISOString().split('T')[0],
+        is_vitalicia: client.isVitalicia || false,
+        vitalicia_discount_percentage: client.vitaliciaDiscountPercentage || 15
       });
     } catch (err) {
       console.warn('Sync client to Supabase fallback:', err);
@@ -795,7 +927,9 @@ class StorageService {
       await supabase.from('client_profiles').update({
         technician_notes: updatedClient.technicianNotes,
         points_balance: updatedClient.pointsBalance,
-        tier: updatedClient.tier
+        tier: updatedClient.tier,
+        is_vitalicia: updatedClient.isVitalicia || false,
+        vitalicia_discount_percentage: updatedClient.vitaliciaDiscountPercentage || 15
       }).eq('id', updatedClient.id);
     } catch (err) {
       console.error('Error updating client in Supabase:', err);
@@ -921,7 +1055,19 @@ class StorageService {
   // --- Integrations & APIs ---
   public getIntegrations(): SalonIntegrationsConfig {
     const raw = localStorage.getItem(STORAGE_KEYS.INTEGRATIONS);
-    return raw ? JSON.parse(raw) : DEFAULT_INTEGRATIONS_CONFIG;
+    if (!raw) return DEFAULT_INTEGRATIONS_CONFIG;
+    try {
+      const parsed: SalonIntegrationsConfig = JSON.parse(raw);
+      // If still having dummy placeholder, upgrade to current default
+      if (parsed?.mercadoPago?.accessToken === 'APP_USR-91829102-1829-4819-b291') {
+        parsed.mercadoPago.accessToken = DEFAULT_INTEGRATIONS_CONFIG.mercadoPago.accessToken;
+        parsed.mercadoPago.publicKey = DEFAULT_INTEGRATIONS_CONFIG.mercadoPago.publicKey;
+        localStorage.setItem(STORAGE_KEYS.INTEGRATIONS, JSON.stringify(parsed));
+      }
+      return parsed;
+    } catch {
+      return DEFAULT_INTEGRATIONS_CONFIG;
+    }
   }
 
   public saveIntegrations(integrations: SalonIntegrationsConfig): void {
@@ -1049,8 +1195,8 @@ const DEFAULT_INTEGRATIONS_CONFIG: SalonIntegrationsConfig = {
   mercadoPago: {
     enabled: true,
     sandboxMode: false,
-    publicKey: 'APP_USR-78192a01-4921-4891-91a2',
-    accessToken: 'APP_USR-91829102-1829-4819-b291',
+    publicKey: 'APP_USR-0b9e047d-fe15-4a97-adb5-803650894421',
+    accessToken: 'APP_USR-4181198818152310-100522-e2a4f4cdfab7027996c8ad7fb46d0719-564315812',
     autoDepositCheckout: true
   },
   googleCalendar: {

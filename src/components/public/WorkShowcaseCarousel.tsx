@@ -31,18 +31,31 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const rawItems = config.showcaseItems || [];
-  const filteredItems = activeCategory === 'all'
-    ? rawItems
-    : rawItems.filter(item => item.category === activeCategory);
+  const rawItems = Array.isArray(config.showcaseItems) ? config.showcaseItems : [];
+  const dynamicCategories = (config.showcaseCategories && Array.isArray(config.showcaseCategories) && config.showcaseCategories.length > 0)
+    ? config.showcaseCategories
+    : [
+        { id: 'kapping', label: 'Kapping Gel' },
+        { id: 'nail_art', label: 'Nail Art & Efectos' },
+        { id: 'soft_gel', label: 'Soft Gel' },
+        { id: 'rusa', label: 'Manicuría Rusa' }
+      ];
 
   const categories = [
     { id: 'all', label: 'Todos los Trabajos' },
-    { id: 'kapping', label: 'Kapping Gel' },
-    { id: 'nail_art', label: 'Nail Art & Efectos' },
-    { id: 'soft_gel', label: 'Soft Gel' },
-    { id: 'rusa', label: 'Manicuría Rusa' }
+    ...(Array.isArray(dynamicCategories) ? dynamicCategories : [])
   ];
+
+  // Auto reset activeCategory if it was removed
+  useEffect(() => {
+    if (activeCategory !== 'all' && Array.isArray(dynamicCategories) && !dynamicCategories.some(c => c && c.id === activeCategory)) {
+      setActiveCategory('all');
+    }
+  }, [dynamicCategories, activeCategory]);
+
+  const filteredItems = activeCategory === 'all'
+    ? rawItems
+    : rawItems.filter(item => item && item.category === activeCategory);
 
   // Auto-play effect
   useEffect(() => {
@@ -111,27 +124,7 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
       <div className="app-container" style={{ position: 'relative', zIndex: 10 }}>
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem auto' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.35rem 0.9rem',
-              borderRadius: 'var(--radius-full)',
-              background: `rgba(${theme.primaryRgb}, 0.12)`,
-              color: theme.secondary,
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-couture)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              marginBottom: '0.85rem',
-              border: `1px solid ${theme.borderSubtle}`
-            }}
-          >
-            <Sparkles size={13} color={theme.primary} />
-            <span>{config.showcaseBadge || '✦ OBRAS DE AUTOR & PORTFOLIO ✦'}</span>
-          </div>
+
 
           <h2 style={{
             fontSize: 'clamp(2rem, 3.8vw, 3.1rem)',
@@ -266,8 +259,14 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
               ref={sliderRef}
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-                gap: '1.75rem'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+                gap: '1.75rem',
+                justifyContent: 'center',
+                maxWidth: filteredItems.length < 4
+                  ? `${Math.max(filteredItems.length * 320 + (filteredItems.length - 1) * 28, 300)}px`
+                  : '100%',
+                margin: '0 auto',
+                width: '100%'
               }}
             >
               {filteredItems.map((item, idx) => (
@@ -282,7 +281,10 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    position: 'relative'
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '340px',
+                    margin: '0 auto'
                   }}
                   className="showcase-card"
                 >
@@ -303,6 +305,7 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
+                        objectPosition: item.objectPosition || 'center center',
                         transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
                       }}
                       className="showcase-img"

@@ -16,7 +16,8 @@ import {
   Play,
   RotateCcw,
   Scissors,
-  DollarSign
+  DollarSign,
+  Crown
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -58,11 +59,16 @@ export const TurnoDetalleModal: React.FC<Props> = ({
   const nailArt = storage.getNailArtTiers().find(t => t.id === appointment.nailArtTierId) || NAIL_ART_TIERS.find(t => t.id === appointment.nailArtTierId);
   const removal = storage.getRemovals().find(r => r.id === appointment.removalId) || REMOVAL_OPTIONS.find(r => r.id === appointment.removalId);
 
+  const client = storage.getClientByPhone(appointment.clientPhone) ||
+    storage.getClients().find(c => c.name.toLowerCase().trim() === appointment.clientName.toLowerCase().trim());
+  const isVitalicia = Boolean(appointment.isVitaliciaApplied || client?.isVitalicia);
+  const vitaliciaDiscountPct = client?.vitaliciaDiscountPercentage || 15;
+
   // WhatsApp reminder message
   const cleanPhone = appointment.clientPhone.replace(/\D/g, '');
   const formattedDate = appointment.scheduledDate ? appointment.scheduledDate : '';
   const messageText = encodeURIComponent(
-    `Hola ${appointment.clientName}! 💅 Te recordamos tu turno en Atelier Nails el día ${formattedDate} a las ${appointment.scheduledTime} hs para ${service?.title || 'tu servicio de manicuría'}. ¡Te esperamos!`
+    `Hola ${appointment.clientName}! 💅 Te recordamos tu turno en Atelier Nails el día ${formattedDate} a las ${appointment.scheduledTime} hs para ${service?.title || 'tu servicio de manicuría'}.${isVitalicia ? ` (Recordá que contás con tu beneficio de Tarifa Vitalicia ${vitaliciaDiscountPct}% OFF ✨).` : ''} ¡Te esperamos!`
   );
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${messageText}`;
 
@@ -132,18 +138,45 @@ export const TurnoDetalleModal: React.FC<Props> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto"
-      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+        animation: 'modalBackdropFade 0.2s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
-        className="w-full max-w-lg bg-card border border-border/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[85vh] animate-scale-up"
+        style={{
+          animation: 'modalCardPop 0.25s ease-out',
+          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)'
+        }}
+        className="w-full max-w-lg bg-card border border-border/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-border/70 bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent flex items-start justify-between">
           <div>
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-2">
               {getStatusBadge(appointment.status)}
+              {isVitalicia && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 shadow-xs">
+                  <Crown size={12} className="text-amber-500" />
+                  <span>Vitalicia (-{vitaliciaDiscountPct}%)</span>
+                </span>
+              )}
             </div>
             <h3 className="text-lg sm:text-xl font-bold font-serif text-foreground">
               {appointment.clientName}
@@ -258,9 +291,21 @@ export const TurnoDetalleModal: React.FC<Props> = ({
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide block">Precio Total</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                  ${appointment.totalPrice.toLocaleString('es-AR')}
-                </span>
+                <div className="flex items-center justify-end gap-1.5">
+                  {isVitalicia && (
+                    <span className="text-[11px] line-through text-muted-foreground">
+                      ${(appointment.originalPrice || Math.round(appointment.totalPrice / (1 - vitaliciaDiscountPct / 100))).toLocaleString('es-AR')}
+                    </span>
+                  )}
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                    ${appointment.totalPrice.toLocaleString('es-AR')}
+                  </span>
+                </div>
+                {isVitalicia && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block">
+                    👑 Vitalicia (-{vitaliciaDiscountPct}%)
+                  </span>
+                )}
               </div>
             </div>
 

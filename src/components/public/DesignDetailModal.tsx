@@ -8,7 +8,6 @@ import {
   Clock,
   Heart,
   ChevronRight,
-  Gem,
   CheckCircle2,
   ArrowRight
 } from 'lucide-react';
@@ -123,38 +122,14 @@ export const DesignDetailModal: React.FC<Props> = ({
               HEMA-Free
             </span>
           </div>
-
-          {/* Duration Banner at bottom of image */}
-          <div className="absolute bottom-3 left-4 right-4 z-10 flex items-center justify-between text-white/90">
-            <div className="flex items-center gap-1.5 text-xs font-medium drop-shadow-sm">
-              <Gem className="size-3.5 text-pink-300" />
-              <span>Acabado de Autor & Durabilidad Superior</span>
-            </div>
-            <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase backdrop-blur-sm">
-              {item.badgeInfo || `${item.durationDays || 21}+ días intactas`}
-            </span>
-          </div>
         </div>
 
         {/* Modal Body / Information & Captation */}
         <div className="p-5 sm:p-6 space-y-4">
-          {/* Header Title & Atelier Label */}
           <div>
-            <div className="flex items-center justify-between">
-              <span
-                className="text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: secondaryColor }}
-              >
-                ✦ COLECCIÓN EXCLUSIVA • {brandName} ✦
-              </span>
-              <span className="text-[11px] text-neutral-400 font-medium">
-                Alta Precisión
-              </span>
-            </div>
-
             <h3
               id="design-modal-title"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-neutral-900"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900"
               style={{ fontFamily: 'var(--font-serif-glam, Italiana, serif)' }}
             >
               {item.title}
@@ -200,13 +175,7 @@ export const DesignDetailModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Conversion Guarantee Note */}
-          <div className="flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2 text-[11px] text-neutral-500">
-            <Sparkles className="size-3.5 text-pink-500 shrink-0" />
-            <span>
-              Incluye diagnóstico previo y preparación ungueal sin daño a tu uña natural.
-            </span>
-          </div>
+
 
           {/* High Conversion CTA Section */}
           <div className="pt-2 space-y-2.5">

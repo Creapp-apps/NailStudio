@@ -40,9 +40,11 @@ import {
   ArrowUp,
   ArrowDown,
   Maximize2,
-  Link as LinkIcon
+  Tag,
+  Link as LinkIcon,
+  Edit2
 } from 'lucide-react';
-import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem, ShowcaseWorkItem } from '../../types/webConfig';
+import { WebCustomizationConfig, DEFAULT_WEB_CONFIG, WhyUsFeatureItem, ShowcaseWorkItem, ShowcaseCategoryItem } from '../../types/webConfig';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { syncDocumentBrand } from '../../utils/brandSync';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -54,6 +56,9 @@ import { PublicHeader } from '../navigation/PublicHeader';
 import { PublicLanding } from '../public/PublicLanding';
 import { IPhoneMockup } from './IPhoneMockup';
 import { MacBookMockup } from './MacBookMockup';
+import { storage } from '../../services/storage';
+import { NailService } from '../../types/nailStudio';
+import { ServiceEditModal } from './ServiceEditModal';
 
 type StudioCategory =
   | 'identidad'
@@ -62,6 +67,7 @@ type StudioCategory =
   | 'glows'
   | 'hero'
   | 'galeria'
+  | 'servicios'
   | 'cinta'
   | 'pilares'
   | 'contacto';
@@ -84,6 +90,69 @@ export const WebStudioView: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<StudioCategory>('identidad');
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [workFilterCategory, setWorkFilterCategory] = useState<string>('all');
+
+  // Services state and modals
+  const [services, setServices] = useState<NailService[]>(() => storage.getServices());
+  const [editingService, setEditingService] = useState<NailService | null>(null);
+  const [isCreatingService, setIsCreatingService] = useState<boolean>(false);
+  const [serviceFilterCategory, setServiceFilterCategory] = useState<string>('all');
+
+  useEffect(() => {
+    const unsub = storage.subscribe(() => {
+      setServices(storage.getServices());
+    });
+    return unsub;
+  }, []);
+
+  const handleMoveService = (fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= services.length) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    storage.saveServices(updated);
+    setServices(updated);
+  };
+
+  const handleMoveServiceToTop = (fromIndex: number) => {
+    if (fromIndex === 0) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.unshift(moved);
+    storage.saveServices(updated);
+    setServices(updated);
+  };
+
+  const handleMoveServiceToPosition = (fromIndex: number, targetPos: number) => {
+    const toIndex = targetPos - 1;
+    if (toIndex < 0 || toIndex >= services.length || toIndex === fromIndex) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    storage.saveServices(updated);
+    setServices(updated);
+  };
+
+  const handleSaveService = (serviceData: Omit<NailService, 'id'>, existingId?: string) => {
+    if (existingId) {
+      storage.updateService({ ...serviceData, id: existingId });
+    } else {
+      storage.addService(serviceData);
+    }
+    setEditingService(null);
+    setIsCreatingService(false);
+  };
+
+  const handleDeleteService = (id: string, title: string) => {
+    if (confirm(`¿Estás segura de eliminar la técnica "${title}"?`)) {
+      storage.deleteService(id);
+    }
+  };
+
+  const handleToggleServiceActive = (srv: NailService) => {
+    storage.updateService({ ...srv, isActive: srv.isActive === false ? true : false });
+  };
 
   const mobileIframeRef = useRef<HTMLIFrameElement>(null);
   const desktopIframeRef = useRef<HTMLIFrameElement>(null);
@@ -336,12 +405,89 @@ export const WebStudioView: React.FC = () => {
     handleFieldChange('showcaseItems', updated);
   };
 
-  const addWorkItem = () => {
+  const moveWorkItem = (index: number, direction: 'up' | 'down') => {
+    const current = [...(draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems)];
+    if (direction === 'up' && index > 0) {
+      const temp = current[index];
+      current[index] = current[index - 1];
+      current[index - 1] = temp;
+      handleFieldChange('showcaseItems', current);
+    } else if (direction === 'down' && index < current.length - 1) {
+      const temp = current[index];
+      current[index] = current[index + 1];
+      current[index + 1] = temp;
+      handleFieldChange('showcaseItems', current);
+    }
+  };
+
+  const moveWorkItemToTop = (index: number) => {
+    if (index === 0) return;
+    const current = [...(draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems)];
+    const [item] = current.splice(index, 1);
+    current.unshift(item);
+    handleFieldChange('showcaseItems', current);
+  };
+
+  const moveWorkItemToPosition = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const current = [...(draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems)];
+    const [item] = current.splice(fromIndex, 1);
+    current.splice(toIndex, 0, item);
+    handleFieldChange('showcaseItems', current);
+  };
+
+  const moveWorkItemInCategory = (workId: string, direction: 'up' | 'down') => {
+    const current = [...(draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems)];
+    const targetWork = current.find(w => w.id === workId);
+    if (!targetWork) return;
+
+    const categoryId = targetWork.category;
+    const catItemsWithIndex = current
+      .map((item, idx) => ({ item, idx }))
+      .filter(x => x.item.category === categoryId);
+
+    const relativeIndex = catItemsWithIndex.findIndex(x => x.item.id === workId);
+    if (relativeIndex === -1) return;
+
+    if (direction === 'up' && relativeIndex > 0) {
+      const currentMasterIdx = catItemsWithIndex[relativeIndex].idx;
+      const prevMasterIdx = catItemsWithIndex[relativeIndex - 1].idx;
+      const temp = current[currentMasterIdx];
+      current[currentMasterIdx] = current[prevMasterIdx];
+      current[prevMasterIdx] = temp;
+      handleFieldChange('showcaseItems', current);
+    } else if (direction === 'down' && relativeIndex < catItemsWithIndex.length - 1) {
+      const currentMasterIdx = catItemsWithIndex[relativeIndex].idx;
+      const nextMasterIdx = catItemsWithIndex[relativeIndex + 1].idx;
+      const temp = current[currentMasterIdx];
+      current[currentMasterIdx] = current[nextMasterIdx];
+      current[nextMasterIdx] = temp;
+      handleFieldChange('showcaseItems', current);
+    }
+  };
+
+  const moveWorkItemToCategoryTop = (workId: string) => {
+    const current = [...(draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems)];
+    const targetWorkIndex = current.findIndex(w => w.id === workId);
+    if (targetWorkIndex === -1) return;
+    const targetWork = current[targetWorkIndex];
+
+    const categoryId = targetWork.category;
+    const firstCatIndex = current.findIndex(w => w.category === categoryId);
+    if (firstCatIndex === -1 || firstCatIndex === targetWorkIndex) return;
+
+    current.splice(targetWorkIndex, 1);
+    current.splice(firstCatIndex, 0, targetWork);
+    handleFieldChange('showcaseItems', current);
+  };
+
+  const addWorkItem = (toTop: boolean = false) => {
     const current = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    const targetCategory = workFilterCategory !== 'all' ? workFilterCategory : (currentCategories[0]?.id || 'kapping');
     const newItem: ShowcaseWorkItem = {
       id: `work-${Date.now()}`,
       title: 'Nuevo Set de Alta Manicuría',
-      category: 'kapping',
+      category: targetCategory,
       imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
       techniqueTag: 'Kapping Rubber',
       description: 'Nivelación con gel hipoalergénico y acabado brillante de 21 días.',
@@ -349,13 +495,73 @@ export const WebStudioView: React.FC = () => {
       durationDays: 21,
       estimatedTime: '~60 - 80m',
       formula: '100% Segura',
-      maintenance: '21 a 28 días'
+      maintenance: '21 a 28 días',
+      objectPosition: 'center center'
     };
-    handleFieldChange('showcaseItems', [...current, newItem]);
+    handleFieldChange('showcaseItems', toTop ? [newItem, ...current] : [...current, newItem]);
   };
 
   const resetShowcasePresets = () => {
     handleFieldChange('showcaseItems', DEFAULT_WEB_CONFIG.showcaseItems);
+  };
+
+  // Categories Management
+  const currentCategories: ShowcaseCategoryItem[] = (draftConfig.showcaseCategories && draftConfig.showcaseCategories.length > 0)
+    ? draftConfig.showcaseCategories
+    : (DEFAULT_WEB_CONFIG.showcaseCategories || [
+        { id: 'kapping', label: 'Kapping Gel' },
+        { id: 'nail_art', label: 'Nail Art & Efectos' },
+        { id: 'soft_gel', label: 'Soft Gel' },
+        { id: 'rusa', label: 'Manicuría Rusa' }
+      ]);
+
+  const updateCategoryLabel = (id: string, newLabel: string) => {
+    const updated = currentCategories.map(cat =>
+      cat.id === id ? { ...cat, label: newLabel } : cat
+    );
+    handleFieldChange('showcaseCategories', updated);
+  };
+
+  const addCategory = () => {
+    const newId = `cat-${Date.now()}`;
+    const newCategory: ShowcaseCategoryItem = {
+      id: newId,
+      label: 'Nueva Técnica'
+    };
+    handleFieldChange('showcaseCategories', [...currentCategories, newCategory]);
+  };
+
+  const removeCategory = (id: string) => {
+    if (currentCategories.length <= 1) {
+      alert('Debes mantener al menos una categoría para la galería.');
+      return;
+    }
+    const updated = currentCategories.filter(cat => cat.id !== id);
+    handleFieldChange('showcaseCategories', updated);
+  };
+
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const updated = [...currentCategories];
+    if (direction === 'up' && index > 0) {
+      const temp = updated[index];
+      updated[index] = updated[index - 1];
+      updated[index - 1] = temp;
+      handleFieldChange('showcaseCategories', updated);
+    } else if (direction === 'down' && index < updated.length - 1) {
+      const temp = updated[index];
+      updated[index] = updated[index + 1];
+      updated[index + 1] = temp;
+      handleFieldChange('showcaseCategories', updated);
+    }
+  };
+
+  const resetCategoriesToDefault = () => {
+    handleFieldChange('showcaseCategories', DEFAULT_WEB_CONFIG.showcaseCategories || [
+      { id: 'kapping', label: 'Kapping Gel' },
+      { id: 'nail_art', label: 'Nail Art & Efectos' },
+      { id: 'soft_gel', label: 'Soft Gel' },
+      { id: 'rusa', label: 'Manicuría Rusa' }
+    ]);
   };
 
   const addPilarItem = () => {
@@ -390,6 +596,7 @@ export const WebStudioView: React.FC = () => {
 
   const handleSave = () => {
     updateConfig(draftConfig);
+    storage.saveServices(services);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2800);
   };
@@ -458,7 +665,7 @@ export const WebStudioView: React.FC = () => {
         <div className={`${previewDevice === 'desktop' ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-1.5 rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-white dark:bg-card p-3 shadow-md`}>
           <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center justify-between">
             <span>Secciones del Sitio</span>
-            <span className="text-[9px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">8 Módulos</span>
+            <span className="text-[9px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">9 Módulos</span>
           </div>
 
           <button
@@ -555,6 +762,21 @@ export const WebStudioView: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveCategory('servicios')}
+            className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
+              activeCategory === 'servicios'
+                ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-transparent text-rose-700 dark:text-rose-300 font-semibold border border-rose-500/30 shadow-xs'
+                : 'text-muted-foreground hover:bg-rose-500/5 hover:text-foreground'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="size-4 text-rose-500" />
+              <span>Técnicas Estructurales</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{services.length} servicios</span>
+          </button>
+
+          <button
             onClick={() => setActiveCategory('cinta')}
             className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
               activeCategory === 'cinta'
@@ -617,6 +839,7 @@ export const WebStudioView: React.FC = () => {
                     {activeCategory === 'glows' && <Sparkles className="size-4 text-pink-400" />}
                     {activeCategory === 'hero' && <Layout className="size-4 text-rose-500" />}
                     {activeCategory === 'galeria' && <ImageIcon className="size-4 text-pink-500" />}
+                    {activeCategory === 'servicios' && <Sparkles className="size-4 text-rose-500" />}
                     {activeCategory === 'cinta' && <SlidersHorizontal className="size-4 text-indigo-500" />}
                     {activeCategory === 'pilares' && <HeartHandshake className="size-4 text-emerald-500" />}
                     {activeCategory === 'contacto' && <MessageCircle className="size-4 text-emerald-600" />}
@@ -629,6 +852,7 @@ export const WebStudioView: React.FC = () => {
                       {activeCategory === 'glows' && 'Fondo Sensorial, Glows & Efectos'}
                       {activeCategory === 'hero' && 'Portada de Inicio & Tarjeta 3D'}
                       {activeCategory === 'galeria' && 'Galería de Trabajos Destacados'}
+                      {activeCategory === 'servicios' && 'Técnicas Estructurales Exclusivas'}
                       {activeCategory === 'cinta' && 'Cinta Continua & Manifiesto'}
                       {activeCategory === 'pilares' && 'Pilares de Diferenciación'}
                       {activeCategory === 'contacto' && 'Redes, WhatsApp & Ubicación'}
@@ -1966,205 +2190,821 @@ export const WebStudioView: React.FC = () => {
                     />
                   </div>
 
+                  {/* Category Management Section */}
                   <div className="border-t border-rose-200/60 dark:border-rose-900/30 pt-3">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2.5 gap-2 flex-wrap">
                       <div>
-                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                          Trabajos en Exhibición ({(draftConfig.showcaseItems || []).length})
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                          <Layers className="size-3.5 text-[#DE738F]" />
+                          <span>Pestañas / Categorías del Portfolio</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DE738F]/15 text-[#DE738F]">
+                            {currentCategories.length}
+                          </span>
                         </h4>
-                        <p className="text-[10px] text-muted-foreground">Podés subir fotos desde tu dispositivo o pegar URLs</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Personalizá los nombres y el orden de las pestañas que tus clientas verán como filtros en la galería.
+                        </p>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={addWorkItem}
-                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1"
+                          onClick={resetCategoriesToDefault}
+                          className="px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground border border-border/60 hover:bg-background rounded-lg shadow-2xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Restablecer categorías predeterminadas"
+                        >
+                          <RotateCcw className="size-2.5" />
+                          <span className="hidden sm:inline">Predeterminadas</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={addCategory}
+                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Crear una nueva categoría para organizar tus trabajos"
                         >
                           <Plus className="size-3" />
-                          <span>Agregar</span>
+                          <span>Nueva Categoría</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Cards list */}
-                    <div className="space-y-3">
-                      {(draftConfig.showcaseItems || []).map((work, index) => (
-                        <div
-                          key={work.id || index}
-                          className="p-3 rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/20 dark:bg-rose-950/10 space-y-2.5"
-                        >
-                          <div className="flex items-start gap-3">
-                            {/* Photo Thumbnail + Quick Upload */}
-                            <div className="relative group shrink-0">
-                              <img
-                                src={work.imageUrl}
-                                alt={work.title}
-                                className="size-16 rounded-lg object-cover border border-rose-200/80 dark:border-rose-800 shadow-xs"
-                              />
-                              <label
-                                className="absolute inset-0 bg-black/55 text-white rounded-lg opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-[9px] font-semibold"
-                                title="Subir foto propia desde dispositivo"
-                              >
-                                <UploadCloud className="size-4 mb-0.5" />
-                                <span>Subir</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleWorkImageUpload(work.id, file);
-                                  }}
-                                />
-                              </label>
-                            </div>
+                    {/* Categories Reorderable List */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                      {currentCategories.map((cat, idx) => {
+                        const assignedCount = (draftConfig.showcaseItems || []).filter(w => w.category === cat.id).length;
+                        return (
+                          <div
+                            key={cat.id}
+                            className="flex items-center gap-2 p-2 rounded-xl border border-rose-200/50 dark:border-rose-900/30 bg-background/80 shadow-2xs hover:border-[#DE738F]/40 transition-colors"
+                          >
+                            <span className="text-[10px] font-bold text-muted-foreground/70 shrink-0 w-4 text-center">
+                              #{idx + 1}
+                            </span>
 
-                            {/* Main Details */}
-                            <div className="flex-1 space-y-1.5 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <input
-                                  type="text"
-                                  value={work.title}
-                                  onChange={(e) => updateWorkItem(work.id, { title: e.target.value })}
-                                  placeholder="Título del set (ej: Kapping Ruso)"
-                                  className="w-full text-xs font-bold text-foreground bg-transparent border-b border-rose-200/50 focus:border-[#DE738F] focus:outline-none pb-0.5"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeWorkItem(work.id)}
-                                  className="text-muted-foreground hover:text-rose-600 p-1 rounded-md hover:bg-rose-100/50 transition-colors"
-                                  title="Eliminar este trabajo"
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Categoría</label>
-                                  <LuxurySelect
-                                    value={work.category}
-                                    onChange={(val) => updateWorkItem(work.id, { category: String(val) })}
-                                    options={[
-                                      { value: 'kapping', label: 'Kapping Gel' },
-                                      { value: 'nail_art', label: 'Nail Art & Efectos' },
-                                      { value: 'soft_gel', label: 'Soft Gel' },
-                                      { value: 'rusa', label: 'Manicuría Rusa' }
-                                    ]}
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Técnica (Pill)</label>
-                                  <input
-                                    type="text"
-                                    value={work.techniqueTag}
-                                    onChange={(e) => updateWorkItem(work.id, { techniqueTag: e.target.value })}
-                                    placeholder="Ej: Nivelación Rubber"
-                                    className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Description, Badge & Image URL input */}
-                          <div className="space-y-1.5 pt-1">
                             <input
                               type="text"
-                              value={work.description || ''}
-                              onChange={(e) => updateWorkItem(work.id, { description: e.target.value })}
-                              placeholder="Breve descripción o detalle técnico del set..."
-                              className="w-full text-[11px] rounded-lg border border-border bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/40"
+                              value={cat.label}
+                              onChange={(e) => updateCategoryLabel(cat.id, e.target.value)}
+                              placeholder="Nombre de la categoría..."
+                              className="flex-1 text-xs font-semibold text-foreground bg-transparent border-b border-rose-200/40 focus:border-[#DE738F] focus:outline-none px-1 py-0.5 min-w-0"
                             />
 
-                            {/* Texto Informativo / Durabilidad (Badge con escudo) */}
-                            <div className="flex items-center gap-1.5 bg-background/60 p-1.5 rounded-lg border border-border/60">
-                              <ShieldCheck className="size-3.5 text-rose-500 shrink-0 ml-1" />
-                              <div className="flex-1 min-w-0">
-                                <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block leading-none mb-1">
-                                  Texto Informativo / Garantía
-                                </label>
-                                <input
-                                  type="text"
-                                  value={work.badgeInfo ?? (work.durationDays ? `Duración intacta ${work.durationDays}+ días • HEMA-Free` : 'Duración intacta 21+ días • HEMA-Free')}
-                                  onChange={(e) => updateWorkItem(work.id, { badgeInfo: e.target.value })}
-                                  placeholder="Ej: Duración intacta 28+ días • HEMA-Free"
-                                  className="w-full text-[11px] font-medium text-foreground bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/40"
-                                />
-                              </div>
-                            </div>
+                            <span
+                              className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 shrink-0 border border-rose-200/40"
+                              title={`${assignedCount} trabajos asignados a esta categoría`}
+                            >
+                              {assignedCount} {assignedCount === 1 ? 'trabajo' : 'trabajos'}
+                            </span>
 
-                            {/* Ficha Técnica / Modal (Tiempo Estimado, Fórmula, Mantenimiento) */}
-                            <div className="rounded-lg bg-pink-50/50 dark:bg-rose-950/20 p-2 border border-pink-100 dark:border-rose-900/30 space-y-1">
-                              <span className="text-[9px] uppercase tracking-wider text-rose-500/80 font-bold block">
-                                Ficha Técnica (Modal al hacer Click)
-                              </span>
-                              <div className="grid grid-cols-3 gap-1.5">
-                                <div>
-                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
-                                    <Clock className="size-2.5 text-pink-500" />
-                                    <span>Tiempo</span>
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={work.estimatedTime ?? '~60 - 80m'}
-                                    onChange={(e) => updateWorkItem(work.id, { estimatedTime: e.target.value })}
-                                    placeholder="~60 - 80m"
-                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
-                                    <ShieldCheck className="size-2.5 text-emerald-600" />
-                                    <span>Fórmula</span>
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={work.formula ?? '100% Segura'}
-                                    onChange={(e) => updateWorkItem(work.id, { formula: e.target.value })}
-                                    placeholder="100% Segura"
-                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
-                                    <CheckCircle2 className="size-2.5 text-pink-500" />
-                                    <span>Mantenimiento</span>
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={work.maintenance ?? (work.durationDays ? `${work.durationDays} días` : '21 a 28 días')}
-                                    onChange={(e) => updateWorkItem(work.id, { maintenance: e.target.value })}
-                                    placeholder="21 a 28 días"
-                                    className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              <LinkIcon className="size-3 text-muted-foreground shrink-0" />
-                              <input
-                                type="text"
-                                value={work.imageUrl.startsWith('data:') ? 'Imagen subida desde tu dispositivo (Base64)' : work.imageUrl}
-                                onChange={(e) => {
-                                  if (!e.target.value.startsWith('Imagen subida')) {
-                                    updateWorkItem(work.id, { imageUrl: e.target.value });
-                                  }
-                                }}
-                                placeholder="https://..."
-                                className="w-full text-[10px] text-muted-foreground bg-transparent border-none focus:outline-none truncate"
-                              />
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => moveCategory(idx, 'up')}
+                                disabled={idx === 0}
+                                className={`p-1 rounded transition-colors ${
+                                  idx === 0
+                                    ? 'text-muted-foreground/20 cursor-not-allowed'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer'
+                                }`}
+                                title="Mover pestaña hacia la izquierda/arriba"
+                              >
+                                <ArrowUp className="size-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveCategory(idx, 'down')}
+                                disabled={idx === currentCategories.length - 1}
+                                className={`p-1 rounded transition-colors ${
+                                  idx === currentCategories.length - 1
+                                    ? 'text-muted-foreground/20 cursor-not-allowed'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer'
+                                }`}
+                                title="Mover pestaña hacia la derecha/abajo"
+                              >
+                                <ArrowDown className="size-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeCategory(cat.id)}
+                                className="p-1 rounded text-muted-foreground hover:text-rose-600 hover:bg-rose-100/50 transition-colors cursor-pointer ml-0.5"
+                                title="Eliminar categoría"
+                              >
+                                <Trash2 className="size-3" />
+                              </button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
+                  </div>
+
+                  <div className="border-t border-rose-200/60 dark:border-rose-900/30 pt-3">
+                    <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                          <span>Trabajos en Exhibición</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DE738F]/15 text-[#DE738F]">
+                            {(draftConfig.showcaseItems || []).length}
+                          </span>
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Organizá el orden con las flechas o usá <strong>"Poner primero"</strong> para elegir qué trabajo lidera la galería pública.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => addWorkItem(true)}
+                          className="px-2.5 py-1 text-[10px] font-semibold text-[#DE738F] hover:text-[#C45774] border border-[#DE738F]/30 bg-[#DE738F]/5 hover:bg-[#DE738F]/15 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Agregar un nuevo trabajo directamente al 1° lugar de la galería"
+                        >
+                          <Plus className="size-3" />
+                          <span>Agregar al inicio (1°)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addWorkItem(false)}
+                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Agregar un nuevo trabajo al final de la galería"
+                        >
+                          <Plus className="size-3" />
+                          <span>Agregar al final</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Category Filter Pills in Backoffice */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-1 scrollbar-none flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                        <Tag className="size-3 text-[#DE738F]" />
+                        <span>Ver y ordenar por:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setWorkFilterCategory('all')}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                          workFilterCategory === 'all'
+                            ? 'bg-[#DE738F] text-white shadow-2xs'
+                            : 'bg-background hover:bg-muted/60 text-foreground/80 border border-border'
+                        }`}
+                      >
+                        Todos ({(draftConfig.showcaseItems || []).length})
+                      </button>
+                      {currentCategories.map(cat => {
+                        const count = (draftConfig.showcaseItems || []).filter(w => w.category === cat.id).length;
+                        const isSelected = workFilterCategory === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setWorkFilterCategory(cat.id)}
+                            className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-[#DE738F] text-white shadow-2xs'
+                                : 'bg-background hover:bg-muted/60 text-foreground/80 border border-border'
+                            }`}
+                          >
+                            <span>{cat.label}</span>
+                            <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-semibold ${isSelected ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'}`}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Cards list */}
+                    {(() => {
+                      const allItems = draftConfig.showcaseItems || [];
+                      const visibleWorks = workFilterCategory === 'all'
+                        ? allItems
+                        : allItems.filter(w => w.category === workFilterCategory);
+
+                      const activeCatLabel = currentCategories.find(c => c.id === workFilterCategory)?.label || 'esta categoría';
+
+                      if (visibleWorks.length === 0) {
+                        return (
+                          <div className="text-center py-8 px-4 rounded-xl border border-dashed border-rose-200/80 bg-rose-50/20 text-muted-foreground text-xs">
+                            <p className="font-semibold text-foreground/80 mb-1">
+                              No hay trabajos asignados a "{activeCatLabel}"
+                            </p>
+                            <p className="text-[11px] mb-3">
+                              Podés agregar un nuevo trabajo directamente en esta categoría o reasignar uno existente.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => addWorkItem(true)}
+                              className="px-3 py-1.5 text-xs font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Plus className="size-3.5" />
+                              <span>Agregar primer trabajo en {activeCatLabel}</span>
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3">
+                          {visibleWorks.map((work, index) => {
+                            const isFirst = index === 0;
+                            const isFiltered = workFilterCategory !== 'all';
+                            const masterIndex = allItems.findIndex(w => w.id === work.id);
+
+                            return (
+                              <div
+                                key={work.id || index}
+                                className={`p-3 rounded-xl border space-y-2.5 transition-all ${
+                                  isFirst
+                                    ? 'border-amber-400/80 dark:border-amber-500/60 bg-gradient-to-b from-amber-50/40 via-rose-50/20 to-transparent dark:from-amber-950/25 dark:to-transparent shadow-xs ring-1 ring-amber-400/25'
+                                    : 'border-rose-200/60 dark:border-rose-900/40 bg-rose-50/20 dark:bg-rose-950/10'
+                                }`}
+                              >
+                                {/* Order Header & Position Bar */}
+                                <div className="flex items-center justify-between pb-2 border-b border-rose-200/40 dark:border-rose-900/30 gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    {isFirst ? (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 shadow-2xs">
+                                        <Star className="size-3 fill-amber-500 text-amber-500" />
+                                        {isFiltered
+                                          ? `1° en ${activeCatLabel} (Primero de la fila)`
+                                          : '1° Lugar • Se muestra primero'}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-muted-foreground bg-background border border-border shadow-2xs">
+                                        {isFiltered ? `#${index + 1} en ${activeCatLabel}` : `Posición #${index + 1}`}
+                                      </span>
+                                    )}
+
+                                    {!isFirst && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (isFiltered) {
+                                            moveWorkItemToCategoryTop(work.id);
+                                          } else {
+                                            moveWorkItemToTop(masterIndex);
+                                          }
+                                        }}
+                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded-md transition-all cursor-pointer shadow-2xs"
+                                        title={isFiltered
+                                          ? `Poner como el primero que se ve dentro de ${activeCatLabel}`
+                                          : 'Mover al primer lugar general de la galería'}
+                                      >
+                                        <Star className="size-2.5 fill-amber-500 text-amber-500" />
+                                        <span>Poner primero</span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 ml-auto">
+                                    {/* Direct position dropdown */}
+                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                      <span className="hidden sm:inline">Posición:</span>
+                                      <select
+                                        value={index}
+                                        onChange={(e) => {
+                                          const targetRelativeIdx = Number(e.target.value);
+                                          if (targetRelativeIdx === index) return;
+                                          if (!isFiltered) {
+                                            moveWorkItemToPosition(masterIndex, targetRelativeIdx);
+                                          } else {
+                                            const targetWorkId = visibleWorks[targetRelativeIdx]?.id;
+                                            if (targetWorkId) {
+                                              const currentList = [...allItems];
+                                              const currentIdx = currentList.findIndex(w => w.id === work.id);
+                                              const targetIdx = currentList.findIndex(w => w.id === targetWorkId);
+                                              const [moved] = currentList.splice(currentIdx, 1);
+                                              currentList.splice(targetIdx, 0, moved);
+                                              handleFieldChange('showcaseItems', currentList);
+                                            }
+                                          }
+                                        }}
+                                        className="text-[10px] font-semibold bg-background border border-border rounded px-1.5 py-0.5 text-foreground cursor-pointer focus:outline-none focus:border-[#DE738F]"
+                                        title="Elegir posición directa en la fila"
+                                      >
+                                        {visibleWorks.map((_, i) => (
+                                          <option key={i} value={i}>
+                                            {i === 0 ? '1° (Primero)' : `${i + 1}° Lugar`}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+
+                                    {/* Up button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (isFiltered) {
+                                          moveWorkItemInCategory(work.id, 'up');
+                                        } else {
+                                          moveWorkItem(masterIndex, 'up');
+                                        }
+                                      }}
+                                      disabled={index === 0}
+                                      className={`p-1 rounded-md transition-colors ${
+                                        index === 0
+                                          ? 'text-muted-foreground/30 cursor-not-allowed'
+                                          : 'text-foreground/80 hover:text-foreground hover:bg-background border border-border/50 cursor-pointer shadow-2xs'
+                                      }`}
+                                      title={isFiltered ? `Subir puesto dentro de ${activeCatLabel} (↑)` : 'Subir un puesto (↑)'}
+                                    >
+                                      <ArrowUp className="size-3.5" />
+                                    </button>
+
+                                    {/* Down button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (isFiltered) {
+                                          moveWorkItemInCategory(work.id, 'down');
+                                        } else {
+                                          moveWorkItem(masterIndex, 'down');
+                                        }
+                                      }}
+                                      disabled={index === visibleWorks.length - 1}
+                                      className={`p-1 rounded-md transition-colors ${
+                                        index === visibleWorks.length - 1
+                                          ? 'text-muted-foreground/30 cursor-not-allowed'
+                                          : 'text-foreground/80 hover:text-foreground hover:bg-background border border-border/50 cursor-pointer shadow-2xs'
+                                      }`}
+                                      title={isFiltered ? `Bajar puesto dentro de ${activeCatLabel} (↓)` : 'Bajar un puesto (↓)'}
+                                    >
+                                      <ArrowDown className="size-3.5" />
+                                    </button>
+
+                                    {/* Delete button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeWorkItem(work.id)}
+                                      className="text-muted-foreground hover:text-rose-600 p-1 rounded-md hover:bg-rose-100/50 transition-colors ml-1 cursor-pointer"
+                                      title="Eliminar este trabajo"
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-start gap-3">
+                                  {/* Photo Thumbnail + Quick Upload */}
+                                  <div className="relative group shrink-0">
+                                    <img
+                                      src={work.imageUrl}
+                                      alt={work.title}
+                                      className="size-16 rounded-lg object-cover border border-rose-200/80 dark:border-rose-800 shadow-xs"
+                                    />
+                                    <label
+                                      className="absolute inset-0 bg-black/55 text-white rounded-lg opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-[9px] font-semibold"
+                                      title="Subir foto propia desde dispositivo"
+                                    >
+                                      <UploadCloud className="size-4 mb-0.5" />
+                                      <span>Subir</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleWorkImageUpload(work.id, file);
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
+
+                                  {/* Main Details */}
+                                  <div className="flex-1 space-y-1.5 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <input
+                                        type="text"
+                                        value={work.title}
+                                        onChange={(e) => updateWorkItem(work.id, { title: e.target.value })}
+                                        placeholder="Título del set (ej: Kapping Ruso)"
+                                        className="w-full text-xs font-bold text-foreground bg-transparent border-b border-rose-200/50 focus:border-[#DE738F] focus:outline-none pb-0.5"
+                                      />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Categoría</label>
+                                        <LuxurySelect
+                                          value={work.category}
+                                          onChange={(val) => updateWorkItem(work.id, { category: String(val) })}
+                                          options={currentCategories.map(cat => ({
+                                            value: cat.id,
+                                            label: cat.label
+                                          }))}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Técnica (Pill)</label>
+                                        <input
+                                          type="text"
+                                          value={work.techniqueTag}
+                                          onChange={(e) => updateWorkItem(work.id, { techniqueTag: e.target.value })}
+                                          placeholder="Ej: Nivelación Rubber"
+                                          className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Description, Badge & Image URL input */}
+                                <div className="space-y-1.5 pt-1">
+                                  <input
+                                    type="text"
+                                    value={work.description || ''}
+                                    onChange={(e) => updateWorkItem(work.id, { description: e.target.value })}
+                                    placeholder="Breve descripción o detalle técnico del set..."
+                                    className="w-full text-[11px] rounded-lg border border-border bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/40"
+                                  />
+
+                                  {/* Texto Informativo / Durabilidad (Badge con escudo) */}
+                                  <div className="flex items-center gap-1.5 bg-background/60 p-1.5 rounded-lg border border-border/60">
+                                    <ShieldCheck className="size-3.5 text-rose-500 shrink-0 ml-1" />
+                                    <div className="flex-1 min-w-0">
+                                      <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block leading-none mb-1">
+                                        Texto Informativo / Garantía
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={work.badgeInfo ?? (work.durationDays ? `Duración intacta ${work.durationDays}+ días • HEMA-Free` : 'Duración intacta 21+ días • HEMA-Free')}
+                                        onChange={(e) => updateWorkItem(work.id, { badgeInfo: e.target.value })}
+                                        placeholder="Ej: Duración intacta 28+ días • HEMA-Free"
+                                        className="w-full text-[11px] font-medium text-foreground bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/40"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Ficha Técnica / Modal (Tiempo Estimado, Fórmula, Mantenimiento) */}
+                                  <div className="rounded-lg bg-pink-50/50 dark:bg-rose-950/20 p-2 border border-pink-100 dark:border-rose-900/30 space-y-1">
+                                    <span className="text-[9px] uppercase tracking-wider text-rose-500/80 font-bold block">
+                                      Ficha Técnica (Modal al hacer Click)
+                                    </span>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                      <div>
+                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                          <Clock className="size-2.5 text-pink-500" />
+                                          <span>Tiempo</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={work.estimatedTime ?? '~60 - 80m'}
+                                          onChange={(e) => updateWorkItem(work.id, { estimatedTime: e.target.value })}
+                                          placeholder="~60 - 80m"
+                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                        />
+                                      </div>
+
+                                      <div>
+                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                          <ShieldCheck className="size-2.5 text-emerald-600" />
+                                          <span>Fórmula</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={work.formula ?? '100% Segura'}
+                                          onChange={(e) => updateWorkItem(work.id, { formula: e.target.value })}
+                                          placeholder="100% Segura"
+                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                        />
+                                      </div>
+
+                                      <div>
+                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                          <CheckCircle2 className="size-2.5 text-pink-500" />
+                                          <span>Mantenimiento</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={work.maintenance ?? (work.durationDays ? `${work.durationDays} días` : '21 a 28 días')}
+                                          onChange={(e) => updateWorkItem(work.id, { maintenance: e.target.value })}
+                                          placeholder="21 a 28 días"
+                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5">
+                                    <LinkIcon className="size-3 text-muted-foreground shrink-0" />
+                                    <input
+                                      type="text"
+                                      value={work.imageUrl.startsWith('data:') ? 'Imagen subida desde tu dispositivo (Base64)' : work.imageUrl}
+                                      onChange={(e) => {
+                                        if (!e.target.value.startsWith('Imagen subida')) {
+                                          updateWorkItem(work.id, { imageUrl: e.target.value });
+                                        }
+                                      }}
+                                      placeholder="https://..."
+                                      className="w-full text-[10px] text-muted-foreground bg-transparent border-none focus:outline-none truncate"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
+
+              {/* 5.c TÉCNICAS ESTRUCTURALES EXCLUSIVAS */}
+              {activeCategory === 'servicios' && (() => {
+                const uniqueCategories = Array.from(new Set(services.map(s => s.category).filter(Boolean)));
+                const categoryLabels: Record<string, string> = {
+                  kapping: 'Kapping Gel',
+                  semipermanente: 'Semipermanente',
+                  soft_gel: 'Soft Gel',
+                  esculpidas: 'Esculpidas',
+                  otros: 'Otros'
+                };
+                const displayedServices = serviceFilterCategory === 'all'
+                  ? services
+                  : services.filter(s => s.category === serviceFilterCategory);
+
+                return (
+                  <div className="space-y-4 text-xs">
+                    {/* Header Controls */}
+                    <div className="p-3.5 bg-muted/30 rounded-2xl border border-border/80 space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 flex items-center justify-between">
+                          <span>Insignia Superior (Badge)</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">cabecera</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.servicesBadge ?? 'MENÚ DE ALTA MANICURÍA'}
+                          onChange={e => handleFieldChange('servicesBadge', e.target.value)}
+                          placeholder="MENÚ DE ALTA MANICURÍA"
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 flex items-center justify-between">
+                          <span>Título Principal</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">sección</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={draftConfig.servicesTitle ?? 'TÉCNICAS ESTRUCTURALES EXCLUSIVAS'}
+                          onChange={e => handleFieldChange('servicesTitle', e.target.value)}
+                          placeholder="TÉCNICAS ESTRUCTURALES EXCLUSIVAS"
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs focus:border-[#DE738F] focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold tracking-wider uppercase text-foreground/80 flex items-center justify-between">
+                          <span>Subtítulo / Bajada</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">garantía</span>
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={draftConfig.servicesSubtitle ?? 'Duración garantizada de 21 días sin desprendimientos, con geles hipoalergénicos libres de HEMA.'}
+                          onChange={e => handleFieldChange('servicesSubtitle', e.target.value)}
+                          placeholder="Duración garantizada de 21 días sin desprendimientos..."
+                          className="w-full rounded-xl border border-rose-200/70 dark:border-rose-900/40 bg-background/90 px-3.5 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground/40 shadow-xs focus:border-[#DE738F] focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Services Reorder & Management Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                      <div>
+                        <h4 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-[#DE738F]" />
+                          Orden y Catálogo de Técnicas ({services.length})
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground">
+                          Cambia el orden de aparición en vivo: el 1° lugar es el primer servicio visible en la web.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setIsCreatingService(true)}
+                        className="bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white hover:opacity-95 shadow-sm text-xs font-semibold gap-1.5 self-start sm:self-auto cursor-pointer"
+                      >
+                        <Plus size={14} />
+                        <span>Nueva Técnica</span>
+                      </Button>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/40 rounded-xl border border-border/80">
+                      <button
+                        type="button"
+                        onClick={() => setServiceFilterCategory('all')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          serviceFilterCategory === 'all'
+                            ? 'bg-[#DE738F] text-white shadow-xs'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/80'
+                        }`}
+                      >
+                        Todos ({services.length})
+                      </button>
+                      {uniqueCategories.map(cat => {
+                        const count = services.filter(s => s.category === cat).length;
+                        const label = categoryLabels[cat] || cat.replace(/_/g, ' ').toUpperCase();
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setServiceFilterCategory(cat)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              serviceFilterCategory === cat
+                                ? 'bg-[#DE738F] text-white shadow-xs'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-background/80'
+                            }`}
+                          >
+                            {label} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* List of Services with Reordering */}
+                    <div className="space-y-3">
+                      {displayedServices.map((srv) => {
+                        const masterIndex = services.findIndex(s => s.id === srv.id);
+                        const isFirst = masterIndex === 0;
+                        const isLast = masterIndex === services.length - 1;
+                        const isPaused = srv.isActive === false;
+
+                        return (
+                          <div
+                            key={srv.id}
+                            className={`rounded-2xl border p-3.5 transition-all bg-card ${
+                              isPaused
+                                ? 'opacity-60 border-dashed border-border'
+                                : 'border-border/80 hover:border-[#DE738F]/50 shadow-xs hover:shadow-sm'
+                            }`}
+                          >
+                            {/* Order Bar */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 rounded-xl bg-muted/50 border border-border/60 mb-2.5">
+                              <div className="flex items-center gap-2">
+                                {isFirst ? (
+                                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                                    <Star size={10} className="fill-amber-400 text-amber-500" />
+                                    1° Lugar • Se muestra primero en la web
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-muted-foreground bg-background px-2.5 py-0.5 rounded-full border border-border">
+                                    Posición #{masterIndex + 1}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                {!isFirst && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveServiceToTop(masterIndex)}
+                                    title="Mover este servicio al 1° lugar"
+                                    className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Star size={9} className="fill-amber-400" />
+                                    Poner primero
+                                  </button>
+                                )}
+
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                  <span>Pos:</span>
+                                  <select
+                                    value={masterIndex + 1}
+                                    onChange={(e) => handleMoveServiceToPosition(masterIndex, Number(e.target.value))}
+                                    className="text-[10px] font-bold bg-background text-foreground border border-border rounded px-1.5 py-0.5 outline-none cursor-pointer"
+                                  >
+                                    {services.map((_, pIdx) => (
+                                      <option key={pIdx} value={pIdx + 1}>
+                                        {pIdx + 1}° {pIdx === 0 ? '(1°)' : ''}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={isFirst}
+                                  onClick={() => handleMoveService(masterIndex, 'up')}
+                                  title="Subir"
+                                  className="p-1 rounded-md border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                >
+                                  <ArrowUp size={12} />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  disabled={isLast}
+                                  onClick={() => handleMoveService(masterIndex, 'down')}
+                                  title="Bajar"
+                                  className="p-1 rounded-md border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                >
+                                  <ArrowDown size={12} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Card Content */}
+                            <div className="flex gap-3">
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-border/80 bg-muted relative">
+                                <img
+                                  src={srv.imageUrl || 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=600&q=80'}
+                                  alt={srv.title}
+                                  className="w-full h-full object-cover"
+                                />
+                                {srv.badge && (
+                                  <span className="absolute bottom-1 left-1 right-1 text-[7px] font-bold px-1 py-0.5 rounded bg-black/70 text-white backdrop-blur text-center truncate">
+                                    {srv.badge}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1.5 mb-1">
+                                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#C45774] bg-[#DE738F]/10 px-2 py-0.5 rounded-md border border-[#DE738F]/25 truncate">
+                                    {categoryLabels[srv.category] || srv.category.replace(/_/g, ' ').toUpperCase()}
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleServiceActive(srv)}
+                                    title={isPaused ? 'Click para activar en la web' : 'Click para pausar en la web'}
+                                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition-all cursor-pointer shrink-0 ${
+                                      isPaused
+                                        ? 'bg-zinc-500/10 text-zinc-500 border-zinc-500/30'
+                                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                    }`}
+                                  >
+                                    {isPaused ? 'Pausado' : '● Activo en Web'}
+                                  </button>
+                                </div>
+
+                                <h4 className="text-xs sm:text-sm font-bold text-foreground line-clamp-1 mb-0.5">
+                                  {srv.title}
+                                </h4>
+
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs sm:text-sm font-extrabold text-[#C45774]">
+                                    ${srv.basePrice.toLocaleString('es-AR')}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                    <Clock size={11} /> {srv.baseDurationMin} min
+                                  </span>
+                                </div>
+
+                                <p className="text-[10px] text-muted-foreground line-clamp-1">
+                                  {srv.description}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Card Footer Actions */}
+                            <div className="pt-2 mt-2 border-t border-border flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground truncate max-w-[180px]">
+                                {srv.recommendedFor ? `Rec: ${srv.recommendedFor}` : 'Sin recomendación'}
+                              </span>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingService(srv)}
+                                  className="px-2 py-1 rounded-md text-[11px] font-semibold text-[#C45774] hover:bg-[#DE738F]/10 border border-[#DE738F]/30 transition-all flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Edit2 size={11} /> Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteService(srv.id, srv.title)}
+                                  className="p-1 rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Modal for Service Editing */}
+                    {(isCreatingService || editingService) && (
+                      <ServiceEditModal
+                        service={editingService}
+                        existingCategories={Array.from(new Set(services.map(s => s.category).filter(Boolean)))}
+                        onClose={() => {
+                          setEditingService(null);
+                          setIsCreatingService(false);
+                        }}
+                        onSave={(data) => handleSaveService(data, editingService?.id)}
+                      />
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* 6. CINTA & MANIFIESTO */}
               {activeCategory === 'cinta' && (

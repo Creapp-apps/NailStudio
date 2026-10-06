@@ -7,6 +7,8 @@ import { BookingModal } from '../components/booking/BookingModal';
 import { HotSlotsModal } from '../components/booking/HotSlotsModal';
 import { NailBotModal } from '../components/ai/NailBotModal';
 import { CinematicPreloader } from '../components/public/CinematicPreloader';
+import { PaymentApprovedModal } from '../components/booking/PaymentApprovedModal';
+import { Appointment } from '../types/nailStudio';
 import { useWebConfig } from '../hooks/useWebConfig';
 import { WebCustomizationConfig } from '../types/webConfig';
 import { getThemeFromConfig } from '../lib/themeStyles';
@@ -22,6 +24,8 @@ export const PublicWebView: React.FC = () => {
   const [isBotTriggerCollapsed, setIsBotTriggerCollapsed] = useState(false);
   const [isHoveredTrigger, setIsHoveredTrigger] = useState(false);
   const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
+  const [approvedAppointment, setApprovedAppointment] = useState<Appointment | null>(null);
+  const [isPaymentApprovedOpen, setIsPaymentApprovedOpen] = useState(false);
 
   const salonSettings = storage.getSalonSettings();
   const assistantName = salonSettings.assistantName || 'Lucía Altieri';
@@ -52,6 +56,14 @@ export const PublicWebView: React.FC = () => {
     setShowPreloader(false);
     setIsRevealed(true);
   };
+
+  // Failsafe: Never let page get permanently stuck on opacity: 0
+  useEffect(() => {
+    const failsafeTimer = setTimeout(() => {
+      setIsRevealed(true);
+    }, 4500);
+    return () => clearTimeout(failsafeTimer);
+  }, []);
 
   // Keep local config in sync with global hook
   useEffect(() => {
@@ -87,6 +99,31 @@ export const PublicWebView: React.FC = () => {
       // Skip preloader if coming from direct flash link so client has zero-friction instant booking
       setShowPreloader(false);
       setIsRevealed(true);
+    }
+  }, []);
+
+  // Detect Mercado Pago redirect status (?booking_status=approved&apt_id=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const bookingStatus = params.get('booking_status');
+    const aptId = params.get('apt_id');
+
+    if (bookingStatus === 'approved') {
+      setShowPreloader(false);
+      setIsRevealed(true);
+
+      if (aptId) {
+        storage.confirmDepositPaid(aptId, 'Acreditado vía Mercado Pago Checkout Pro');
+        const found = storage.getAppointments().find(a => a.id === aptId);
+        if (found) {
+          setApprovedAppointment(found);
+          setIsPaymentApprovedOpen(true);
+        }
+      }
+
+      // Clean query params from URL
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
@@ -339,6 +376,13 @@ export const PublicWebView: React.FC = () => {
         onClose={() => setIsNailBotOpen(false)}
         onOpenBooking={(srvId) => handleOpenBooking(srvId)}
         onOpenHotSlots={() => setIsHotSlotsOpen(true)}
+      />
+
+      {/* Mercado Pago Payment Approved Celebratory Modal */}
+      <PaymentApprovedModal
+        isOpen={isPaymentApprovedOpen}
+        onClose={() => setIsPaymentApprovedOpen(false)}
+        appointment={approvedAppointment}
       />
     </div>
   );

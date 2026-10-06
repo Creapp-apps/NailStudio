@@ -67,6 +67,9 @@ export interface Appointment {
   status: AppointmentStatus;
   notes?: string;
   createdAt: string;
+  isVitaliciaApplied?: boolean;
+  originalPrice?: number;
+  discountAmount?: number;
 }
 
 export type NailPlateCondition = 'healthy' | 'thin_weak' | 'onychophagy' | 'sensitive_lamp';
@@ -100,6 +103,9 @@ export interface ClientProfile {
   totalVisits: number;
   lastVisitDate: string; // YYYY-MM-DD
   setsHistory: PastSetRecord[];
+  isVitalicia?: boolean;
+  vitaliciaDiscountPercentage?: number; // e.g. 15 (%)
+  vitaliciaAssignedAt?: string; // YYYY-MM-DD
 }
 
 export interface SupplyItem {

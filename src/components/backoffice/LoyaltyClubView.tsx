@@ -26,7 +26,7 @@ interface Props {
 
 export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'VIP Haute' | 'Gold' | 'Silver'>('all');
+  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'vitalicias' | 'VIP Haute' | 'Gold' | 'Silver'>('all');
   const [adjustModalClient, setAdjustModalClient] = useState<ClientProfile | null>(null);
   const [pointsAdjustment, setPointsAdjustment] = useState<number>(500);
   const [adjustmentReason, setAdjustmentReason] = useState('Bonificación Fidelidad / Cumpleaños');
@@ -38,6 +38,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
 
   // Stats calculation
   const totalPointsCirculating = clients.reduce((sum, c) => sum + (c.pointsBalance || 0), 0);
+  const vitaliciasCount = clients.filter(c => c.isVitalicia).length;
   const vipCount = clients.filter(c => c.tier === 'VIP Haute').length;
   const goldCount = clients.filter(c => c.tier === 'Gold').length;
   const silverCount = clients.filter(c => c.tier === 'Silver' || !c.tier).length;
@@ -47,7 +48,12 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
       c.phone.includes(searchTerm) ||
       (c.referralCode && c.referralCode.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesTier = selectedTierFilter === 'all' || (c.tier || 'Silver') === selectedTierFilter;
+    const matchesTier = selectedTierFilter === 'all'
+      ? true
+      : selectedTierFilter === 'vitalicias'
+      ? Boolean(c.isVitalicia)
+      : (c.tier || 'Silver') === selectedTierFilter;
+
     return matchesSearch && matchesTier;
   });
 
@@ -120,7 +126,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Puntos en Circulación</span>
@@ -136,6 +142,21 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
           </div>
         </div>
 
+        <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-transparent border border-amber-500/30">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">👑 Clientas Vitalicias</span>
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600">
+              <Crown className="size-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-amber-700 dark:text-amber-300 mt-2">
+            {vitaliciasCount}
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            Tarifa protegida Lu (-15% permanente)
+          </div>
+        </div>
+
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">VIP Haute Members</span>
@@ -147,7 +168,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
             {vipCount}
           </div>
           <div className="text-[10px] text-muted-foreground mt-0.5">
-            Clientas de máxima frecuencia (10+ visitas)
+            10+ visitas acumuladas
           </div>
         </div>
 
@@ -177,7 +198,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
             {silverCount}
           </div>
           <div className="text-[10px] text-muted-foreground mt-0.5">
-            Primeras visitas (1 a 4 servicios)
+            1 a 4 servicios acumulados
           </div>
         </div>
       </div>
@@ -251,7 +272,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
 
             {/* Tier Filter Tabs */}
             <div className="flex items-center gap-1">
-              {(['all', 'VIP Haute', 'Gold', 'Silver'] as const).map(tier => (
+              {(['all', 'vitalicias', 'VIP Haute', 'Gold', 'Silver'] as const).map(tier => (
                 <button
                   key={tier}
                   onClick={() => setSelectedTierFilter(tier)}
@@ -261,7 +282,7 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
                       : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
-                  {tier === 'all' ? 'Todos' : tier}
+                  {tier === 'all' ? 'Todos' : tier === 'vitalicias' ? '👑 Vitalicias' : tier}
                 </button>
               ))}
             </div>
@@ -296,9 +317,15 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
                     className="grid grid-cols-12 gap-3 px-5 py-3.5 items-center text-xs hover:bg-muted/20 transition-colors"
                   >
                     <div className="col-span-4">
-                      <div className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                      <div className="font-bold text-foreground text-sm flex items-center gap-1.5 flex-wrap">
                         <span>{client.name}</span>
-                        {isVip && <Crown className="size-3.5 text-purple-500 fill-purple-500/20" />}
+                        {client.isVitalicia && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                            <Crown className="size-3 text-amber-500" />
+                            <span>Vitalicia (-{client.vitaliciaDiscountPercentage || 15}%)</span>
+                          </span>
+                        )}
+                        {isVip && !client.isVitalicia && <Crown className="size-3.5 text-purple-500 fill-purple-500/20" />}
                       </div>
                       <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
                         <span>{client.phone}</span>
@@ -337,6 +364,18 @@ export const LoyaltyClubView: React.FC<Props> = ({ clients }) => {
                     </div>
 
                     <div className="col-span-2 flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => storage.toggleVitalicia(client.id, 15)}
+                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                          client.isVitalicia
+                            ? 'bg-amber-500/15 border-amber-500/35 text-amber-600 dark:text-amber-300 shadow-2xs'
+                            : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                        title={client.isVitalicia ? "Desactivar Tarifa Vitalicia" : "Activar Tarifa Vitalicia (-15% permanente)"}
+                      >
+                        <Crown className="size-3.5" />
+                      </button>
                       <button
                         onClick={() => setAdjustModalClient(client)}
                         className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"

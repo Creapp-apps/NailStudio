@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Sparkles,
   Plus,
@@ -15,11 +16,18 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Check,
-  X
+  X,
+  ArrowUp,
+  ArrowDown,
+  Star,
+  Filter,
+  Save,
+  Loader2
 } from 'lucide-react';
 import { NailService, RemovalOption, NailArtTier, ServiceCategory } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
 import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
+import { ServiceEditModal } from './ServiceEditModal';
 
 interface Props {
   onOpenBookingPreview?: () => void;
@@ -35,6 +43,9 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
   const [removals, setRemovals] = useState<RemovalOption[]>(() => storage.getRemovals());
   const [nailArtTiers, setNailArtTiers] = useState<NailArtTier[]>(() => storage.getNailArtTiers());
 
+  // Filter for services tab
+  const [serviceCategoryFilter, setServiceCategoryFilter] = useState<string>('all');
+
   // Modals for Create/Edit
   const [editingService, setEditingService] = useState<NailService | null>(null);
   const [isCreatingService, setIsCreatingService] = useState<boolean>(false);
@@ -46,10 +57,28 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
   const [isCreatingTier, setIsCreatingTier] = useState<boolean>(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    storage.saveServices(services);
+    storage.saveRemovals(removals);
+    storage.saveNailArtTiers(nailArtTiers);
+    const ok = await storage.pushCatalogToSupabase();
+    setIsSaving(false);
+    if (ok) {
+      setSavedSuccess(true);
+      showToast('✓ Todo el catálogo fue guardado y sincronizado con éxito en la nube');
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } else {
+      showToast('Cambios guardados localmente');
+    }
   };
 
   useEffect(() => {
@@ -85,6 +114,39 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
     const updated = { ...srv, isActive: srv.isActive === false ? true : false };
     storage.updateService(updated);
     showToast(updated.isActive ? `"${srv.title}" ahora está visible` : `"${srv.title}" fue pausado`);
+  };
+
+  // --- Handlers: Reordering Services ---
+  const handleMoveService = (fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= services.length) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    storage.saveServices(updated);
+    setServices(updated);
+    showToast(`Posición actualizada: "${moved.title}" ahora está en lugar #${toIndex + 1}`);
+  };
+
+  const handleMoveServiceToTop = (fromIndex: number) => {
+    if (fromIndex === 0) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.unshift(moved);
+    storage.saveServices(updated);
+    setServices(updated);
+    showToast(`⭐ "${moved.title}" ahora es la 1° técnica visible en la web`);
+  };
+
+  const handleMoveServiceToPosition = (fromIndex: number, targetPos: number) => {
+    const toIndex = targetPos - 1;
+    if (toIndex < 0 || toIndex >= services.length || toIndex === fromIndex) return;
+    const updated = [...services];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    storage.saveServices(updated);
+    setServices(updated);
+    showToast(`Posición actualizada: "${moved.title}" ahora está en lugar #${targetPos}`);
   };
 
   // --- Handlers: Removals ---
@@ -177,11 +239,37 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {savedSuccess && (
+              <span className="px-3.5 py-2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-950/40 animate-fade-in">
+                <CheckCircle2 size={15} className="text-emerald-400" />
+                <span>¡Cambios Guardados en Nube!</span>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-950/40 hover:shadow-emerald-700/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
+            </button>
+
             {onOpenBookingPreview && (
               <button
                 type="button"
                 onClick={onOpenBookingPreview}
-                className="px-4 py-2.5 rounded-full bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#DE738F]/30 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs sm:text-sm font-bold border border-white/20 shadow-md hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Eye size={16} /> Ver Modal de Reserva en Vivo
               </button>
@@ -256,122 +344,253 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
       {/* ========================================================================= */}
       {/* TAB 1: TÉCNICAS BASE (SERVICIOS) */}
       {/* ========================================================================= */}
-      {activeTab === 'services' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                Paso 1: Técnicas Estructurales Base
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Es la elección inicial de la clienta al agendar (Kapping, Semipermanente, Soft Gel, Esculpidas).
-              </p>
+      {activeTab === 'services' && (() => {
+        const uniqueCategories = Array.from(new Set(services.map(s => s.category).filter(Boolean)));
+        const categoryLabels: Record<string, string> = {
+          kapping: 'Kapping Gel',
+          semipermanente: 'Semipermanente',
+          soft_gel: 'Soft Gel',
+          esculpidas: 'Esculpidas',
+          otros: 'Otros'
+        };
+        const displayedServices = serviceCategoryFilter === 'all'
+          ? services
+          : services.filter(s => s.category === serviceCategoryFilter);
+
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  Paso 1: Técnicas Estructurales Base
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Organiza el orden de aparición en la landing web y el modal de reservas. El primer servicio (#1) se destaca en el inicio.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsCreatingService(true)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#DE738F]/20 flex items-center gap-2 hover:opacity-95 transition-all cursor-pointer self-start sm:self-auto"
+              >
+                <Plus size={16} /> Nueva Técnica / Servicio
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsCreatingService(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#DE738F]/20 flex items-center gap-2 hover:opacity-95 transition-all cursor-pointer self-start sm:self-auto"
-            >
-              <Plus size={16} /> Nueva Técnica / Servicio
-            </button>
-          </div>
+            {/* Category / Type Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/40 rounded-2xl border border-border/80">
+              <button
+                type="button"
+                onClick={() => setServiceCategoryFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  serviceCategoryFilter === 'all'
+                    ? 'bg-[#DE738F] text-white shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/80'
+                }`}
+              >
+                Todos los tipos ({services.length})
+              </button>
+              {uniqueCategories.map(cat => {
+                const count = services.filter(s => s.category === cat).length;
+                const label = categoryLabels[cat] || cat.replace(/_/g, ' ').toUpperCase();
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setServiceCategoryFilter(cat)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      serviceCategoryFilter === cat
+                        ? 'bg-[#DE738F] text-white shadow-xs'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/80'
+                    }`}
+                  >
+                    {label} ({count})
+                  </button>
+                );
+              })}
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {services.map((srv) => {
-              const isPaused = srv.isActive === false;
-              return (
-                <div
-                  key={srv.id}
-                  className={`rounded-2xl border p-5 transition-all flex flex-col justify-between bg-card ${
-                    isPaused
-                      ? 'opacity-60 border-dashed border-border'
-                      : 'border-border/80 hover:border-[#DE738F]/50 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <div>
-                    {/* Top Row: Category & Badges */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C45774] bg-[#DE738F]/10 px-2 py-0.5 rounded-md border border-[#DE738F]/25">
-                          {srv.category}
-                        </span>
-                        {srv.badge && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#DE738F] bg-[#DE738F]/15 px-2 py-0.5 rounded-full border border-[#DE738F]/30">
-                            {srv.badge}
-                          </span>
-                        )}
+            {/* Services Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {displayedServices.map((srv) => {
+                const masterIndex = services.findIndex(s => s.id === srv.id);
+                const isFirst = masterIndex === 0;
+                const isLast = masterIndex === services.length - 1;
+                const isPaused = srv.isActive === false;
+
+                return (
+                  <div
+                    key={srv.id}
+                    className={`rounded-2xl border p-4 sm:p-5 transition-all flex flex-col justify-between bg-card ${
+                      isPaused
+                        ? 'opacity-60 border-dashed border-border'
+                        : 'border-border/80 hover:border-[#DE738F]/50 shadow-sm hover:shadow-md'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Bar: Order & Position Controls */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-muted/50 border border-border/60 mb-3.5">
+                        <div className="flex items-center gap-2">
+                          {isFirst ? (
+                            <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                              <Star size={11} className="fill-amber-400 text-amber-500" />
+                              1° Lugar • Se muestra primero en la web
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-muted-foreground bg-background px-2.5 py-0.5 rounded-full border border-border">
+                              Posición #{masterIndex + 1}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {!isFirst && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveServiceToTop(masterIndex)}
+                              title="Mover este servicio al 1° lugar"
+                              className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <Star size={10} className="fill-amber-400" />
+                              Poner primero
+                            </button>
+                          )}
+
+                          {/* Direct Position Selector */}
+                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <span>Posición:</span>
+                            <select
+                              value={masterIndex + 1}
+                              onChange={(e) => handleMoveServiceToPosition(masterIndex, Number(e.target.value))}
+                              className="text-[11px] font-bold bg-background text-foreground border border-border rounded px-1.5 py-0.5 outline-none cursor-pointer"
+                            >
+                              {services.map((_, pIdx) => (
+                                <option key={pIdx} value={pIdx + 1}>
+                                  {pIdx + 1}° {pIdx === 0 ? '(Primero)' : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={isFirst}
+                            onClick={() => handleMoveService(masterIndex, 'up')}
+                            title="Subir de posición"
+                            className="p-1 rounded-md border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                          >
+                            <ArrowUp size={13} />
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isLast}
+                            onClick={() => handleMoveService(masterIndex, 'down')}
+                            title="Bajar de posición"
+                            className="p-1 rounded-md border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                          >
+                            <ArrowDown size={13} />
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Active Status Badge */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleServiceActive(srv)}
-                        title={isPaused ? 'Click para activar' : 'Click para pausar'}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
-                          isPaused
-                            ? 'bg-zinc-500/10 text-zinc-500 border-zinc-500/30'
-                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                        }`}
-                      >
-                        {isPaused ? 'Pausado' : '● Activo en Web'}
-                      </button>
-                    </div>
+                      {/* Main Info: Thumbnail + Details */}
+                      <div className="flex gap-3.5 mb-3">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-border/80 bg-muted relative">
+                          <img
+                            src={srv.imageUrl || 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=600&q=80'}
+                            alt={srv.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {srv.badge && (
+                            <span className="absolute bottom-1 left-1 right-1 text-[8px] font-bold px-1 py-0.5 rounded bg-black/70 text-white backdrop-blur text-center truncate">
+                              {srv.badge}
+                            </span>
+                          )}
+                        </div>
 
-                    {/* Title */}
-                    <h3 className="text-base font-bold text-foreground mb-1">
-                      {srv.title}
-                    </h3>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C45774] bg-[#DE738F]/10 px-2 py-0.5 rounded-md border border-[#DE738F]/25 truncate">
+                              {categoryLabels[srv.category] || srv.category.replace(/_/g, ' ').toUpperCase()}
+                            </span>
 
-                    {/* Description */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
-                      {srv.description}
-                    </p>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleServiceActive(srv)}
+                              title={isPaused ? 'Click para activar en la web' : 'Click para pausar en la web'}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all cursor-pointer shrink-0 ${
+                                isPaused
+                                  ? 'bg-zinc-500/10 text-zinc-500 border-zinc-500/30'
+                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                              }`}
+                            >
+                              {isPaused ? 'Pausado' : '● Activo en Web'}
+                            </button>
+                          </div>
 
-                    {/* Recommendation note */}
-                    {srv.recommendedFor && (
-                      <div className="text-[11px] text-rose-800 dark:text-rose-200/80 bg-rose-50 dark:bg-rose-950/30 p-2 rounded-lg border border-rose-200/50 dark:border-rose-900/30 mb-3">
-                        <span className="font-semibold">Recomendado:</span> {srv.recommendedFor}
+                          <h3 className="text-sm sm:text-base font-bold text-foreground line-clamp-1 mb-1 font-serif">
+                            {srv.title}
+                          </h3>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-base sm:text-lg font-extrabold text-[#C45774]">
+                              ${srv.basePrice.toLocaleString('es-AR')}
+                            </span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock size={12} /> {srv.baseDurationMin} min
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Price & Duration Row */}
-                  <div className="pt-3 border-t border-border flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-extrabold text-[#C45774]">
-                        ${srv.basePrice.toLocaleString('es-AR')}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock size={12} /> {srv.baseDurationMin} min
-                      </span>
+                      {/* Description */}
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                        {srv.description}
+                      </p>
+
+                      {/* Recommendation note */}
+                      {srv.recommendedFor && (
+                        <div className="text-[11px] text-rose-800 dark:text-rose-200/80 bg-rose-50 dark:bg-rose-950/30 p-2 rounded-lg border border-rose-200/50 dark:border-rose-900/30 mb-3">
+                          <span className="font-semibold">Recomendado:</span> {srv.recommendedFor}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setEditingService(srv)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-[#C45774] hover:bg-[#DE738F]/10 transition-all cursor-pointer"
-                        title="Editar técnica"
-                      >
-                        <Edit2 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteService(srv.id, srv.title)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
-                        title="Eliminar técnica"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                    {/* Footer Row: Actions */}
+                    <div className="pt-3 border-t border-border flex items-center justify-between">
+                      <span className="text-[11px] text-muted-foreground">
+                        {srv.badge ? `Badge: ${srv.badge}` : 'Sin badge destacado'}
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditingService(srv)}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#C45774] hover:bg-[#DE738F]/10 border border-[#DE738F]/30 transition-all flex items-center gap-1 cursor-pointer"
+                          title="Editar técnica"
+                        >
+                          <Edit2 size={13} />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteService(srv.id, srv.title)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
+                          title="Eliminar técnica"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* TAB 2: RETIRO DE PRODUCTO PREVIO */}
@@ -591,6 +810,7 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
       {(isCreatingService || editingService) && (
         <ServiceEditModal
           service={editingService}
+          existingCategories={Array.from(new Set(services.map(s => s.category).filter(Boolean)))}
           onClose={() => {
             setEditingService(null);
             setIsCreatingService(false);
@@ -634,181 +854,6 @@ export const ServicesCatalogView: React.FC<Props> = ({ onOpenBookingPreview }) =
 // SUB-MODALS FOR EDITING
 // ============================================================================
 
-interface ServiceModalProps {
-  service: NailService | null;
-  onClose: () => void;
-  onSave: (data: Omit<NailService, 'id'>) => void;
-}
-
-const ServiceEditModal: React.FC<ServiceModalProps> = ({ service, onClose, onSave }) => {
-  const [title, setTitle] = useState(service?.title || '');
-  const [category, setCategory] = useState<ServiceCategory>(service?.category || 'kapping');
-  const [basePrice, setBasePrice] = useState<number>(service?.basePrice || 18500);
-  const [baseDurationMin, setBaseDurationMin] = useState<number>(service?.baseDurationMin || 75);
-  const [description, setDescription] = useState(service?.description || '');
-  const [badge, setBadge] = useState(service?.badge || '');
-  const [recommendedFor, setRecommendedFor] = useState(service?.recommendedFor || '');
-  const [imageUrl, setImageUrl] = useState(
-    service?.imageUrl ||
-      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=600&q=80'
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return alert('Por favor ingresa un título para el servicio.');
-    onSave({
-      title: title.trim(),
-      category,
-      basePrice: Number(basePrice) || 0,
-      baseDurationMin: Number(baseDurationMin) || 60,
-      description: description.trim(),
-      badge: badge.trim() || undefined,
-      recommendedFor: recommendedFor.trim(),
-      imageUrl: imageUrl.trim()
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-card w-full max-w-xl rounded-3xl border border-border shadow-2xl p-6 sm:p-7 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
-          <h3 className="text-lg font-bold text-foreground font-serif">
-            {service ? 'Editar Técnica Base (Paso 1)' : 'Nueva Técnica Base (Paso 1)'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Título del Servicio / Técnica *
-            </label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej: Kapping Gel Fortalecedor (Manicura Rusa)"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Categoría
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-              >
-                <option value="kapping">Kapping (Nivelación Rubber)</option>
-                <option value="semipermanente">Semipermanente</option>
-                <option value="soft_gel">Soft Gel (Press-On Tips)</option>
-                <option value="esculpidas">Esculpidas (Acrílico / Polygel)</option>
-                <option value="otros">Otros / Tratamientos Especiales</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Badge Destacado (Opcional)
-              </label>
-              <input
-                type="text"
-                value={badge}
-                onChange={(e) => setBadge(e.target.value)}
-                placeholder="Ej: Más Solicitado, Tendencia 2026"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Precio Base ($ ARS) *
-              </label>
-              <input
-                type="number"
-                required
-                min={0}
-                step={500}
-                value={basePrice}
-                onChange={(e) => setBasePrice(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Duración Base (Minutos en Mesa) *
-              </label>
-              <input
-                type="number"
-                required
-                min={15}
-                step={15}
-                value={baseDurationMin}
-                onChange={(e) => setBaseDurationMin(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Descripción del Tratamiento
-            </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Explica qué incluye la técnica (ej. limpieza profunda de cutículas con torno y nivelación con gel Rubber...)"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F] resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Recomendado para...
-            </label>
-            <input
-              type="text"
-              value={recommendedFor}
-              onChange={(e) => setRecommendedFor(e.target.value)}
-              placeholder="Ej: Uñas frágiles, quebradizas o personas que buscan crecimiento natural."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-[#DE738F]"
-            />
-          </div>
-
-          <div className="pt-4 border-t border-border flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-all cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#DE738F] to-[#C45774] text-white text-xs sm:text-sm font-bold shadow-md cursor-pointer hover:opacity-95"
-            >
-              Guardar Técnica
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 interface RemovalModalProps {
   removal: RemovalOption | null;
   onClose: () => void;
@@ -832,9 +877,38 @@ const RemovalEditModal: React.FC<RemovalModalProps> = ({ removal, onClose, onSav
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl p-6 sm:p-7">
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+        animation: 'modalBackdropFade 0.2s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        style={{
+          animation: 'modalCardPop 0.25s ease-out',
+          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)'
+        }}
+        className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl p-6 sm:p-7 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
           <h3 className="text-lg font-bold text-foreground font-serif">
             {removal ? 'Editar Opción de Retiro (Paso 2)' : 'Nueva Opción de Retiro (Paso 2)'}
@@ -928,7 +1002,8 @@ const RemovalEditModal: React.FC<RemovalModalProps> = ({ removal, onClose, onSav
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -965,9 +1040,38 @@ const NailArtTierEditModal: React.FC<NailArtTierModalProps> = ({ tier, onClose, 
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl p-6 sm:p-7">
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'radial-gradient(circle at center, rgba(222, 115, 143, 0.12) 0%, rgba(20, 10, 15, 0.55) 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+        animation: 'modalBackdropFade 0.2s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        style={{
+          animation: 'modalCardPop 0.25s ease-out',
+          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(222, 115, 143, 0.2)'
+        }}
+        className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl p-6 sm:p-7 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
           <h3 className="text-lg font-bold text-foreground font-serif">
             {tier ? `Editar Nivel ${tier.tierLevel} (Paso 3)` : 'Nuevo Nivel de Nail Art (Paso 3)'}
@@ -1093,6 +1197,7 @@ const NailArtTierEditModal: React.FC<NailArtTierModalProps> = ({ tier, onClose, 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
