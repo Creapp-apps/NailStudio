@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 function apiDevMiddleware() {
@@ -52,15 +52,30 @@ function apiDevMiddleware() {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), apiDevMiddleware()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
+export default defineConfig(({ mode }) => {
+  // Env desde archivos .env (local) y desde process.env (Vercel inyecta las vars del proyecto).
+  const fileEnv = loadEnv(mode, process.cwd(), '');
+  const pick = (...keys: string[]) =>
+    keys.map((k) => process.env[k] || fileEnv[k]).find((v) => v && v.length > 0) || '';
+
+  // Aceptamos tanto los nombres con prefijo VITE_ (local) como sin prefijo (Vercel).
+  const SUPABASE_URL = pick('VITE_SUPABASE_URL', 'SUPABASE_URL');
+  const SUPABASE_ANON_KEY = pick('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY');
+
+  return {
+    plugins: [react(), apiDevMiddleware()],
+    define: {
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(SUPABASE_ANON_KEY)
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src')
+      }
+    },
+    server: {
+      port: 5173,
+      host: true
     }
-  },
-  server: {
-    port: 5173,
-    host: true
-  }
+  };
 });
