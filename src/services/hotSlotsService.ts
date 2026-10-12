@@ -39,6 +39,7 @@ export function calculateTodayHotSlots(options?: {
   const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
   const salonSettings = storage.getSalonSettings();
+  const bufferMin = Math.max(0, Number(salonSettings?.slotBufferMin) || 0);
   const allAppointments = storage.getAppointments();
   const allTechs = storage.getTechs();
   const activeTechs: NailTechnician[] = allTechs.length > 0 ? allTechs : [{
@@ -100,11 +101,11 @@ export function calculateTodayHotSlots(options?: {
     const isPast = slotStart <= currentTotalMinutes;
 
     // Modelo de recurso único: 1 turno por vez. El slot está libre solo si NINGÚN
-    // turno se solapa, sin importar la profesional (evita superposiciones).
+    // turno se solapa (expandido por el buffer de limpieza), sin importar la profesional.
     const hasOverlap = todayAppointments.some(apt => {
       const aptStart = toMinutes(apt.scheduledTime);
       const aptEnd = aptStart + (apt.totalDurationMin || 60);
-      return Math.max(slotStart, aptStart) < Math.min(slotEnd, aptEnd);
+      return Math.max(slotStart, aptStart - bufferMin) < Math.min(slotEnd, aptEnd + bufferMin);
     });
 
     if (!hasOverlap) {

@@ -173,6 +173,7 @@ export const BookingModal: React.FC<Props> = ({
 
     const effectiveSlotDuration = totalDuration > 0 ? totalDuration : 60;
     const stepMin = 30; // Offer slots every 30 mins
+    const bufferMin = Math.max(0, Number(salonSettings.slotBufferMin) || 0); // limpieza/esterilización entre turnos
     const generated: string[] = [];
 
     // Modelo de recurso único: 1 turno por vez. Un turno tomado bloquea la franja
@@ -203,7 +204,9 @@ export const BookingModal: React.FC<Props> = ({
         const hasCollision = activeApts.some(apt => {
           const aptStart = toMinutes(apt.scheduledTime);
           const aptEnd = aptStart + (apt.totalDurationMin || 60);
-          return Math.max(curr, aptStart) < Math.min(slotEnd, aptEnd);
+          // Expandimos el turno existente por el buffer a ambos lados: obliga a dejar
+          // al menos `bufferMin` de separación entre el fin de un turno y el inicio del otro.
+          return Math.max(curr, aptStart - bufferMin) < Math.min(slotEnd, aptEnd + bufferMin);
         });
 
         if (!hasCollision) {
@@ -216,7 +219,7 @@ export const BookingModal: React.FC<Props> = ({
     });
 
     return generated;
-  }, [isDayClosed, currentDaySchedule, totalDuration, appointments, selectedDate, selectedTech]);
+  }, [isDayClosed, currentDaySchedule, totalDuration, appointments, selectedDate, selectedTech, salonSettings.slotBufferMin]);
 
   // Keep selectedTime synced with available slots
   useEffect(() => {
