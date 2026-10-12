@@ -323,9 +323,6 @@ export const PublicLanding: React.FC<Props> = ({
                       <span style={{ fontSize: '1.4rem', fontWeight: 800, color: theme.secondary, fontFamily: 'var(--font-couture)' }}>
                         ${(service.basePrice || 0).toLocaleString('es-AR')}
                       </span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Clock size={14} /> {service.baseDurationMin || 60} min
-                      </span>
                     </div>
 
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1rem' }}>
@@ -394,7 +391,16 @@ export const PublicLanding: React.FC<Props> = ({
                   <img
                     src={tier.sampleImage || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80'}
                     alt={tier.name || 'Nail Art'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: `${tier.sampleImagePositionX ?? 50}% ${tier.sampleImagePositionY ?? 50}%`,
+                      transform: (tier.sampleImageScale && tier.sampleImageScale !== 100)
+                        ? `scale(${(tier.sampleImageScale / 100).toFixed(2)})`
+                        : undefined,
+                      transformOrigin: `${tier.sampleImagePositionX ?? 50}% ${tier.sampleImagePositionY ?? 50}%`
+                    }}
                   />
                 </div>
                 <h4 style={{ fontSize: '1rem', color: 'var(--brand-espresso)', fontFamily: 'var(--font-serif-glam)', marginBottom: '0.3rem' }}>
@@ -403,18 +409,9 @@ export const PublicLanding: React.FC<Props> = ({
                 <div style={{ fontSize: '1.15rem', fontWeight: 800, color: theme.secondary, marginBottom: '0.5rem', fontFamily: 'var(--font-couture)' }}>
                   {(tier.price || 0) > 0 ? `+$${(tier.price || 0).toLocaleString('es-AR')}` : 'Sin costo adicional'}
                 </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 0 }}>
                   {tier.description || ''}
                 </p>
-                {Array.isArray(tier.examples) && tier.examples.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                    {tier.examples.map(ex => (
-                      <span key={ex} style={{ fontSize: '0.7rem', background: `rgba(${theme.primaryRgb}, 0.08)`, padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)', color: theme.secondary, border: `1px solid ${theme.borderSubtle}` }}>
-                        {ex}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </div>

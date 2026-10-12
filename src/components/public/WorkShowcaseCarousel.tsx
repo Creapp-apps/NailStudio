@@ -7,7 +7,6 @@ import {
   Maximize2,
   X,
   CheckCircle2,
-  ShieldCheck,
   Eye
 } from 'lucide-react';
 import { WebCustomizationConfig, ShowcaseWorkItem } from '../../types/webConfig';
@@ -311,26 +310,6 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                       className="showcase-img"
                     />
 
-                    {/* Technique Badge */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      background: 'rgba(255, 255, 255, 0.94)',
-                      backdropFilter: 'blur(8px)',
-                      color: theme.secondary,
-                      padding: '0.3rem 0.75rem',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-couture)',
-                      letterSpacing: '0.08em',
-                      border: `1px solid ${theme.borderSubtle}`,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                    }}>
-                      {item.techniqueTag}
-                    </div>
-
                     {/* Zoom Icon Button */}
                     <div style={{
                       position: 'absolute',
@@ -392,19 +371,6 @@ export const WorkShowcaseCarousel: React.FC<Props> = ({ config: propConfig, onOp
                     </div>
 
                     <div>
-                      {/* Durability / Guarantee Badge */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        fontSize: '0.72rem',
-                        color: 'var(--text-muted)',
-                        marginBottom: '1rem'
-                      }}>
-                        <ShieldCheck size={14} color={theme.primary} style={{ flexShrink: 0 }} />
-                        <span>{item.badgeInfo || `Duración intacta ${item.durationDays || 21}+ días • HEMA-Free`}</span>
-                      </div>
-
                       {/* Action Button: Preview & Agendar este diseño */}
                       <button
                         onClick={(e) => {

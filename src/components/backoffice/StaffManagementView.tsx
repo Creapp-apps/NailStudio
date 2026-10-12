@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles, Star, Calendar, Clock, Plus, Trash2, UserPlus, X, Check, DollarSign } from 'lucide-react';
+import { Sparkles, Star, Calendar, Clock, Plus, Trash2, UserPlus, X, Check, DollarSign, Pencil } from 'lucide-react';
 import { NailTechnician } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -26,6 +26,7 @@ const AVAILABLE_SPECIALTIES = [
 
 export const StaffManagementView: React.FC<Props> = ({ techs }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTech, setEditingTech] = useState<NailTechnician | null>(null);
   const [name, setName] = useState('');
   const [role, setRole] = useState('Nail Artist & Especialista');
   const [avatar, setAvatar] = useState('');
@@ -35,6 +36,35 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
     'Kapping Gel'
   ]);
 
+  const resetForm = () => {
+    setName('');
+    setRole('Nail Artist & Especialista');
+    setAvatar('');
+    setCommissionRate(50);
+    setSelectedSpecialties(['Manicura Rusa', 'Kapping Gel']);
+  };
+
+  const openCreate = () => {
+    setEditingTech(null);
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (tech: NailTechnician) => {
+    setEditingTech(tech);
+    setName(tech.name);
+    setRole(tech.role);
+    setAvatar(tech.avatar || '');
+    setCommissionRate(Math.round((tech.commissionRate ?? 0.5) * 100));
+    setSelectedSpecialties(tech.specialties && tech.specialties.length > 0 ? tech.specialties : ['Manicura Rusa']);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTech(null);
+  };
+
   const toggleSpecialty = (spec: string) => {
     if (selectedSpecialties.includes(spec)) {
       setSelectedSpecialties(selectedSpecialties.filter(s => s !== spec));
@@ -43,27 +73,35 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    storage.addTech({
-      name: name.trim(),
-      role: role.trim() || 'Nail Artist',
-      avatar: avatar.trim() || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80`,
-      specialties: selectedSpecialties.length > 0 ? selectedSpecialties : ['Manicura Rusa'],
-      rating: 5.0,
-      reviewsCount: 0,
-      commissionRate: commissionRate / 100
-    });
+    const fallbackAvatar = `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80`;
 
-    // Reset & close
-    setName('');
-    setRole('Nail Artist & Especialista');
-    setAvatar('');
-    setCommissionRate(50);
-    setSelectedSpecialties(['Manicura Rusa', 'Kapping Gel']);
-    setIsModalOpen(false);
+    if (editingTech) {
+      storage.updateTech({
+        ...editingTech,
+        name: name.trim(),
+        role: role.trim() || 'Nail Artist',
+        avatar: avatar.trim() || editingTech.avatar || fallbackAvatar,
+        specialties: selectedSpecialties.length > 0 ? selectedSpecialties : ['Manicura Rusa'],
+        commissionRate: commissionRate / 100
+      });
+    } else {
+      storage.addTech({
+        name: name.trim(),
+        role: role.trim() || 'Nail Artist',
+        avatar: avatar.trim() || fallbackAvatar,
+        specialties: selectedSpecialties.length > 0 ? selectedSpecialties : ['Manicura Rusa'],
+        rating: 5.0,
+        reviewsCount: 0,
+        commissionRate: commissionRate / 100
+      });
+    }
+
+    resetForm();
+    closeModal();
   };
 
   const handleDelete = (id: string, techName: string) => {
@@ -83,7 +121,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
         </div>
         <Button
           size="sm"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreate}
           className="bg-primary text-primary-foreground text-xs gap-1.5 shadow-xs"
         >
           <Plus className="size-3.5" />
@@ -105,7 +143,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
             </div>
             <Button
               size="sm"
-              onClick={() => setIsModalOpen(true)}
+              onClick={openCreate}
               className="bg-primary text-primary-foreground text-xs gap-1.5"
             >
               <Plus className="size-3.5" />
@@ -129,6 +167,13 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                       Mesa {idx + 1}
                     </span>
+                    <button
+                      onClick={() => openEdit(tech)}
+                      className="p-1 text-muted-foreground/60 hover:text-rose-600 rounded transition-colors opacity-80 group-hover:opacity-100"
+                      title="Editar especialista"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
                     <button
                       onClick={() => handleDelete(tech.id, tech.name)}
                       className="p-1 text-muted-foreground/60 hover:text-red-600 rounded transition-colors opacity-80 group-hover:opacity-100"
@@ -215,7 +260,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
             animation: 'modalBackdropFade 0.25s ease-out'
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
+            if (e.target === e.currentTarget) closeModal();
           }}
         >
           <div
@@ -240,13 +285,17 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
                   <UserPlus className="size-4.5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground text-sm sm:text-base leading-tight">Nueva Especialista</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Alta de manicurista en el staff del salón</p>
+                  <h3 className="font-bold text-foreground text-sm sm:text-base leading-tight">
+                    {editingTech ? 'Editar Especialista' : 'Nueva Especialista'}
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {editingTech ? 'Actualizá los datos de la manicurista' : 'Alta de manicurista en el staff del salón'}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-rose-100/60 transition-colors"
               >
                 <X className="size-4" />
@@ -254,7 +303,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
             </div>
 
             {/* Scrollable Form Body */}
-            <form onSubmit={handleCreate} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
               <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
                 {/* Row 1: Nombre & Cargo (2 Cols) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -344,7 +393,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeModal}
                   className="text-xs"
                 >
                   Cancelar
@@ -355,7 +404,7 @@ export const StaffManagementView: React.FC<Props> = ({ techs }) => {
                   className="bg-primary text-primary-foreground text-xs gap-1.5"
                 >
                   <Check className="size-3.5" />
-                  <span>Guardar Especialista</span>
+                  <span>{editingTech ? 'Guardar Cambios' : 'Guardar Especialista'}</span>
                 </Button>
               </div>
             </form>

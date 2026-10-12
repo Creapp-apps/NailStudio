@@ -104,27 +104,20 @@ export function calculateTodayHotSlots(options?: {
     const slotEnd = slotStart + slotDuration;
     const isPast = slotStart <= currentTotalMinutes;
 
-    // Check which technicians are free during this slot
-    const freeTechsForSlot = activeTechs.filter(tech => {
-      const techCollisions = todayAppointments.filter(apt => {
-        if (apt.techId && apt.techId !== tech.id && activeTechs.length > 1) {
-          return false;
-        }
-        const aptStart = toMinutes(apt.scheduledTime);
-        const aptEnd = aptStart + (apt.totalDurationMin || 60);
-        // Overlap test
-        return Math.max(slotStart, aptStart) < Math.min(slotEnd, aptEnd);
-      });
-      return techCollisions.length === 0;
+    // Modelo de recurso único: 1 turno por vez. El slot está libre solo si NINGÚN
+    // turno se solapa, sin importar la profesional (evita superposiciones).
+    const hasOverlap = todayAppointments.some(apt => {
+      const aptStart = toMinutes(apt.scheduledTime);
+      const aptEnd = aptStart + (apt.totalDurationMin || 60);
+      return Math.max(slotStart, aptStart) < Math.min(slotEnd, aptEnd);
     });
 
-    // If at least one tech has this time slot free
-    if (freeTechsForSlot.length > 0) {
+    if (!hasOverlap) {
       freeSlots.push({
         time: slot.time,
         minutes: slot.minutes,
         isPast,
-        availableTechs: freeTechsForSlot
+        availableTechs: activeTechs
       });
     }
   });

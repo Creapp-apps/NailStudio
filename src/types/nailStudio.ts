@@ -33,6 +33,9 @@ export interface NailArtTier {
   description: string;
   examples: string[];
   sampleImage: string;
+  sampleImagePositionX?: number; // 0 a 100% horizontal (objectPosition)
+  sampleImagePositionY?: number; // 0 a 100% vertical (objectPosition)
+  sampleImageScale?: number; // 100 a 200% escala/zoom
   isActive?: boolean;
 }
 

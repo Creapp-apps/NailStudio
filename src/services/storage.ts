@@ -493,6 +493,9 @@ class StorageService {
         description: t.description || '',
         examples: Array.isArray(t.examples) ? t.examples : (t.examples ? [String(t.examples)] : ['Diseño personalizado', 'Efecto en tendencia']),
         sampleImage: t.sampleImage || '',
+        sampleImagePositionX: typeof t.sampleImagePositionX === 'number' ? t.sampleImagePositionX : 50,
+        sampleImagePositionY: typeof t.sampleImagePositionY === 'number' ? t.sampleImagePositionY : 50,
+        sampleImageScale: typeof t.sampleImageScale === 'number' ? t.sampleImageScale : 100,
         isActive: t.isActive ?? true
       }));
     } catch {

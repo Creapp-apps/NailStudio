@@ -22,7 +22,11 @@ import {
   Star,
   Filter,
   Save,
-  Loader2
+  Loader2,
+  Upload,
+  ZoomIn,
+  ZoomOut,
+  Move
 } from 'lucide-react';
 import { NailService, RemovalOption, NailArtTier, ServiceCategory } from '../../types/nailStudio';
 import { storage } from '../../services/storage';
@@ -1021,6 +1025,37 @@ const NailArtTierEditModal: React.FC<NailArtTierModalProps> = ({ tier, onClose, 
   const [description, setDescription] = useState(tier?.description || '');
   const [examplesInput, setExamplesInput] = useState(tier?.examples ? tier.examples.join(', ') : '');
 
+  // Imagen de muestra + calibrador (ajuste, zoom y área visible)
+  const [sampleImage, setSampleImage] = useState(tier?.sampleImage || '');
+  const [posX, setPosX] = useState<number>(tier?.sampleImagePositionX ?? 50);
+  const [posY, setPosY] = useState<number>(tier?.sampleImagePositionY ?? 50);
+  const [scale, setScale] = useState<number>(tier?.sampleImageScale ?? 100);
+  const [imageUrlInput, setImageUrlInput] = useState(
+    tier?.sampleImage && tier.sampleImage.startsWith('http') ? tier.sampleImage : ''
+  );
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPreviewDragging, setIsPreviewDragging] = useState(false);
+
+  const handleImageFile = (file: File | null | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return alert('El archivo debe ser una imagen.');
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setSampleImage(result);
+      setImageUrlInput('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePreviewPoint = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setPosX(Math.max(0, Math.min(100, Math.round(x))));
+    setPosY(Math.max(0, Math.min(100, Math.round(y))));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return alert('Por favor ingresa un nombre para el nivel de Nail Art.');
@@ -1036,7 +1071,10 @@ const NailArtTierEditModal: React.FC<NailArtTierModalProps> = ({ tier, onClose, 
       additionalDurationMin: Number(additionalDurationMin) || 0,
       description: description.trim(),
       examples,
-      sampleImage: tier?.sampleImage || 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=400&q=80'
+      sampleImage: sampleImage || tier?.sampleImage || 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=400&q=80',
+      sampleImagePositionX: posX,
+      sampleImagePositionY: posY,
+      sampleImageScale: scale
     });
   };
 
@@ -1178,6 +1216,187 @@ const NailArtTierEditModal: React.FC<NailArtTierModalProps> = ({ tier, onClose, 
             <span className="text-[10px] text-muted-foreground mt-1 block">
               Se mostrarán como etiquetas debajo de la card en el Paso 3.
             </span>
+          </div>
+
+          {/* ================= FOTO DE MUESTRA + CALIBRADOR ================= */}
+          <div className="pt-4 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon size={13} /> Foto del Nivel (Web Pública)
+              </label>
+              {sampleImage && (
+                <button
+                  type="button"
+                  onClick={() => { setSampleImage(''); setImageUrlInput(''); }}
+                  className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                >
+                  Quitar imagen
+                </button>
+              )}
+            </div>
+
+            {/* Carga: drag & drop + botón + URL */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageFile(e.dataTransfer.files?.[0]); }}
+              className={`rounded-xl border-2 border-dashed p-3 text-center transition-all ${
+                isDragging ? 'border-[#DE738F] bg-[#DE738F]/5' : 'border-border bg-background'
+              }`}
+            >
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#DE738F]/10 text-[#C45774] text-xs font-bold hover:bg-[#DE738F]/15 transition-all">
+                <Upload size={14} /> Subir desde el dispositivo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageFile(e.target.files?.[0])}
+                />
+              </label>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Arrastrá una imagen o pegá una URL abajo.
+              </p>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="url"
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  placeholder="https://…"
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#DE738F]"
+                />
+                <button
+                  type="button"
+                  onClick={() => { if (imageUrlInput.trim()) setSampleImage(imageUrlInput.trim()); }}
+                  className="px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold text-foreground hover:bg-muted/70 cursor-pointer"
+                >
+                  Usar URL
+                </button>
+              </div>
+            </div>
+
+            {/* Calibrador: área visible (click/drag), ajuste y zoom */}
+            {sampleImage && (
+              <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                  <Move size={12} /> Hacé click o arrastrá en la imagen para elegir el área visible
+                </div>
+
+                {/* Preview arrastrable (misma relación que la web: ~16:9) */}
+                <div
+                  onMouseDown={(e) => { setIsPreviewDragging(true); handlePreviewPoint(e); }}
+                  onMouseMove={(e) => { if (isPreviewDragging) handlePreviewPoint(e); }}
+                  onMouseUp={() => setIsPreviewDragging(false)}
+                  onMouseLeave={() => setIsPreviewDragging(false)}
+                  className="relative w-full rounded-lg overflow-hidden cursor-crosshair select-none border border-border"
+                  style={{ height: '160px' }}
+                >
+                  <img
+                    src={sampleImage}
+                    alt="Vista previa del nivel"
+                    draggable={false}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: `${posX}% ${posY}%`,
+                      transform: scale !== 100 ? `scale(${(scale / 100).toFixed(2)})` : undefined,
+                      transformOrigin: `${posX}% ${posY}%`,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  {/* Retícula del foco */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${posX}%`,
+                      top: `${posY}%`,
+                      width: '22px',
+                      height: '22px',
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%',
+                      border: '2px solid #fff',
+                      boxShadow: '0 0 0 2px rgba(222,115,143,0.9), 0 2px 8px rgba(0,0,0,0.35)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Zoom / Escala */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground">Aumento / Zoom</span>
+                    <span className="text-[11px] font-bold text-[#C45774]">{scale}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setScale((s) => Math.max(100, s - 5))}
+                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-[#C45774] cursor-pointer"
+                      title="Alejar (-5%)"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+                    <input
+                      type="range"
+                      min={100}
+                      max={200}
+                      step={1}
+                      value={scale}
+                      onChange={(e) => setScale(Number(e.target.value))}
+                      className="flex-1 accent-[#DE738F]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setScale((s) => Math.min(200, s + 5))}
+                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-[#C45774] cursor-pointer"
+                      title="Acercar (+5%)"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ajuste fino X / Y */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-semibold text-muted-foreground">Ajuste horizontal</span>
+                      <span className="text-[11px] font-bold text-[#C45774]">{posX}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={posX}
+                      onChange={(e) => setPosX(Number(e.target.value))}
+                      className="w-full accent-[#DE738F]"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-semibold text-muted-foreground">Ajuste vertical</span>
+                      <span className="text-[11px] font-bold text-[#C45774]">{posY}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={posY}
+                      onChange={(e) => setPosY(Number(e.target.value))}
+                      className="w-full accent-[#DE738F]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => { setPosX(50); setPosY(50); setScale(100); }}
+                  className="text-[10px] font-semibold text-muted-foreground hover:text-[#C45774] flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw size={11} /> Restablecer encuadre
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 border-t border-border flex justify-end gap-3">

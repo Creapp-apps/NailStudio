@@ -174,10 +174,11 @@ export const BookingModal: React.FC<Props> = ({
     const stepMin = 30; // Offer slots every 30 mins
     const generated: string[] = [];
 
+    // Modelo de recurso único: 1 turno por vez. Un turno tomado bloquea la franja
+    // para cualquier profesional, sin importar su techId (evita superposiciones).
     const activeApts = appointments.filter(a =>
       a.scheduledDate === selectedDate &&
-      a.status !== 'cancelled' &&
-      (!selectedTech || a.techId === selectedTech.id)
+      a.status !== 'cancelled'
     );
 
     const toMinutes = (timeStr: string) => {

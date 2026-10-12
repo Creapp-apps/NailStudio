@@ -59,6 +59,7 @@ import { MacBookMockup } from './MacBookMockup';
 import { storage } from '../../services/storage';
 import { NailService } from '../../types/nailStudio';
 import { ServiceEditModal } from './ServiceEditModal';
+import { ShowcaseWorkEditModal } from './ShowcaseWorkEditModal';
 
 type StudioCategory =
   | 'identidad'
@@ -91,6 +92,8 @@ export const WebStudioView: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [workFilterCategory, setWorkFilterCategory] = useState<string>('all');
+  const [editingWork, setEditingWork] = useState<ShowcaseWorkItem | null>(null);
+  const [isCreatingWork, setIsCreatingWork] = useState<boolean>(false);
 
   // Services state and modals
   const [services, setServices] = useState<NailService[]>(() => storage.getServices());
@@ -505,6 +508,30 @@ export const WebStudioView: React.FC = () => {
     handleFieldChange('showcaseItems', DEFAULT_WEB_CONFIG.showcaseItems);
   };
 
+  const handleSaveWork = (data: Omit<ShowcaseWorkItem, 'id'>, existingId?: string) => {
+    const current = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    if (existingId) {
+      const updated = current.map(item =>
+        item.id === existingId ? { ...item, ...data, id: existingId } : item
+      );
+      handleFieldChange('showcaseItems', updated);
+    } else {
+      const newItem: ShowcaseWorkItem = {
+        ...data,
+        id: `work-${Date.now()}`
+      };
+      handleFieldChange('showcaseItems', [newItem, ...current]);
+    }
+    setEditingWork(null);
+    setIsCreatingWork(false);
+  };
+
+  const handleDeleteWork = (id: string, title: string) => {
+    if (confirm(`¿Estás segura de eliminar el trabajo "${title}" de la galería?`)) {
+      removeWorkItem(id);
+    }
+  };
+
   // Categories Management
   const currentCategories: ShowcaseCategoryItem[] = (draftConfig.showcaseCategories && draftConfig.showcaseCategories.length > 0)
     ? draftConfig.showcaseCategories
@@ -537,7 +564,20 @@ export const WebStudioView: React.FC = () => {
       return;
     }
     const updated = currentCategories.filter(cat => cat.id !== id);
+    const fallbackCategory = updated[0]?.id || 'kapping';
+
+    // Reasignar trabajos que estaban en la categoría eliminada para que no queden invisibles
+    const currentWorks = draftConfig.showcaseItems || DEFAULT_WEB_CONFIG.showcaseItems;
+    const updatedWorks = currentWorks.map(w =>
+      w.category === id ? { ...w, category: fallbackCategory } : w
+    );
+
     handleFieldChange('showcaseCategories', updated);
+    handleFieldChange('showcaseItems', updatedWorks);
+
+    if (workFilterCategory === id) {
+      setWorkFilterCategory('all');
+    }
   };
 
   const moveCategory = (index: number, direction: 'up' | 'down') => {
@@ -2313,21 +2353,24 @@ export const WebStudioView: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => addWorkItem(true)}
-                          className="px-2.5 py-1 text-[10px] font-semibold text-[#DE738F] hover:text-[#C45774] border border-[#DE738F]/30 bg-[#DE738F]/5 hover:bg-[#DE738F]/15 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1 transition-colors"
-                          title="Agregar un nuevo trabajo directamente al 1° lugar de la galería"
+                          onClick={() => {
+                            setEditingWork(null);
+                            setIsCreatingWork(true);
+                          }}
+                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Crear y publicar un nuevo trabajo con el modal de edición"
                         >
                           <Plus className="size-3" />
-                          <span>Agregar al inicio (1°)</span>
+                          <span>Nuevo Trabajo</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => addWorkItem(false)}
-                          className="px-2.5 py-1 text-[10px] font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer flex items-center gap-1 transition-colors"
-                          title="Agregar un nuevo trabajo al final de la galería"
+                          onClick={() => addWorkItem(true)}
+                          className="px-2.5 py-1 text-[10px] font-semibold text-[#DE738F] hover:text-[#C45774] border border-[#DE738F]/30 bg-[#DE738F]/5 hover:bg-[#DE738F]/15 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1 transition-colors"
+                          title="Agregar un trabajo predeterminado al 1° lugar de la galería"
                         >
                           <Plus className="size-3" />
-                          <span>Agregar al final</span>
+                          <span className="hidden sm:inline">Rápido 1°</span>
                         </button>
                       </div>
                     </div>
@@ -2388,15 +2431,18 @@ export const WebStudioView: React.FC = () => {
                               No hay trabajos asignados a "{activeCatLabel}"
                             </p>
                             <p className="text-[11px] mb-3">
-                              Podés agregar un nuevo trabajo directamente en esta categoría o reasignar uno existente.
+                              Podés crear un nuevo trabajo directamente en esta categoría o editar uno existente para reasignarlo.
                             </p>
                             <button
                               type="button"
-                              onClick={() => addWorkItem(true)}
-                              className="px-3 py-1.5 text-xs font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                              onClick={() => {
+                                setEditingWork(null);
+                                setIsCreatingWork(true);
+                              }}
+                              className="px-3.5 py-1.5 text-xs font-bold text-white rounded-lg bg-[#DE738F] hover:bg-[#C45774] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                             >
                               <Plus className="size-3.5" />
-                              <span>Agregar primer trabajo en {activeCatLabel}</span>
+                              <span>Crear primer trabajo en {activeCatLabel}</span>
                             </button>
                           </div>
                         );
@@ -2408,24 +2454,25 @@ export const WebStudioView: React.FC = () => {
                             const isFirst = index === 0;
                             const isFiltered = workFilterCategory !== 'all';
                             const masterIndex = allItems.findIndex(w => w.id === work.id);
+                            const workCatLabel = currentCategories.find(c => c.id === work.category)?.label || work.category;
 
                             return (
                               <div
                                 key={work.id || index}
-                                className={`p-3 rounded-xl border space-y-2.5 transition-all ${
+                                className={`p-3 rounded-2xl border space-y-2.5 transition-all shadow-2xs ${
                                   isFirst
-                                    ? 'border-amber-400/80 dark:border-amber-500/60 bg-gradient-to-b from-amber-50/40 via-rose-50/20 to-transparent dark:from-amber-950/25 dark:to-transparent shadow-xs ring-1 ring-amber-400/25'
-                                    : 'border-rose-200/60 dark:border-rose-900/40 bg-rose-50/20 dark:bg-rose-950/10'
+                                    ? 'border-amber-400/80 dark:border-amber-500/60 bg-gradient-to-b from-amber-50/30 via-rose-50/15 to-transparent dark:from-amber-950/25 dark:to-transparent shadow-xs ring-1 ring-amber-400/25'
+                                    : 'border-rose-200/60 dark:border-rose-900/40 bg-card hover:border-[#DE738F]/40'
                                 }`}
                               >
-                                {/* Order Header & Position Bar */}
+                                {/* Order Header & Action Bar */}
                                 <div className="flex items-center justify-between pb-2 border-b border-rose-200/40 dark:border-rose-900/30 gap-2 flex-wrap">
                                   <div className="flex items-center gap-2">
                                     {isFirst ? (
                                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 shadow-2xs">
                                         <Star className="size-3 fill-amber-500 text-amber-500" />
                                         {isFiltered
-                                          ? `1° en ${activeCatLabel} (Primero de la fila)`
+                                          ? `1° en ${activeCatLabel} (Lidera categoría)`
                                           : '1° Lugar • Se muestra primero'}
                                       </span>
                                     ) : (
@@ -2458,7 +2505,7 @@ export const WebStudioView: React.FC = () => {
                                   <div className="flex items-center gap-1.5 ml-auto">
                                     {/* Direct position dropdown */}
                                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                      <span className="hidden sm:inline">Posición:</span>
+                                      <span className="hidden sm:inline">Pos:</span>
                                       <select
                                         value={index}
                                         onChange={(e) => {
@@ -2531,11 +2578,22 @@ export const WebStudioView: React.FC = () => {
                                       <ArrowDown className="size-3.5" />
                                     </button>
 
+                                    {/* Edit button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingWork(work)}
+                                      className="px-2 py-1 rounded-md text-[11px] font-semibold text-[#C45774] hover:bg-[#DE738F]/10 border border-[#DE738F]/30 transition-all flex items-center gap-1 cursor-pointer ml-0.5"
+                                      title="Editar todos los datos, categoría y foto de este trabajo"
+                                    >
+                                      <Edit2 className="size-3" />
+                                      <span>Editar</span>
+                                    </button>
+
                                     {/* Delete button */}
                                     <button
                                       type="button"
-                                      onClick={() => removeWorkItem(work.id)}
-                                      className="text-muted-foreground hover:text-rose-600 p-1 rounded-md hover:bg-rose-100/50 transition-colors ml-1 cursor-pointer"
+                                      onClick={() => handleDeleteWork(work.id, work.title)}
+                                      className="text-muted-foreground hover:text-rose-600 p-1 rounded-md hover:bg-rose-100/50 transition-colors ml-0.5 cursor-pointer"
                                       title="Eliminar este trabajo"
                                     >
                                       <Trash2 className="size-3.5" />
@@ -2543,160 +2601,72 @@ export const WebStudioView: React.FC = () => {
                                   </div>
                                 </div>
 
+                                {/* Card Body Preview */}
                                 <div className="flex items-start gap-3">
-                                  {/* Photo Thumbnail + Quick Upload */}
-                                  <div className="relative group shrink-0">
+                                  {/* Photo Thumbnail */}
+                                  <div
+                                    onClick={() => setEditingWork(work)}
+                                    className="relative group shrink-0 cursor-pointer"
+                                    title="Click para editar trabajo"
+                                  >
                                     <img
                                       src={work.imageUrl}
                                       alt={work.title}
-                                      className="size-16 rounded-lg object-cover border border-rose-200/80 dark:border-rose-800 shadow-xs"
+                                      className="size-16 sm:size-20 rounded-xl object-cover border border-rose-200/80 dark:border-rose-800 shadow-xs group-hover:scale-105 transition-transform"
                                     />
-                                    <label
-                                      className="absolute inset-0 bg-black/55 text-white rounded-lg opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-[9px] font-semibold"
-                                      title="Subir foto propia desde dispositivo"
+                                    <div className="absolute inset-0 bg-black/40 text-white rounded-xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity text-[8.5px] font-bold">
+                                      <Edit2 className="size-3 mb-0.5" />
+                                      <span>Editar</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Content details */}
+                                  <div className="flex-1 min-w-0 space-y-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-[#C45774] bg-[#DE738F]/10 px-2 py-0.5 rounded-md border border-[#DE738F]/25">
+                                        {workCatLabel}
+                                      </span>
+                                      {work.techniqueTag && (
+                                        <span className="text-[9px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
+                                          {work.techniqueTag}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <h4
+                                      onClick={() => setEditingWork(work)}
+                                      className="text-xs sm:text-sm font-bold text-foreground font-serif tracking-tight truncate cursor-pointer hover:text-[#DE738F] transition-colors"
                                     >
-                                      <UploadCloud className="size-4 mb-0.5" />
-                                      <span>Subir</span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) handleWorkImageUpload(work.id, file);
-                                        }}
-                                      />
-                                    </label>
-                                  </div>
+                                      {work.title}
+                                    </h4>
 
-                                  {/* Main Details */}
-                                  <div className="flex-1 space-y-1.5 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <input
-                                        type="text"
-                                        value={work.title}
-                                        onChange={(e) => updateWorkItem(work.id, { title: e.target.value })}
-                                        placeholder="Título del set (ej: Kapping Ruso)"
-                                        className="w-full text-xs font-bold text-foreground bg-transparent border-b border-rose-200/50 focus:border-[#DE738F] focus:outline-none pb-0.5"
-                                      />
-                                    </div>
+                                    {work.description && (
+                                      <p className="text-[10.5px] text-muted-foreground line-clamp-1 leading-relaxed">
+                                        {work.description}
+                                      </p>
+                                    )}
 
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Categoría</label>
-                                        <LuxurySelect
-                                          value={work.category}
-                                          onChange={(val) => updateWorkItem(work.id, { category: String(val) })}
-                                          options={currentCategories.map(cat => ({
-                                            value: cat.id,
-                                            label: cat.label
-                                          }))}
-                                        />
+                                    {/* Badges / Tech Sheet Details */}
+                                    <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                                      <div className="flex items-center gap-1 text-[9px] font-medium text-rose-600 dark:text-rose-300">
+                                        <ShieldCheck className="size-3 shrink-0" />
+                                        <span className="truncate max-w-[170px]">{work.badgeInfo || 'Garantía 21+ días'}</span>
                                       </div>
-                                      <div>
-                                        <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block">Técnica (Pill)</label>
-                                        <input
-                                          type="text"
-                                          value={work.techniqueTag}
-                                          onChange={(e) => updateWorkItem(work.id, { techniqueTag: e.target.value })}
-                                          placeholder="Ej: Nivelación Rubber"
-                                          className="w-full text-[10px] rounded-lg border border-border bg-background px-2 py-1 text-foreground"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
 
-                                {/* Description, Badge & Image URL input */}
-                                <div className="space-y-1.5 pt-1">
-                                  <input
-                                    type="text"
-                                    value={work.description || ''}
-                                    onChange={(e) => updateWorkItem(work.id, { description: e.target.value })}
-                                    placeholder="Breve descripción o detalle técnico del set..."
-                                    className="w-full text-[11px] rounded-lg border border-border bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/40"
-                                  />
-
-                                  {/* Texto Informativo / Durabilidad (Badge con escudo) */}
-                                  <div className="flex items-center gap-1.5 bg-background/60 p-1.5 rounded-lg border border-border/60">
-                                    <ShieldCheck className="size-3.5 text-rose-500 shrink-0 ml-1" />
-                                    <div className="flex-1 min-w-0">
-                                      <label className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold block leading-none mb-1">
-                                        Texto Informativo / Garantía
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={work.badgeInfo ?? (work.durationDays ? `Duración intacta ${work.durationDays}+ días • HEMA-Free` : 'Duración intacta 21+ días • HEMA-Free')}
-                                        onChange={(e) => updateWorkItem(work.id, { badgeInfo: e.target.value })}
-                                        placeholder="Ej: Duración intacta 28+ días • HEMA-Free"
-                                        className="w-full text-[11px] font-medium text-foreground bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/40"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Ficha Técnica / Modal (Tiempo Estimado, Fórmula, Mantenimiento) */}
-                                  <div className="rounded-lg bg-pink-50/50 dark:bg-rose-950/20 p-2 border border-pink-100 dark:border-rose-900/30 space-y-1">
-                                    <span className="text-[9px] uppercase tracking-wider text-rose-500/80 font-bold block">
-                                      Ficha Técnica (Modal al hacer Click)
-                                    </span>
-                                    <div className="grid grid-cols-3 gap-1.5">
-                                      <div>
-                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                      {work.estimatedTime && (
+                                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5 bg-background px-1.5 py-0.5 rounded border border-border/60">
                                           <Clock className="size-2.5 text-pink-500" />
-                                          <span>Tiempo</span>
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={work.estimatedTime ?? '~60 - 80m'}
-                                          onChange={(e) => updateWorkItem(work.id, { estimatedTime: e.target.value })}
-                                          placeholder="~60 - 80m"
-                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                        />
-                                      </div>
+                                          {work.estimatedTime}
+                                        </span>
+                                      )}
 
-                                      <div>
-                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
-                                          <ShieldCheck className="size-2.5 text-emerald-600" />
-                                          <span>Fórmula</span>
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={work.formula ?? '100% Segura'}
-                                          onChange={(e) => updateWorkItem(work.id, { formula: e.target.value })}
-                                          placeholder="100% Segura"
-                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                        />
-                                      </div>
-
-                                      <div>
-                                        <label className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-0.5">
+                                      {work.maintenance && (
+                                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5 bg-background px-1.5 py-0.5 rounded border border-border/60">
                                           <CheckCircle2 className="size-2.5 text-pink-500" />
-                                          <span>Mantenimiento</span>
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={work.maintenance ?? (work.durationDays ? `${work.durationDays} días` : '21 a 28 días')}
-                                          onChange={(e) => updateWorkItem(work.id, { maintenance: e.target.value })}
-                                          placeholder="21 a 28 días"
-                                          className="w-full text-[10px] font-medium rounded-md border border-border/70 bg-background/90 px-1.5 py-1 text-foreground focus:outline-none focus:border-[#DE738F]"
-                                        />
-                                      </div>
+                                          {work.maintenance}
+                                        </span>
+                                      )}
                                     </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5">
-                                    <LinkIcon className="size-3 text-muted-foreground shrink-0" />
-                                    <input
-                                      type="text"
-                                      value={work.imageUrl.startsWith('data:') ? 'Imagen subida desde tu dispositivo (Base64)' : work.imageUrl}
-                                      onChange={(e) => {
-                                        if (!e.target.value.startsWith('Imagen subida')) {
-                                          updateWorkItem(work.id, { imageUrl: e.target.value });
-                                        }
-                                      }}
-                                      placeholder="https://..."
-                                      className="w-full text-[10px] text-muted-foreground bg-transparent border-none focus:outline-none truncate"
-                                    />
                                   </div>
                                 </div>
                               </div>
@@ -2705,6 +2675,20 @@ export const WebStudioView: React.FC = () => {
                         </div>
                       );
                     })()}
+
+                    {/* Modal para Crear y Editar Trabajos en Exhibición */}
+                    {(isCreatingWork || editingWork) && (
+                      <ShowcaseWorkEditModal
+                        work={editingWork}
+                        categories={currentCategories}
+                        defaultCategory={workFilterCategory !== 'all' ? workFilterCategory : undefined}
+                        onClose={() => {
+                          setEditingWork(null);
+                          setIsCreatingWork(false);
+                        }}
+                        onSave={handleSaveWork}
+                      />
+                    )}
                   </div>
                 </div>
               )}
