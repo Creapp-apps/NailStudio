@@ -1143,6 +1143,28 @@ class StorageService {
   }
 }
 
+const SCHEDULE_DAY_KEYS: (keyof ScheduleByDay)[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+/**
+ * Determina si el salón atiende en una fecha concreta (YYYY-MM-DD), respetando
+ * el modo de recurrencia del día: 'all' (todos) o 'custom' (solo fechas elegidas).
+ */
+export function isDateOpen(schedule: ScheduleByDay | undefined, dateStr: string): boolean {
+  const sched = schedule || DEFAULT_SCHEDULE_BY_DAY;
+  let dayIdx: number;
+  try {
+    dayIdx = new Date(dateStr + 'T12:00:00').getDay();
+  } catch {
+    return false;
+  }
+  const cfg = sched[SCHEDULE_DAY_KEYS[dayIdx]];
+  if (!cfg || !cfg.enabled || !cfg.ranges || cfg.ranges.length === 0) return false;
+  if (cfg.recurrence === 'custom') {
+    return Array.isArray(cfg.activeDates) && cfg.activeDates.includes(dateStr);
+  }
+  return true;
+}
+
 export const DEFAULT_SCHEDULE_BY_DAY: ScheduleByDay = {
   monday: {
     enabled: true,

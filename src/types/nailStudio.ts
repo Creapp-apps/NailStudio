@@ -153,6 +153,11 @@ export interface TimeRangeBlock {
 export interface DayScheduleConfig {
   enabled: boolean;
   ranges: TimeRangeBlock[];
+  // Recurrencia del día:
+  //  - 'all' (o undefined): atiende TODOS los días de la semana (comportamiento por defecto).
+  //  - 'custom': atiende solo en las fechas puntuales listadas en activeDates.
+  recurrence?: 'all' | 'custom';
+  activeDates?: string[]; // YYYY-MM-DD, usado cuando recurrence === 'custom'
 }
 
 export type DayOfWeekKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';

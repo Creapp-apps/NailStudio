@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { NailService, RemovalOption, NailArtTier, NailTechnician, Appointment, DayOfWeekKey, TimeRangeBlock } from '../../types/nailStudio';
 import { INITIAL_SERVICES, REMOVAL_OPTIONS, NAIL_ART_TIERS } from '../../services/mockData';
-import { storage, DEFAULT_SCHEDULE_BY_DAY } from '../../services/storage';
+import { storage, DEFAULT_SCHEDULE_BY_DAY, isDateOpen } from '../../services/storage';
 import { useWebConfig } from '../../hooks/useWebConfig';
 import { LuxuryDatePicker } from '../common/LuxuryDatePicker';
 import { mercadoPagoService } from '../../services/mercadoPagoService';
@@ -106,10 +106,10 @@ export const BookingModal: React.FC<Props> = ({
   const findNextOpenDate = (fromStr: string) => {
     const sched = salonSettings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
     const curr = new Date(fromStr + 'T12:00:00');
-    for (let i = 0; i < 14; i++) {
-      const key = DAY_KEYS[curr.getDay()];
-      if (sched[key]?.enabled && sched[key]?.ranges.length > 0) {
-        return format(curr, 'yyyy-MM-dd');
+    for (let i = 0; i < 60; i++) {
+      const dateStr = format(curr, 'yyyy-MM-dd');
+      if (isDateOpen(sched, dateStr)) {
+        return dateStr;
       }
       curr.setDate(curr.getDate() + 1);
     }
@@ -164,7 +164,8 @@ export const BookingModal: React.FC<Props> = ({
     }
   }, [selectedDate, salonSettings]);
 
-  const isDayClosed = !currentDaySchedule.enabled || currentDaySchedule.ranges.length === 0;
+  // Cerrado si el día no atiende o si, en modo personalizado, la fecha no está habilitada.
+  const isDayClosed = !isDateOpen(salonSettings.scheduleByDay, selectedDate);
 
   // Generate available slots based on the day's time blocks and active bookings
   const availableHours = useMemo(() => {

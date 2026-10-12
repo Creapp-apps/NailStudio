@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { Appointment, NailTechnician, DayOfWeekKey, TimeRangeBlock } from '../types/nailStudio';
-import { storage, DEFAULT_SCHEDULE_BY_DAY } from './storage';
+import { storage, DEFAULT_SCHEDULE_BY_DAY, isDateOpen } from './storage';
 
 export interface HotSlot {
   time: string; // e.g. "14:30"
@@ -57,18 +57,13 @@ export function calculateTodayHotSlots(options?: {
     a => a.scheduledDate === todayStr && a.status !== 'cancelled'
   );
 
-  // Determine working hour ranges for today
+  // Determine working hour ranges for today, respecting custom-date recurrence.
   const dayKey = DAY_KEYS[now.getDay()];
   const sched = salonSettings?.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
-  let ranges: TimeRangeBlock[] = sched[dayKey]?.ranges || [];
-
-  // Fallback to standard daytime ranges if day is marked closed or ranges are empty
-  if (!sched[dayKey]?.enabled || ranges.length === 0) {
-    ranges = [
-      { id: 'fallback-morn', startTime: '10:00', endTime: '13:00' },
-      { id: 'fallback-aft', startTime: '14:30', endTime: '20:30' }
-    ];
-  }
+  const openToday = isDateOpen(sched, todayStr);
+  // Si hoy no se atiende (día cerrado o fecha no habilitada en modo personalizado),
+  // no hay franjas y por ende no hay hot slots.
+  const ranges: TimeRangeBlock[] = openToday ? (sched[dayKey]?.ranges || []) : [];
 
   const toMinutes = (timeStr: string): number => {
     const [h, m] = (timeStr || '00:00').split(':').map(Number);

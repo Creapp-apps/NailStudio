@@ -16,7 +16,10 @@ import {
   Plus,
   Trash2,
   Copy,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CalendarCheck
 } from 'lucide-react';
 import { storage, DEFAULT_SCHEDULE_BY_DAY } from '../../services/storage';
 import { SalonOperatingSettings, DayOfWeekKey, TimeRangeBlock } from '../../types/nailStudio';
@@ -38,12 +41,35 @@ const DAYS_MAP = [
   { key: 'sunday', label: 'Domingo' }
 ] as const;
 
+const DAY_JS_INDEX: Record<DayOfWeekKey, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6
+};
+const MONTH_LABELS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+const fmtDate = (dt: Date) =>
+  `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+/** Todas las fechas (YYYY-MM-DD) de un mes que caen en cierto día de la semana. */
+function weekdayDatesInMonth(year: number, month: number, weekdayIdx: number): string[] {
+  const res: string[] = [];
+  const d = new Date(year, month, 1);
+  while (d.getMonth() === month) {
+    if (d.getDay() === weekdayIdx) res.push(fmtDate(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return res;
+}
+
 export const SalonSettingsView: React.FC = () => {
   const [settings, setSettings] = useState<SalonOperatingSettings>(storage.getSalonSettings());
   const [currentTier, setCurrentTier] = useState<PlatformTier>(() => storage.getPlatformTier());
   const [isSaved, setIsSaved] = useState(false);
   const [activeDayKey, setActiveDayKey] = useState<DayOfWeekKey>('monday');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
+  const [calMonth, setCalMonth] = useState<Date>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
 
   const handleTierChange = (newTier: PlatformTier) => {
     storage.setPlatformTier(newTier);
@@ -53,6 +79,10 @@ export const SalonSettingsView: React.FC = () => {
 
   const currentSchedule = settings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
   const activeDayConfig = currentSchedule[activeDayKey] || { enabled: false, ranges: [] };
+  const activeRecurrence: 'all' | 'custom' = activeDayConfig.recurrence === 'custom' ? 'custom' : 'all';
+  const activeDates = Array.isArray(activeDayConfig.activeDates) ? activeDayConfig.activeDates : [];
+  const activeDayLabel = DAYS_MAP.find(d => d.key === activeDayKey)?.label || '';
+  const calWeekdayDates = weekdayDatesInMonth(calMonth.getFullYear(), calMonth.getMonth(), DAY_JS_INDEX[activeDayKey]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,6 +194,46 @@ export const SalonSettingsView: React.FC = () => {
     });
     setCopiedSuccess(true);
     setTimeout(() => setCopiedSuccess(false), 2500);
+  };
+
+  const handleSetRecurrence = (dayKey: DayOfWeekKey, mode: 'all' | 'custom') => {
+    setSettings(prev => {
+      const sched = prev.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
+      const cfg = sched[dayKey] || { enabled: true, ranges: [] };
+      return {
+        ...prev,
+        scheduleByDay: {
+          ...sched,
+          [dayKey]: {
+            ...cfg,
+            recurrence: mode,
+            activeDates: Array.isArray(cfg.activeDates) ? cfg.activeDates : []
+          }
+        }
+      };
+    });
+  };
+
+  const handleToggleActiveDate = (dayKey: DayOfWeekKey, dateStr: string) => {
+    setSettings(prev => {
+      const sched = prev.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
+      const cfg = sched[dayKey] || { enabled: true, ranges: [] };
+      const current = Array.isArray(cfg.activeDates) ? cfg.activeDates : [];
+      const next = current.includes(dateStr)
+        ? current.filter(d => d !== dateStr)
+        : [...current, dateStr].sort();
+      return {
+        ...prev,
+        scheduleByDay: {
+          ...sched,
+          [dayKey]: { ...cfg, recurrence: 'custom', activeDates: next }
+        }
+      };
+    });
+  };
+
+  const shiftCalMonth = (delta: number) => {
+    setCalMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
   const getRangeDurationText = (start: string, end: string) => {
@@ -281,7 +351,11 @@ export const SalonSettingsView: React.FC = () => {
                           ? 'bg-rose-100 text-[#C45774]'
                           : 'bg-zinc-100 text-zinc-400'
                       }`}>
-                        {dayCfg.enabled ? `${dayCfg.ranges.length} franja${dayCfg.ranges.length !== 1 ? 's' : ''}` : 'Cerrado'}
+                        {dayCfg.enabled
+                          ? (dayCfg.recurrence === 'custom'
+                              ? `${(dayCfg.activeDates || []).length} fecha${(dayCfg.activeDates || []).length !== 1 ? 's' : ''}`
+                              : `${dayCfg.ranges.length} franja${dayCfg.ranges.length !== 1 ? 's' : ''}`)
+                          : 'Cerrado'}
                       </span>
                     </button>
                   );
@@ -340,6 +414,100 @@ export const SalonSettingsView: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Modalidad de atención: Fijo (todos) vs Personalizado (fechas puntuales) */}
+              {activeDayConfig.enabled && (
+                <div className="space-y-2.5 pb-3 border-b border-rose-200/50">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    Modalidad de atención
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSetRecurrence(activeDayKey, 'all')}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                        activeRecurrence !== 'custom'
+                          ? 'bg-[#DE738F]/10 border-[#DE738F] text-[#B83256]'
+                          : 'bg-white border-rose-200 text-muted-foreground hover:border-rose-300'
+                      }`}
+                    >
+                      Fijo
+                      <span className="block text-[10px] font-normal mt-0.5">Todos los {activeDayLabel.toLowerCase()}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetRecurrence(activeDayKey, 'custom')}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                        activeRecurrence === 'custom'
+                          ? 'bg-[#DE738F]/10 border-[#DE738F] text-[#B83256]'
+                          : 'bg-white border-rose-200 text-muted-foreground hover:border-rose-300'
+                      }`}
+                    >
+                      Personalizado
+                      <span className="block text-[10px] font-normal mt-0.5">Elegís las fechas del mes</span>
+                    </button>
+                  </div>
+
+                  {activeRecurrence === 'custom' && (
+                    <div className="rounded-xl border border-rose-200/80 bg-white p-3 space-y-3">
+                      {/* Navegación de mes */}
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => shiftCalMonth(-1)}
+                          className="p-1.5 rounded-lg border border-rose-200 text-[#C45774] hover:bg-rose-50 cursor-pointer"
+                          title="Mes anterior"
+                        >
+                          <ChevronLeft size={15} />
+                        </button>
+                        <span className="font-bold text-sm text-[#2B181C]">
+                          {MONTH_LABELS[calMonth.getMonth()]} {calMonth.getFullYear()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => shiftCalMonth(1)}
+                          className="p-1.5 rounded-lg border border-rose-200 text-[#C45774] hover:bg-rose-50 cursor-pointer"
+                          title="Mes siguiente"
+                        >
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+
+                      {/* Chips de los días (ese weekday) del mes */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {calWeekdayDates.map(ds => {
+                          const on = activeDates.includes(ds);
+                          const dayNum = Number(ds.split('-')[2]);
+                          return (
+                            <button
+                              key={ds}
+                              type="button"
+                              onClick={() => handleToggleActiveDate(activeDayKey, ds)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                                on
+                                  ? 'bg-[#DE738F] text-white border-[#DE738F] shadow-2xs'
+                                  : 'bg-white text-zinc-700 border-rose-200 hover:border-rose-300'
+                              }`}
+                            >
+                              {on && <Check size={12} />}
+                              {activeDayLabel} {dayNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <p className="text-[10px] text-muted-foreground max-w-[70%]">
+                          Marcá los {activeDayLabel.toLowerCase()} que vas a atender. Avanzá de mes para cargar los próximos.
+                        </p>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-1 rounded-full shrink-0">
+                          <CalendarCheck size={11} /> {activeDates.length} fecha(s)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Contenido de franjas */}
               {activeDayConfig.enabled ? (
