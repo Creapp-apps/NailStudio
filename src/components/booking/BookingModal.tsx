@@ -736,12 +736,9 @@ export const BookingModal: React.FC<Props> = ({
                           value={selectedDate}
                           onChange={setSelectedDate}
                           minDate={format(new Date(), 'yyyy-MM-dd')}
-                          isDateDisabled={(date) => {
-                            const dayKey = DAY_KEYS[date.getDay()];
-                            const sched = salonSettings.scheduleByDay || DEFAULT_SCHEDULE_BY_DAY;
-                            const config = sched[dayKey];
-                            return !config || !config.enabled || config.ranges.length === 0;
-                          }}
+                          isDateDisabled={(date) =>
+                            !isDateOpen(salonSettings.scheduleByDay, format(date, 'yyyy-MM-dd'))
+                          }
                         />
                       </div>
                     </div>
